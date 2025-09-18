@@ -1,8 +1,20 @@
 import Fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 import { env } from "@config/environment.js";
+import { connect } from "nats";
 
 export const createApp = async (): Promise<FastifyInstance> => {
+
+	const nc = await connect({ servers: env.NATS_URL, name: "gateway-service" })
+		.then((nc) => {
+			console.log(`🔔 Connecté à NATS à ${env.NATS_URL}`);
+			return nc;
+		})
+		.catch((err) => {
+			console.error("❌ Erreur de connexion à NATS:", err);
+			process.exit(1);
+		});
+
 	const app = Fastify({
 		logger:
 			env.NODE_ENV === "development"
