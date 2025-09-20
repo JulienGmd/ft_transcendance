@@ -13,8 +13,8 @@ services:
   # Applications (tes microservices)
   api-gateway:
     build:
-      context: ./services/gateway-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: ft_transcendance/backend/services/gateway-service/Dockerfile
     depends_on: [nats]
     environment:
       - NATS_URL=nats://nats:4222

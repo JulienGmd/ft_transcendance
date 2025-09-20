@@ -6,17 +6,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch --tsconfig tsconfig.json src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node --experimental-specifier-resolution=node dist/index.js",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "start": "node dist/index.js",
     "test": "echo \"No tests yet\" && exit 0"
-  },
-  "imports": {
-    "@config/*": "./dist/config/*",
-    "@routes/*": "./dist/routes/*",
-    "@middleware/*": "./dist/middleware/*",
-    "@types/*": "./dist/types/*",
-    "@plugins/*": "./dist/plugins/*",
-    "@services/*": "./dist/services/*"
   },
   "dependencies": {
     "@fastify/cors": "^10.1.0",
@@ -27,7 +19,8 @@
     "dotenv": "^16.6.1",
     "fastify": "^5.5.0",
     "jsonwebtoken": "^9.0.2",
-    "nats": "^2.29.3"
+    "nats": "^2.29.3",
+    "tsc-alias": "^1.8.16"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.0",
