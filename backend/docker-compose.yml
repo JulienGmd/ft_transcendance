@@ -15,12 +15,12 @@ services:
     build:
       context: ../..
       dockerfile: ft_transcendance/backend/services/gateway-service/Dockerfile
+      target: production
     depends_on: [nats]
     environment:
       - NATS_URL=nats://nats:4222
     networks:
       - transcendence-network
-
 
 networks:
   transcendence-network:
