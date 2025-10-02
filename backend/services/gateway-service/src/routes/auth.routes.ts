@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { topics } from "@messaging/topics"
 import type {
 	AuthLoginRequest,
 	AuthRegisterRequest,
@@ -9,7 +10,7 @@ export default async function authRoutes(app: FastifyInstance) {
 	app.post("/auth/login", async (req, reply) => {
 		const { email, password } = req.body as AuthLoginRequest;
 
-		const result = await app.nats.request<AuthResponse>("auth.login", {
+		const result = await app.nats.request<AuthResponse>(topics.AUTH.LOGIN, {
 			email,
 			password,
 		});
@@ -22,7 +23,7 @@ export default async function authRoutes(app: FastifyInstance) {
 		const { email, password, username } = req.body as AuthRegisterRequest;
 
 		// Fire & Forget (publish un événement)
-		app.nats.publish("auth.user.registered", { email, password, username });
+		app.nats.publish(topics.AUTH.REGISTER, { email, password, username });
 
 		return reply.code(202).send({
 			status: "accepted",

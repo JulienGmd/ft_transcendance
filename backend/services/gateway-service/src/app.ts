@@ -73,6 +73,9 @@ export const createApp = async (): Promise<FastifyInstance> => {
 		},
 	});
 
+	// Routes
+	// await app.register(import("./routes/auth.routes"), { prefix: "/api" });
+
 	// Health check
 	app.get("/health", async () => ({
 		status: "ok",

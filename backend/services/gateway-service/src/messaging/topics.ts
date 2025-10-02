@@ -1,4 +1,4 @@
-export const Topics = {
+export const topics = {
 	AUTH: {
 		LOGIN: "auth.login",
 		REGISTER: "auth.register",
