@@ -107,5 +107,3 @@ bootstrap();
 4. **Gateway** → renvoie la réponse HTTP au front
 
 ---
-
-

@@ -2,11 +2,6 @@ FROM node:21-alpine AS dev
 
 WORKDIR /app
 
-COPY ft_transcendance/backend/services/gateway-service/package*.json ./
-COPY ft_transcendance/backend/services/gateway-service/tsconfig.json ./
-COPY ft_transcendance/backend/services/gateway-service/src/ ./src/
-COPY ft_transcendance/shared/ ./src/shared/
-
 RUN npm install
 
 EXPOSE 3000
@@ -15,11 +10,6 @@ CMD ["npm", "run", "dev"]
 FROM node:21-alpine AS build
 
 WORKDIR /app
-
-COPY ft_transcendance/backend/services/gateway-service/package*.json ./
-COPY ft_transcendance/backend/services/gateway-service/tsconfig.json ./
-COPY ft_transcendance/backend/services/gateway-service/src/ ./src/
-COPY ft_transcendance/shared/ ./src/shared/
 
 RUN npm install
 

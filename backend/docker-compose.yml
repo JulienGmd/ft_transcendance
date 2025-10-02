@@ -13,8 +13,7 @@ services:
   # Applications (tes microservices)
   api-gateway:
     build:
-      context: ../..
-      dockerfile: ft_transcendance/backend/services/gateway-service/Dockerfile
+      context: gateway-service/
       target: production
     depends_on: [nats]
     environment:
