@@ -1,5 +1,5 @@
 import { createApp } from "./app.js";
-import { env } from "@config/environment.js";
+import { env } from "@config/environment";
 
 const start = async (): Promise<void> => {
 	try {
