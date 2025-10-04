@@ -2,33 +2,54 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"baseUrl": "./src", // ← baseUrl root project
+		"baseUrl": "./src",
 		"paths": {
-			"@shared-types/*": ["types/*"],
-			"@messaging/*": ["messaging/*"],
-			"@config/*": ["config/*"],
-			"@routes/*": ["routes/*"]
+			"@shared-types/*": [
+				"types/*"
+			],
+			"@messaging/*": [
+				"messaging/*"
+			],
+			"@config/*": [
+				"config/*"
+			],
+			"@routes/*": [
+				"routes/*"
+			]
 		},
+		// Modules ESM pour Node.js
 		"module": "esnext",
+		"moduleResolution": "bundler",
 		"target": "ES2022",
-		"lib": ["ES2022"],
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"moduleResolution": "node",
+		"lib": [
+			"ES2022"
+		],
+		// Interopérabilité
+		"verbatimModuleSyntax": true,
 		"ignoreDeprecations": "6.0",
-		"types": ["node"],
+		// Types
+		"types": [
+			"node"
+		],
+		// Output
 		"sourceMap": true,
 		"declaration": true,
 		"declarationMap": true,
+		// Strictness
+		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"exactOptionalPropertyTypes": true,
-		"strict": true,
-		"verbatimModuleSyntax": false,
 		"isolatedModules": true,
 		"noUncheckedSideEffectImports": true,
+		// Détection
 		"moduleDetection": "force",
 		"skipLibCheck": true
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist"]
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
 }

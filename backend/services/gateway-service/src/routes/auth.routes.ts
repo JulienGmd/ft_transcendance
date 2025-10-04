@@ -22,12 +22,12 @@ export default async function authRoutes(app: FastifyInstance) {
 	app.post("/auth/register", async (req, reply) => {
 		const { email, password, username } = req.body as AuthRegisterRequest;
 
-		// Fire & Forget (publish un événement)
+		// Fire & Forget (publish an event)
 		app.nats.publish(topics.AUTH.REGISTER, { email, password, username });
 
 		return reply.code(202).send({
 			status: "accepted",
-			message: "Inscription en cours...",
+			message: "Registration in progress...",
 		});
 	});
 }

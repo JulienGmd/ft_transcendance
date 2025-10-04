@@ -10,16 +10,16 @@ const start = async (): Promise<void> => {
 			host: env.HOST,
 		});
 
-		app.log.info(`🚀 API Gateway démarré sur http://${env.HOST}:${env.PORT}`);
-		app.log.info("🎯 Prêt à recevoir du trafic !");
+		app.log.info(`🚀 API Gateway started on http://${env.HOST}:${env.PORT}`);
+		app.log.info("🎯 Ready to receive traffic!");
 	} catch (err) {
-		console.error("❌ Erreur au démarrage:", err);
+		console.error("❌ Startup error:", err);
 		process.exit(1);
 	}
 };
 
 const gracefulShutdown = (signal: string) => {
-	console.log(`🔔 Signal ${signal} reçu, arrêt en cours...`);
+	console.log(`🔔 Signal ${signal} received, shutting down...`);
 	process.exit(0);
 };
 
@@ -27,6 +27,6 @@ process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 start().catch((err) => {
-	console.error("💥 Erreur critique:", err);
+	console.error("💥 Critical error:", err);
 	process.exit(1);
 });

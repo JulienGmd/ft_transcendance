@@ -2,6 +2,8 @@ FROM node:21-alpine AS dev
 
 WORKDIR /app
 
+COPY . .
+
 RUN npm install
 
 EXPOSE 3000
@@ -10,6 +12,8 @@ CMD ["npm", "run", "dev"]
 FROM node:21-alpine AS build
 
 WORKDIR /app
+
+COPY . .
 
 RUN npm install
 
