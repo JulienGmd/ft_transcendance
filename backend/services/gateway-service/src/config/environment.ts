@@ -9,12 +9,8 @@ export interface Environment {
 	LOG_LEVEL: string;
 	CORS_ORIGINS: string[];
 	FRONTEND_URL: string;
-	SERVICES: {
-		AUTH_SERVICE_URL: string;
-		USER_SERVICE_URL: string;
-		GAME_SERVICE_URL: string;
-		CHAT_SERVICE_URL: string;
-	};
+	NATS_CLUSTER_ID: string;
+	NATS_URL: string;
 }
 
 export const env: Environment = {
@@ -30,10 +26,6 @@ export const env: Environment = {
 		"http://localhost:3000",
 	],
 	FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
-	SERVICES: {
-		AUTH_SERVICE_URL: process.env.AUTH_SERVICE_URL || "https://localhost:3001",
-		USER_SERVICE_URL: process.env.USER_SERVICE_URL || "https://localhost:3002",
-		GAME_SERVICE_URL: process.env.GAME_SERVICE_URL || "https://localhost:3003",
-		CHAT_SERVICE_URL: process.env.CHAT_SERVICE_URL || "https://localhost:3004",
-	},
+	NATS_URL: process.env.NATS_URL || "nats://localhost:4222",
+	NATS_CLUSTER_ID: process.env.NATS_CLUSTER_ID || 'transcendence-cluster'
 };
