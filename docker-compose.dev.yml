@@ -13,12 +13,11 @@ services:
   # Applications (tes microservices)
   api-gateway:
     build:
-      context: ../..
-      dockerfile: ft_transcendance/backend/services/gateway-service/Dockerfile
-      target: production
+      context: backend/services/gateway-service/
+      target: dev
     depends_on: [nats]
-    environment:
-      - NATS_URL=nats://nats:4222
+    env_file:
+      - .env
     networks:
       - transcendence-network
 

@@ -1,13 +1,19 @@
 import type { FastifyInstance } from "fastify";
-// TODO ERROR TS2307: Cannot find module '../shared/auth.types' or its corresponding type declarations.
-import type { AuthLoginRequest, AuthResponse, AuthRegisterRequest } from '../shared/auth.types';
+import { topics } from "@messaging/topics"
+import type {
+	AuthLoginRequest,
+	AuthRegisterRequest,
+	AuthResponse,
+} from "@shared-types/auth.types";
 
 export default async function authRoutes(app: FastifyInstance) {
 	app.post("/auth/login", async (req, reply) => {
 		const { email, password } = req.body as AuthLoginRequest;
 
-
-		const result = await app.nats.request<AuthResponse>("auth.login", { email, password });
+		const result = await app.nats.request<AuthResponse>(topics.AUTH.LOGIN, {
+			email,
+			password,
+		});
 
 		if (result.error) return reply.code(401).send(result);
 		return reply.send(result);
@@ -17,7 +23,7 @@ export default async function authRoutes(app: FastifyInstance) {
 		const { email, password, username } = req.body as AuthRegisterRequest;
 
 		// Fire & Forget (publish un événement)
-		app.nats.publish("auth.user.registered", { email, password, username });
+		app.nats.publish(topics.AUTH.REGISTER, { email, password, username });
 
 		return reply.code(202).send({
 			status: "accepted",

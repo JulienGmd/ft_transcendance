@@ -1,11 +1,13 @@
 {
 	"compilerOptions": {
-		"rootDir": "./src", // ← Garder src comme rootDir
+		"rootDir": "./src",
 		"outDir": "./dist",
-		"baseUrl": "./src", // ← baseUrl à la racine du projet
+		"baseUrl": "./src", // ← baseUrl root project
 		"paths": {
-			"@shared/*": ["shared/*"], // ← Chemin vers shared depuis la racine
-			"@config/*": ["config/*"] // ← Chemin vers config depuis la racine
+			"@shared-types/*": ["types/*"],
+			"@messaging/*": ["messaging/*"],
+			"@config/*": ["config/*"],
+			"@routes/*": ["routes/*"]
 		},
 		"module": "esnext",
 		"target": "ES2022",
@@ -13,6 +15,7 @@
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"moduleResolution": "node",
+		"ignoreDeprecations": "6.0",
 		"types": ["node"],
 		"sourceMap": true,
 		"declaration": true,
@@ -20,7 +23,7 @@
 		"noUncheckedIndexedAccess": true,
 		"exactOptionalPropertyTypes": true,
 		"strict": true,
-		"verbatimModuleSyntax": true,
+		"verbatimModuleSyntax": false,
 		"isolatedModules": true,
 		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",

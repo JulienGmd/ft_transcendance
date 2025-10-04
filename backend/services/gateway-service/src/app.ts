@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
-import { env } from "@config/environment.js";
+import { env } from "@config/environment";
 import { connect, type NatsConnection, StringCodec } from "nats";
 
 declare module "fastify" {
@@ -7,7 +7,11 @@ declare module "fastify" {
 		nats: {
 			nc: NatsConnection;
 			publish: (subject: string, data: object) => void;
-			request: <T = any>(subject: string, data: object, timeout?: number) => Promise<T>;
+			request: <T = any>(
+				subject: string,
+				data: object,
+				timeout?: number
+			) => Promise<T>;
 		};
 	}
 }
@@ -29,16 +33,16 @@ export const createApp = async (): Promise<FastifyInstance> => {
 		logger:
 			env.NODE_ENV === "development"
 				? {
-					level: env.LOG_LEVEL,
-					transport: {
-						target: "pino-pretty",
-						options: {
-							colorize: true,
-							translateTime: "HH:MM:ss Z",
-							ignore: "pid,hostname",
+						level: env.LOG_LEVEL,
+						transport: {
+							target: "pino-pretty",
+							options: {
+								colorize: true,
+								translateTime: "HH:MM:ss Z",
+								ignore: "pid,hostname",
+							},
 						},
-					},
-				}
+				  }
 				: { level: env.LOG_LEVEL },
 	});
 
@@ -60,10 +64,17 @@ export const createApp = async (): Promise<FastifyInstance> => {
 			nc.publish(subject, codec.encode(JSON.stringify(data)));
 		},
 		request: async <T = any>(subject: string, data: object, timeout = 2000) => {
-			const msg = await nc.request(subject, codec.encode(JSON.stringify(data)), { timeout });
+			const msg = await nc.request(
+				subject,
+				codec.encode(JSON.stringify(data)),
+				{ timeout }
+			);
 			return JSON.parse(codec.decode(msg.data)) as T;
 		},
 	});
+
+	// Routes
+	// await app.register(import("./routes/auth.routes"), { prefix: "/api" });
 
 	// Health check
 	app.get("/health", async () => ({

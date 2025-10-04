@@ -6,18 +6,18 @@ services:
     ports:
       - "4222:4222"
       - "8222:8222"
-    command: ["--http_port=8222", "--max_connections=1000"]
+    command: ["--http_port=8222"]
     networks:
       - transcendence-network
 
-  # Applications (microservices)
+  # Applications (tes microservices)
   api-gateway:
     build:
-      context: ./services/gateway-service
+      context: backend/services/gateway-service/
       target: production
     depends_on: [nats]
-    environment:
-      - NATS_URL=nats://nats:4222
+    env_file:
+      - .env
     networks:
       - transcendence-network
 
