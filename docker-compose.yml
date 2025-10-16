@@ -1,5 +1,4 @@
 services:
-  # Infrastructure
   nats:
     image: nats:2.10-alpine
     container_name: transcendence-nats
@@ -10,16 +9,21 @@ services:
     networks:
       - transcendence-network
 
-  # Applications (tes microservices)
   api-gateway:
     build:
-      context: backend/services/gateway-service/
+      context: ./backend/services/gateway-service/
       target: production
     depends_on: [nats]
     env_file:
-      - .env
+      - ./backend/services/gateway-service/.env
     networks:
       - transcendence-network
+
+  frontend:
+    build: ./backend/services/frontend-service/
+    ports:
+      - "3000:3000"
+    restart: always
 
 networks:
   transcendence-network:

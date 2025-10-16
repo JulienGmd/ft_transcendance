@@ -1,26 +1,14 @@
+# This file is used to override or add some properties to docker-compose.yml.
+
 services:
-  # Infrastructure
-  nats:
-    image: nats:2.10-alpine
-    container_name: transcendence-nats
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: ["--http_port=8222"]
-    networks:
-      - transcendence-network
-
-  # Applications (tes microservices)
   api-gateway:
-    build:
-      context: backend/services/gateway-service/
-      target: dev
-    depends_on: [nats]
-    env_file:
-      - backend/services/gateway-service/.env
-    networks:
-      - transcendence-network
+    command: npm run dev
+    volumes:
+      - ./backend/services/gateway-service:/app # sync service folder to /app
+      - /app/node_modules                     # don't sync node_modules
 
-networks:
-  transcendence-network:
-    driver: bridge
+  frontend:
+    command: npm run dev
+    volumes:
+      - ./backend/services/frontend-service:/app
+      - /app/node_modules
