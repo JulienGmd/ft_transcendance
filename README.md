@@ -1,6 +1,6 @@
 # SPA
 
-## Prerequesites
+## Prerequisites
 
 [Docker engine](https://docs.docker.com/engine/install/)
 [NodeJS](https://nodejs.org/en/download)
@@ -14,11 +14,7 @@ Install [dprint extension](https://marketplace.visualstudio.com/items?itemName=d
 ### Run
 
 ```sh
-# Inside docker
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-# Or locally
-npm i
-npm run dev
+make dev
 ```
 
 ## Production
@@ -26,5 +22,5 @@ npm run dev
 ### Run
 
 ```sh
-docker compose up --build
+make start
 ```
