@@ -1,4 +1,4 @@
-import { connect, NatsConnection } from "nats";
+import { connect, type NatsConnection } from "nats";
 
 let nc: NatsConnection | null = null;
 
