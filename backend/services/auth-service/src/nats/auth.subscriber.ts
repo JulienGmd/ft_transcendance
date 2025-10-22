@@ -474,7 +474,7 @@ export class AuthSubscriber {
     }
 
     const db = new Database('auth.db');
-    const user = db.prepare('SELECT twofa_secret, twofa_enabled FROM users WHERE id = ?').get(userId);
+    const user = db.prepare('SELECT twofa_secret, twofa_enabled FROM users WHERE id = ?').get(userId) as any;
     db.close();
 
     if (!user || !user.twofa_enabled || !user.twofa_secret) {
@@ -560,14 +560,14 @@ export class AuthSubscriber {
     }
 
     const db = new Database('auth.db');
-    const tokenEntry = db.prepare('SELECT user_id FROM tokens WHERE refresh_token = ?').get(refreshToken);
+    const tokenEntry = db.prepare('SELECT user_id FROM tokens WHERE refresh_token = ?').get(refreshToken) as any;
     
     if (!tokenEntry) {
       db.close();
       return { success: false, error: 'Refresh token invalide' };
     }
     
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(tokenEntry.user_id);
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(tokenEntry.user_id) as any;
     db.close();
     
     if (!user) {
