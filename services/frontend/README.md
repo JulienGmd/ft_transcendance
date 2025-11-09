@@ -1,4 +1,4 @@
-# frontend-service
+# frontend
 
 ## TODO
 

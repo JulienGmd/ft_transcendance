@@ -15,8 +15,12 @@
 ### Add new service
 
 - Add folder in `services/`
+- Copy Dockerfile from another service, change or remove port
 - Add service in `docker-compose.yml`
-- Add service in `docker-compose.dev.yml` (if auto reload needed)
+- Add service in `docker-compose.dev.yml`
+- Install tsx and add dev rule:
+  - `npm i -D tsx`
+  - `"dev": "tsx watch src/index.ts",`
 
 ### Run
 

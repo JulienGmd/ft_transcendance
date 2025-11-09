@@ -2,19 +2,22 @@
 
 services:
   auth:
-    command: npm run dev
+    build:
+      target: development     # use development stage in Dockerfile
     volumes:
       - ./services/auth:/app  # sync local folder to docker's /app folder
       - /app/node_modules     # don't sync node_modules
 
   frontend:
-    command: npm run dev
+    build:
+      target: development
     volumes:
       - ./services/frontend:/app
       - /app/node_modules
 
   gateway:
-    command: npm run dev
+    build:
+      target: development
     volumes:
       - ./services/gateway:/app
       - /app/node_modules

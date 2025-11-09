@@ -1,5 +1,5 @@
 {
-  "name": "gateway-service",
+  "name": "gateway",
   "version": "1.0.0",
   "description": "Gateway service",
   "type": "module",

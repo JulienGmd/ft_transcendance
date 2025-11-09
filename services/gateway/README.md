@@ -45,8 +45,8 @@ npm start
 Construisez et lancez le conteneur :
 
 ```bash
-docker build -t gateway-service .
-docker run --env-file .env -p 3000:3000 gateway-service
+docker build -t gateway .
+docker run --env-file .env -p 3000:3000 gateway
 ```
 
 ## Variables d'environnement principales

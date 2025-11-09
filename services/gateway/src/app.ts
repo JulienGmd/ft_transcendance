@@ -18,7 +18,7 @@ declare module "fastify" {
 
 export const createApp = async (): Promise<FastifyInstance> => {
 
-	const nc = await connect({ servers: env.NATS_URL, name: "gateway-service" })
+	const nc = await connect({ servers: env.NATS_URL, name: "gateway" })
 		.then((nc) => {
 			console.log(`🔔 Connected to NATS at ${env.NATS_URL} test`);
 			return nc;

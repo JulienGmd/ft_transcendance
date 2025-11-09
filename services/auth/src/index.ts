@@ -8,9 +8,9 @@ async function bootstrap() {
   try {
     console.log('🚀 Starting Auth Service...');
 
-    const nc = await connect({ 
-      servers: process.env.NATS_URL || 'nats://localhost:4222',
-      name: 'auth-service'
+    const nc = await connect({
+      servers: process.env.NATS_URL || 'nats://nats:4222',
+      name: 'auth'
     });
 
     console.log('✅ Connected to NATS');

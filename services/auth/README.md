@@ -10,8 +10,8 @@ npm run start
 ## Build & Run (Docker)
 
 ```sh
-docker build -t auth-service .
-docker run --env-file .env -p 4000:4000 auth-service
+docker build -t auth .
+docker run --env-file .env -p 4000:4000 auth
 ```
 
 ## Configuration via variables d'environnement

@@ -6,7 +6,7 @@ Ce document explique comment gérer les **topics NATS** dans le projet, ainsi qu
 
 ## 🔖 1. Organisation des Topics
 
-Pour ajouter un nouveau Topics go dans `gateway-service/src/messaging/topics.ts` :
+Pour ajouter un nouveau Topics go dans `gateway/src/messaging/topics.ts` :
 
 ```ts
 // src/messaging/topics.ts

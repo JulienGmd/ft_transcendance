@@ -1,18 +1,25 @@
-FROM alpine:3.22.1
-
+FROM node:20-alpine AS base
 WORKDIR /app
-
-RUN apk add --no-cache nodejs npm
-
-# Copy and npm install first so docker can cache this layer if package.json hasn't changed
 COPY package*.json ./
-# not using --production because typescript is needed to build
-RUN npm install
 
+FROM base AS development
+RUN npm ci
 COPY . .
+EXPOSE 3000
+ENV PORT=3000
+CMD ["npm", "run", "dev"]
 
+FROM base AS builder
+RUN npm ci
+COPY . .
 RUN npm run build
 
+FROM base AS production
+# Install production dependencies
+RUN npm ci --production --silent && npm cache clean --force
+# Execute builder stage and copy built files
+COPY --from=builder /app/dist ./dist
 EXPOSE 3000
-
-CMD ["npm", "start"]
+ENV PORT=3000
+ENV NODE_ENV=production
+CMD ["npm", "run", "start"]
