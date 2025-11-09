@@ -1,0 +1,9 @@
+{
+  "name": "ft_transcendance",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "dprint": "^0.50.2"
+  }
+}

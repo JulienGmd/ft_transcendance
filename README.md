@@ -9,8 +9,17 @@
 
 ### Setup (vscode)
 
-- Install [dprint extension](https://marketplace.visualstudio.com/items?itemName=dprint.dprint)
+#### Formatter
+
+- Install [Dprint extension](https://marketplace.visualstudio.com/items?itemName=dprint.dprint)
 - Enable [format on save](vscode://settings/editor.formatOnSave)
+- `npm i`
+- F1 > Reload Window
+- On any typescript file: F1 > Format Document With... > dprint
+
+#### Tailwind intellisense
+
+- Install [Tailwind extension](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
 ### Add new service
 
