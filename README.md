@@ -12,6 +12,12 @@
 - Install [dprint extension](https://marketplace.visualstudio.com/items?itemName=dprint.dprint)
 - Enable [format on save](vscode://settings/editor.formatOnSave)
 
+### Add new service
+
+- Add folder in `services/`
+- Add service in `docker-compose.yml`
+- Add service in `docker-compose.dev.yml` (if auto reload needed)
+
 ### Run
 
 ```sh
