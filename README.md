@@ -13,9 +13,11 @@
 
 - Install [Dprint extension](https://marketplace.visualstudio.com/items?itemName=dprint.dprint)
 - Enable [format on save](vscode://settings/editor.formatOnSave)
-- `npm i`
+- `make setup`
 - F1 > Reload Window
 - On any typescript file: F1 > Format Document With... > dprint
+
+_From now, typescript files will be formatted on save._
 
 #### Tailwind intellisense
 
