@@ -1,6 +1,8 @@
 import Fastify from "fastify"
 import { getMimeType, readFile } from "./utils.js"
 
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000
+
 const fastify = Fastify()
 
 // Generic error handler (when a route throws an error)
@@ -30,6 +32,6 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
 })
 
 // Start the server
-console.log("Starting server on http://localhost:3000")
+console.log(`Starting server on http://localhost:${PORT}`)
 // USe host 0.0.0.0 so it can be accessible from outside the docker container
-await fastify.listen({ port: 3000, host: "0.0.0.0" })
+await fastify.listen({ port: PORT, host: "0.0.0.0" })
