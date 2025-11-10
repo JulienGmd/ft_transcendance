@@ -1,101 +1,114 @@
-# Frontend
+# Frontend Service
 
-Frontend service for ft_transcendence which provides a client-side Single Page Application (SPA) and serves static assets using a Fastify server.
+A Single Page Application (SPA) frontend service built with TypeScript and Fastify that serves static assets and provides client-side routing for the ft_transcendence project.
+
+## Features
+
+- Client-side SPA routing with HTML page caching
+- TypeScript compilation for both server and client code
+- Tailwind CSS processing
+- Static asset serving
+- Development and production builds
 
 ## Project Structure
 
 ```
 src/
-├── server/           # Backend code
-└── client/           # Client code
+├── server/           # Fastify server code
+└── client/           # Client-side TypeScript and styles
 
-public/               # Static HTML files and assets (exposed to /public/*)
+public/               # Static assets
 ├── _index.html       # Main SPA template
-├── [.../...].html    # Pages content (will be injected in _index.html #app)
-└── [.../...].xxx     # Other static assets (images, etc.)
+├── *.html            # Page content (injected into #app)
+└── assets/           # Images, icons, etc.
 
-dist/                 # Compiled typescript
-├── server/           # Compiled backend code
-└── public/           # Compiled client code (exposed to /public/*.js and /public/*.css)
+dist/                 # Compiled output
+├── server/           # Compiled server code
+└── public/           # Compiled client code and styles
 ```
 
 ## Routing
 
-The server implements a SPA routing system:
+### Server Routes
 
-- `/*` - Serves the main `_index.html`.
-- `/public/*` - Serves static assets:
-  - Files from `dist/public/` (.js, .css)
-  - Other files from `public/` (.html, .png, .svg, etc...)
+- `/*` - Serves the main SPA (`_index.html`)
+- `/public/*` - Serves static assets (JS, CSS, images, HTML)
 
-### How it works
+### Client-side Navigation
 
-- On first navigation, for example on /home, the server will serve `public/_index.html`, which will then request `public/home.html`, cache it and place its content inside #app.
-- Anchor tags (`<a>`) are overridden to navigate using the SPA router:
-  - On anchor hover, if the corresponding HTML file is not cached, the router will request and cache the file (e.g. `public/user.html`).
-  - On anchor click, the router will update #app with the cached content.
+- Navigation links: `<a href="/some/page">Link</a>`
 
-### Navigate to a page
+Anchor tags (`<a>`) are enhanced to provide SPA navigation with lazy loading and caching:
 
-`<a href="/some/page">link</a>`
-
-Will load `public/some/page.html` in #app.
-
-### Import a script
-
-`<script src="/public/myscript.js"></script>`
-
-Will serve `dist/public/myscript.js`.
-
-### Import CSS file
-
-`<link rel="stylesheet" href="/public/styles.css">`
-
-Will serve `dist/public/styles.css`.
-
-### Import an image
-
-`<img src="/public/images/logo.png">`
-
-Will serve `public/images/logo.png`.
-
-## Typescript
-
-When running `npm run dev`:
-
-- `src/server` typescript files are transpiled on-the-fly to memory using tsx.
-- `src/client` typescript files are transpiled on-the-fly to `dist/public` using `tsconfig.client.json` (browser config).
-- `src/client/tailwind.css` is processed to `dist/public/styles.css` using Tailwind CLI in watch mode.
-
-When running `npm run build`:
-
-- `src/server` typescript files are transpiled to `dist/server` using `tsconfig.json` (node config).
-- `src/client` files are transpiled to `dist/public` using `tsconfig.client.json` (browser config).
-- `src/client/tailwind.css` is processed to `dist/public/styles.css` using Tailwind CLI.
-
-## Environment Variables
-
-- `PORT`: Server port (default: 3000)
+- On hover: Pages are preloaded and cached if not already available
+- On click: Cached content is instantly injected into the `#app` element
 
 ## Development
 
-### With Docker
+### Prerequisites
 
-- `make dev`
+- Node.js
+- Docker (optional)
 
-### Locally
+### Development Guidelines
 
-- Install dependencies: `npm i`
-- Start development server: `npm run dev`
+- **Client code**: `src/client/` for TypeScript logic
+- **HTML pages**: `public/**/*.html` for page content
+- **Assets**: `public/assets/` for images and static files
+- **Styling**: Use Tailwind classes inline, avoid separate CSS files
+
+```html
+<div class="bg-blue-500 text-white p-4 rounded">
+  <h2 class="text-xl font-bold">Card Title</h2>
+  <p class="text-sm">Card content</p>
+</div>
+```
+
+### Local Development
+
+```bash
+npm i
+npm run dev
+```
+
+### Docker Development
+
+```bash
+make dev
+```
 
 ## Production
 
-### With Docker
+### Local Build
 
-- `make start`
+```bash
+npm i
+npm run build
+npm start
+```
 
-### Locally
+### Docker Production
 
-- Install dependencies: `npm i`
-- Build the project: `npm run build`
-- Start the server: `npm start`
+```bash
+make start
+```
+
+## Configuration
+
+| Variable | Description | Default |
+| -------- | ----------- | ------- |
+| `PORT`   | Server port | `3000`  |
+
+## Build Process
+
+### Development Mode
+
+- Server: TypeScript transpiled in memory in watch mode
+- Client: TypeScript transpiled to `dist/public/` with browser config in watch mode
+- Styles: Tailwind CSS processed to `dist/public/styles.css` in watch mode
+
+### Production Mode
+
+- Server: TypeScript transpiled to `dist/server/`
+- Client: TypeScript transpiled to `dist/public/`
+- Styles: Tailwind CSS processed and optimized
