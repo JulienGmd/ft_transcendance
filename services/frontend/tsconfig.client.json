@@ -12,5 +12,5 @@
 
     "outDir": "dist/public"
   },
-  "include": ["src/public"]
+  "include": ["src/client"]
 }

@@ -16,11 +16,11 @@ fastify.get("/*", async (req, res) => {
   res.type("text/html").send(content)
 })
 
-// /public serve static files (js from ../../dist/public, others from ../../public)
+// /public serve static files (js, css from ../../dist/public, others from ../../public)
 fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   const filePath = req.params["*"] || ""
   const ext = filePath.split(".").pop() || ""
-  const dir = ext === "js" ? "dist/public" : "public"
+  const dir = (ext === "js" || ext === "css") ? "dist/public" : "public"
 
   try {
     const content = await readFile(`../../${dir}/${filePath}`)
@@ -32,6 +32,6 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
 })
 
 // Start the server
-console.log(`Starting server on http://localhost:${PORT}`)
+console.log(`✅ Starting server on http://localhost:${PORT}`)
 // USe host 0.0.0.0 so it can be accessible from outside the docker container
 await fastify.listen({ port: PORT, host: "0.0.0.0" })

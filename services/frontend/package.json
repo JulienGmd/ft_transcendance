@@ -4,17 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm run build:server && npm run build:client",
+    "build": "npm run build:server && npm run build:client && npm run build:tailwind",
     "build:server": "tsc",
     "build:client": "tsc --project tsconfig.client.json",
-    "start": "node dist/server/_index.js",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:tailwind": "npx @tailwindcss/cli -i src/client/tailwind.css -o dist/public/styles.css",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:tailwind\"",
     "dev:server": "tsx watch src/server/_index.ts",
-    "dev:client": "tsc --project tsconfig.client.json --watch"
+    "dev:client": "tsc --project tsconfig.client.json --watch",
+    "dev:tailwind": "npx @tailwindcss/cli -i src/client/tailwind.css -o dist/public/styles.css --watch",
+    "start": "node dist/server/_index.js"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.17",
     "@types/node": "^22.7.4",
     "concurrently": "^9.2.1",
+    "tailwindcss": "^4.1.17",
     "tsx": "^4.20.6",
     "typescript": "^5.6.3"
   },

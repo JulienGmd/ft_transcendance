@@ -7,16 +7,16 @@ Frontend service for ft_transcendence which provides a client-side Single Page A
 ```
 src/
 ├── server/           # Backend code
-└── public/           # Client code
+└── client/           # Client code
 
 public/               # Static HTML files and assets (exposed to /public/*)
 ├── _index.html       # Main SPA template
 ├── [.../...].html    # Pages content (will be injected in _index.html #app)
-└── [.../...].xxx     # Other static assets (CSS, images, etc.)
+└── [.../...].xxx     # Other static assets (images, etc.)
 
 dist/                 # Compiled typescript
 ├── server/           # Compiled backend code
-└── public/           # Compiled client code (exposed to /public/*.js)
+└── public/           # Compiled client code (exposed to /public/*.js and /public/*.css)
 ```
 
 ## Routing
@@ -25,8 +25,8 @@ The server implements a SPA routing system:
 
 - `/*` - Serves the main `_index.html`.
 - `/public/*` - Serves static assets:
-  - Javascript files from `dist/public/` (.js)
-  - Other files from `public/` (.html, .css, .png, etc...)
+  - Files from `dist/public/` (.js, .css)
+  - Other files from `public/` (.html, .png, .svg, etc...)
 
 ### How it works
 
@@ -51,7 +51,7 @@ Will serve `dist/public/myscript.js`.
 
 `<link rel="stylesheet" href="/public/styles.css">`
 
-Will serve `public/styles.css`.
+Will serve `dist/public/styles.css`.
 
 ### Import an image
 
@@ -64,12 +64,14 @@ Will serve `public/images/logo.png`.
 When running `npm run dev`:
 
 - `src/server` typescript files are transpiled on-the-fly to memory using tsx.
-- `src/public` typescript files are transpiled on-the-fly to `dist/public` using `tsconfig.public.json` (browser config).
+- `src/client` typescript files are transpiled on-the-fly to `dist/public` using `tsconfig.client.json` (browser config).
+- `src/client/tailwind.css` is processed to `dist/public/styles.css` using Tailwind CLI in watch mode.
 
 When running `npm run build`:
 
 - `src/server` typescript files are transpiled to `dist/server` using `tsconfig.json` (node config).
-- `src/public` files are transpiled to `dist/public` using `tsconfig.public.json` (browser config).
+- `src/client` files are transpiled to `dist/public` using `tsconfig.client.json` (browser config).
+- `src/client/tailwind.css` is processed to `dist/public/styles.css` using Tailwind CLI.
 
 ## Environment Variables
 
