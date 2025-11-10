@@ -59,6 +59,18 @@ Will serve `public/styles.css`.
 
 Will serve `public/images/logo.png`.
 
+## Typescript
+
+When running `npm run dev`:
+
+- `src/server` typescript files are transpiled on-the-fly to memory using tsx.
+- `src/public` typescript files are transpiled on-the-fly to `dist/public` using `tsconfig.public.json` (browser config).
+
+When running `npm run build`:
+
+- `src/server` typescript files are transpiled to `dist/server` using `tsconfig.json` (node config).
+- `src/public` files are transpiled to `dist/public` using `tsconfig.public.json` (browser config).
+
 ## Environment Variables
 
 - `PORT`: Server port (default: 3000)
