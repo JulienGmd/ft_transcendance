@@ -10,16 +10,18 @@ fastify.setErrorHandler((err, req, res) => {
 
 // By default, all routes serve index.html
 fastify.get("/*", async (req, res) => {
-  const content = await readFile("../public/index.html")
+  const content = await readFile("../../public/index.html")
   res.type("text/html").send(content)
 })
 
-// Serve static files
+// /public serve static files (js from ../../dist/public, others from ../../public)
 fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   const filePath = req.params["*"] || ""
+  const ext = filePath.split(".").pop() || ""
+  const dir = ext === "js" ? "dist/public" : "public"
 
   try {
-    const content = await readFile(`../public/${filePath}`)
+    const content = await readFile(`../../${dir}/${filePath}`)
     const mimeType = getMimeType(filePath)
     res.type(mimeType).send(content)
   } catch (error) {
@@ -29,5 +31,5 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
 
 // Start the server
 console.log("Starting server on http://localhost:3000")
-// host 0.0.0.0 to be accessible from outside the docker container
+// USe host 0.0.0.0 so it can be accessible from outside the docker container
 await fastify.listen({ port: 3000, host: "0.0.0.0" })
