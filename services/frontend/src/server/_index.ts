@@ -8,9 +8,9 @@ fastify.setErrorHandler((err, req, res) => {
   res.status(500).type("application/json").send({ error: "Internal Server Error" })
 })
 
-// By default, all routes serve index.html
+// By default, all routes serve _index.html
 fastify.get("/*", async (req, res) => {
-  const content = await readFile("../../public/index.html")
+  const content = await readFile("../../public/_index.html")
   res.type("text/html").send(content)
 })
 

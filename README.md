@@ -29,7 +29,7 @@
 - Add service in `docker-compose.dev.yml`
 - Install tsx and add dev rule:
   - `npm i -D tsx`
-  - `"dev": "tsx watch src/index.ts",`
+  - `"dev": "tsx watch src/_index.ts",`
 
 ### Run
 

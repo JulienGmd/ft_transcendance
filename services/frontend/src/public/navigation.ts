@@ -41,7 +41,7 @@ const pages: { [pagePath: string]: string } = {}
 if (!app)
   throw new Error("App element not found")
 
-// On first navigation, /public/index.html and this script will be served,
+// On first navigation, /public/_index.html and this script will be served,
 // if url is /user, this navigate will then display /public/user inside #app
 navigate(window.location.pathname)
 
