@@ -1,7 +1,7 @@
 import Fastify from "fastify"
-import { getMimeType, readFile } from "./utils.js"
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000
+import { NODE_ENV, PORT } from "./config.js"
+import { getMimeType, readFile } from "./utils.js"
 
 const fastify = Fastify()
 
@@ -32,6 +32,6 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
 })
 
 // Start the server
-console.log(`✅ Starting server on http://localhost:${PORT}`)
-// USe host 0.0.0.0 so it can be accessible from outside the docker container
+console.log(`✅ Starting server in ${NODE_ENV} mode on http://localhost:${PORT}`)
+// Use host 0.0.0.0 so it can be accessible from outside the docker container
 await fastify.listen({ port: PORT, host: "0.0.0.0" })

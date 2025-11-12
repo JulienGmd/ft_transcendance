@@ -95,9 +95,10 @@ make start
 
 ## Configuration
 
-| Variable | Description | Default |
-| -------- | ----------- | ------- |
-| `PORT`   | Server port | `3000`  |
+| Variable   | Description                                      | Default       |
+| ---------- | ------------------------------------------------ | ------------- |
+| `PORT`     | Server port                                      | `3000`        |
+| `NODE_ENV` | Environment mode (`development` or `production`) | `development` |
 
 ## Build Process
 

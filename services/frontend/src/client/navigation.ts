@@ -36,7 +36,7 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent) {
 // ----------------------------------------------------------------------------
 
 const app: HTMLElement = document.getElementById("app")!
-const pages: { [pagePath: string]: string } = {}
+const pages: Record<string, string> = {}
 
 if (!app)
   throw new Error("App element not found")
