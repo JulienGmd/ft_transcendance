@@ -1,7 +1,8 @@
 import Fastify from "fastify"
+import { readFile } from "fs/promises"
 
-import { NODE_ENV, PORT } from "./config.js"
-import { getMimeType, readFile } from "./utils.js"
+import { NODE_ENV, PORT, ROOT_DIR } from "./config.js"
+import { getMimeType } from "./utils.js"
 
 const fastify = Fastify()
 
@@ -12,7 +13,7 @@ fastify.setErrorHandler((err, req, res) => {
 
 // By default, all routes serve _index.html
 fastify.get("/*", async (req, res) => {
-  const content = await readFile("../../public/_index.html")
+  const content = await readFile(ROOT_DIR + "/public/_index.html", "utf-8")
   res.type("text/html").send(content)
 })
 
@@ -23,7 +24,7 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   const dir = (ext === "js" || ext === "css") ? "dist/public" : "public"
 
   try {
-    const content = await readFile(`../../${dir}/${filePath}`)
+    const content = await readFile(ROOT_DIR + `/${dir}/${filePath}`, "utf-8")
     const mimeType = getMimeType(filePath)
     res.type(mimeType).send(content)
   } catch (error) {
