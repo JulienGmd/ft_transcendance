@@ -64,6 +64,11 @@ Anchor tags (`<a>`) are enhanced to provide SPA navigation with lazy loading and
 </div>
 ```
 
+### Development Features
+
+- **Auto Refresh**: Browser automatically refreshes when frontend code changes
+- **Auto Restart**: Server automatically restarts when backend code changes
+
 ### Local Development
 
 ```bash
