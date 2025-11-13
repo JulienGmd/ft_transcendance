@@ -32,6 +32,7 @@
   "excludes": [
     "**/node_modules",
     "**/*-lock.json",
+    "**/*.html", // Use prettier and prettier-plugin-tailwind for html
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.95.11.wasm",

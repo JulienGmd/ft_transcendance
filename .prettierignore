@@ -1,0 +1,7 @@
+# Prettier is only used for html with prettier-plugin-tailwind
+**/*.ts
+**/*.js
+**/*.json
+**/*.md
+**/Dockerfile
+**/Makefile

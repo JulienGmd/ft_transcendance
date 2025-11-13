@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "dprint": "^0.50.2"
+    "dprint": "^0.50.2",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.7.1"
   }
 }
