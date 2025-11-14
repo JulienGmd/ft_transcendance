@@ -1,1 +1,53 @@
 @import "tailwindcss";
+
+@theme {
+  --color-*: initial;
+
+  /* Color palette */
+  --color-primary: #1da1f2; /* Primary brand color */
+  --color-primary-dark: #0d8de1; /* Darker shade of primary */
+  --color-text: #ffffff; /* Main text color */
+  --color-text-muted: #9ca3af; /* Secondary text */
+  --color-background: #111827; /* Main background */
+  --color-surface: #1c2634; /* Cards, modals */
+
+  /* Animation keyframes */
+  --animate-fade-in: fadeIn 0.4s ease-out;
+  --animate-slide-up: slideUp 0.4s ease-out;
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Base styles */
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-background text-text;
+  }
+}
+
+/* Custom classes that can still be overridden by utility classes */
+@layer components {
+}

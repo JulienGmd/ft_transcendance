@@ -38,4 +38,4 @@ function shallowEqual(obj1: Record<string, any>, obj2: Record<string, any>): boo
   return true
 }
 
-setInterval(reloadIfFilesChanged, 3000)
+setInterval(reloadIfFilesChanged, 1000)
