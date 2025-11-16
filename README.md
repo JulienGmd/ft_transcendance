@@ -12,14 +12,30 @@
 #### Formatter
 
 - Install [Dprint extension](https://marketplace.visualstudio.com/items?itemName=dprint.dprint)
+- Install [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+- Add to Settings.json (F1 > Preferences: Open User Settings (JSON)):
+  ```json
+  "[json]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[tailwindcss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  ```
 - Enable [format on save](vscode://settings/editor.formatOnSave)
 - `make setup`
 - F1 > Reload Window
-- On any typescript file: F1 > Format Document With... > dprint
 
-_From now, typescript files will be formatted on save._
-
-#### Tailwind intellisense
+#### Intellisense
 
 - Install [Tailwind extension](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
