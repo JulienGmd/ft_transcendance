@@ -16,9 +16,12 @@ fastify.setErrorHandler((err, req, res) => {
 fastify.get("/*", async (req, res) => {
   let content = await readFile(ROOT_DIR + "/public/_index.html", "utf-8")
 
+  if (NODE_ENV !== "production")
+    console.log("Fetching /public/_index.html")
+
   // Inject live reload script in development
   if (NODE_ENV !== "production")
-    content = content.replace("</body>", '<script src="/public/liveReload.js"></script></body>')
+    content = content.replace("</head>", '<script src="/public/liveReload.js"></script></head>')
 
   res.type("text/html").send(content)
 })
@@ -28,6 +31,9 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   const filePath = req.params["*"] || ""
   const ext = filePath.split(".").pop() || ""
   const dir = (ext === "js" || ext === "css") ? "dist/public" : "public"
+
+  if (NODE_ENV !== "production")
+    console.log("Fetching /public/", filePath)
 
   try {
     const content = await readFile(ROOT_DIR + `/${dir}/${filePath}`, "utf-8")
