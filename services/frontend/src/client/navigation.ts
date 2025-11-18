@@ -1,3 +1,10 @@
+const app: HTMLElement = document.getElementById("app")!
+const pages: Record<string, string> = {}
+let currentScript: { onMount?: () => void; onDestroy?: () => void } | null = null
+
+if (!app)
+  throw new Error("App element not found")
+
 /**
  * Fetch or retrieve from cache the HTML content of a page
  * @param path The path of the page (e.g. /user/info)
@@ -19,8 +26,21 @@ async function getPage(path: string) {
 
 /** Navigate to a different page, fetching content if necessary, updating the URL and history */
 async function navigate(to: string, pushHistory = true) {
+  // Unload old page script
+  currentScript?.onDestroy?.()
+
+  // Set html
   const page = await getPage(to)
   app.innerHTML = page || "<h1>404 Not Found</h1>"
+
+  // Load new page script
+  if (page.startsWith("<!-- script -->")) {
+    const scriptUrl = to === "/" ? "/public/home.js" : `/public${to}.js`
+    currentScript = await import(scriptUrl)
+    currentScript?.onMount?.()
+  }
+
+  // Update URL and history
   if (pushHistory)
     window.history.pushState({}, "", to)
 }
@@ -34,12 +54,6 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent) {
 }
 
 // ----------------------------------------------------------------------------
-
-const app: HTMLElement = document.getElementById("app")!
-const pages: Record<string, string> = {}
-
-if (!app)
-  throw new Error("App element not found")
 
 // On first navigation, /public/_index.html and this script will be served,
 // if url is /user, this navigate will then display /public/user inside #app

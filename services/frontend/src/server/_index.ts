@@ -12,12 +12,18 @@ fastify.setErrorHandler((err, req, res) => {
   res.status(500).type("application/json").send({ error: "Internal Server Error" })
 })
 
+fastify.addHook("onRequest", async (req, rep) => {
+  if (NODE_ENV === "production")
+    return
+  if (req.url === "/dev/file-timestamps")
+    return
+
+  console.log(`${req.method} ${req.url}`)
+})
+
 // By default, all routes serve _index.html
 fastify.get("/*", async (req, res) => {
   let content = await readFile(ROOT_DIR + "/public/_index.html", "utf-8")
-
-  if (NODE_ENV !== "production")
-    console.log("Fetching /public/_index.html")
 
   // Inject live reload script in development
   if (NODE_ENV !== "production")
@@ -31,9 +37,6 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   const filePath = req.params["*"] || ""
   const ext = filePath.split(".").pop() || ""
   const dir = (ext === "js" || ext === "css") ? "dist/public" : "public"
-
-  if (NODE_ENV !== "production")
-    console.log("Fetching /public/", filePath)
 
   try {
     const content = await readFile(ROOT_DIR + `/${dir}/${filePath}`, "utf-8")

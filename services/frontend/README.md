@@ -9,6 +9,7 @@ A Single Page Application (SPA) frontend service built with TypeScript and Fasti
 - Tailwind CSS processing
 - Static asset serving
 - Development and production builds
+- Auto script import: JavaScript files are automatically imported when `<!-- script -->` is present in the first line of HTML files
 
 ## Project Structure
 
