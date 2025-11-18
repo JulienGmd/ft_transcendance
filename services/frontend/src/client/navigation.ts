@@ -38,6 +38,8 @@ async function navigate(to: string, pushHistory = true) {
     const scriptUrl = to === "/" ? "/public/home.js" : `/public${to}.js`
     currentScript = await import(scriptUrl)
     currentScript?.onMount?.()
+  } else {
+    currentScript = null
   }
 
   // Update URL and history
