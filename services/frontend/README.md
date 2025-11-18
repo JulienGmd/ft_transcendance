@@ -73,6 +73,13 @@ Use Tailwind classes inline:
 
 Add `<!-- script -->` to the first line of HTML files to auto-import corresponding JavaScript files (the file path must match, e.g., `public/some/page.html` imports `dist/public/some/page.js`, which is transpiled from `src/client/some/page.ts`).
 
+The `onMount()` function is called when the page loads, and `onDestroy()` is called before navigating away:
+
+```ts
+export function onMount() {}
+export function onDestroy() {}
+```
+
 ## Configuration
 
 | Variable   | Default       | Description |
