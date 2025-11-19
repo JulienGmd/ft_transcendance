@@ -76,8 +76,8 @@ Add `<!-- script -->` to the first line of HTML files to auto-import correspondi
 The `onMount()` function is called when the page loads, and `onDestroy()` is called before navigating away:
 
 ```ts
-export function onMount() {}
-export function onDestroy() {}
+export function onMount(): void {}
+export function onDestroy(): void {}
 ```
 
 ## Configuration
