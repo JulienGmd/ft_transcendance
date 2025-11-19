@@ -65,3 +65,5 @@ function validateConfirmPassword(): void {
 }
 
 // TODO on submit, checker si l'email n'est pas deja use
+// TODO l'url /auth/register n'est pas accessible (car sur la gateway, pas sur le back du front)
+// -> ? faire que le front passe par la gateway
