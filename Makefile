@@ -20,8 +20,7 @@ start: setup
 # Remove build artifacts and dependencies
 clean:
 	docker compose down --volumes --remove-orphans
-# TODO when docker create a dir, the local user doesn't have permissions to delete it.
-# 	-> In each Dockerfile, create a user with the same UID/GID as the host user and run as that user.
+# TODO checker sur les pc 42 si ca fonctionne sans sudo, run `id` et voir si uid=1000 et gid=1000 (requis avec la config actuelle pour que ca corresponde a l'user node dans les Dockerfiles)
 	rm -rf */*/dist
 	rm -rf node_modules
 	rm -rf */*/node_modules
