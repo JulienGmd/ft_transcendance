@@ -1,34 +1,61 @@
+# Notes:
+# - Only caddy expose ports because it's the only entry point. It will then redirect requests to corresponding services (they are on the same Docker network)
+# - All services need to communicate over HTTPS with caddy, so they must have the certs mounted and configured in Fastify so they can trust caddy's TLS certificate.
+
 services:
+  # https://hub.docker.com/_/caddy#docker-compose-example
+  caddy:
+    image: caddy:2.10.2-alpine
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy:/etc/caddy
+      - ./certs/cert.pem:/certs/cert.pem:ro # ro = read-only
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - nats
+      - auth
+      - frontend
+      # Add services here
+    networks:
+      - internal
+    restart: unless-stopped
+
   nats:
     image: nats:2.10-alpine
     networks:
-      - app-network
-    ports:
-      - "4222:4222"
-    restart: always
+      - internal
+    restart: unless-stopped
 
   auth:
     build: ./services/auth/
+    volumes:
+      - ./certs:/certs:ro
+    depends_on: # TODO remove if not using nats
+      - nats
     networks:
-      - app-network
-    restart: always
+      - internal
+    restart: unless-stopped
 
   frontend:
     build: ./services/frontend/
+    volumes:
+      - ./certs:/certs:ro
     networks:
-      - app-network
-    ports:
-      - "3000:3000"
-    restart: always
+      - internal
+    restart: unless-stopped
 
-  gateway:
-    build: ./services/gateway/
-    depends_on: [nats]
-    env_file: ./services/gateway/.env
-    networks:
-      - app-network
-    restart: always
+volumes:
+  # Defining these volumes make them persistent across container restarts, so we
+  # don't need to reclick "trust" on browser every time (they contains the TLS certs)
+  caddy_data:
+  caddy_config:
 
 networks:
-  app-network:
+  internal:
     driver: bridge

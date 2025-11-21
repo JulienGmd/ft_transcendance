@@ -3,10 +3,12 @@ WORKDIR /app
 COPY package*.json ./
 
 FROM base AS development
+# Install all dependencies
 RUN npm ci
 COPY . .
 EXPOSE 3000
 ENV PORT=3000
+ENV NODE_ENV=development
 CMD ["npm", "run", "dev"]
 
 FROM base AS builder

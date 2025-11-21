@@ -1,11 +1,17 @@
 import Fastify from "fastify"
+import { readFileSync } from "fs"
 import { readFile } from "fs/promises"
 
 import { NODE_ENV, PORT, ROOT_DIR } from "./config.js"
 import { enableLiveReload } from "./liveReload.js"
 import { getMimeType } from "./utils.js"
 
-const fastify = Fastify()
+const fastify = Fastify({
+  https: {
+    key: readFileSync("/certs/key.pem"),
+    cert: readFileSync("/certs/cert.pem"),
+  },
+})
 
 // Generic error handler (when a route throws an error)
 fastify.setErrorHandler((err, req, res) => {
@@ -52,6 +58,6 @@ if (NODE_ENV !== "production")
   await enableLiveReload(fastify)
 
 // Start the server
-console.log(`✅ Starting server in ${NODE_ENV} mode on http://localhost:${PORT}`)
+console.log(`✅ Starting server in ${NODE_ENV} mode`)
 // Use host 0.0.0.0 so it can be accessible from outside the docker container
 await fastify.listen({ port: PORT, host: "0.0.0.0" })
