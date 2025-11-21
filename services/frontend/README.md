@@ -82,6 +82,8 @@ export function onDestroy(): void {}
 
 ## Configuration
 
+These are set in Dockerfile.
+
 | Variable   | Default       | Description |
 | ---------- | ------------- | ----------- |
 | `PORT`     | `3000`        | Server port |
