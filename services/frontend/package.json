@@ -8,9 +8,9 @@
     "build:server": "tsc",
     "build:client": "tsc --project tsconfig.client.json",
     "build:tailwind": "npx @tailwindcss/cli -i src/client/tailwind.css -o dist/public/styles.css",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:tailwind\"",
+    "dev": "concurrently --names \"serv,client,tailwind\" \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:tailwind\"",
     "dev:server": "tsx watch src/server/_index.ts",
-    "dev:client": "tsc --project tsconfig.client.json --watch",
+    "dev:client": "tsc --project tsconfig.client.json --watch --preserveWatchOutput",
     "dev:tailwind": "npx @tailwindcss/cli -i src/client/tailwind.css -o dist/public/styles.css --watch",
     "start": "node dist/server/_index.js"
   },
