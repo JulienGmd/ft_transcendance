@@ -27,7 +27,7 @@ export function onDestroy(): void {
 }
 
 function validateEmail(): void {
-  if (isValidEmail(email!.value)) {
+  if (email?.value.length === 0 || isValidEmail(email!.value)) {
     email?.setCustomValidity("")
     emailError!.textContent = ""
     emailError!.classList.add("hidden")
@@ -39,7 +39,7 @@ function validateEmail(): void {
 }
 
 function validatePassword(): void {
-  if (isValidPassword(password!.value)) {
+  if (password?.value.length === 0 || isValidPassword(password!.value)) {
     password?.setCustomValidity("")
     passwordError!.textContent = ""
     passwordError!.classList.add("hidden")
@@ -63,7 +63,3 @@ function validateConfirmPassword(): void {
     confirmPasswordError!.classList.remove("hidden")
   }
 }
-
-// TODO on submit, checker si l'email n'est pas deja use
-// TODO l'url /auth/register n'est pas accessible (car sur la gateway, pas sur le back du front)
-// -> ? faire que le front passe par la gateway
