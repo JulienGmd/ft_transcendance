@@ -55,18 +55,25 @@ Notes:
 - The scripts can have imports and they will be resolved correctly.
 
 ```html
-<!-- This will load `dist/public/page.js`, which is transpiled from `src/client/page.ts` -->
-<script src ="/public/page.js"></script>
+<!-- Load `dist/public/page.js` (transpiled from `src/client/page.ts`) -->
+<script src="/public/page.js"></script>
 ```
 
 Lifecycle events:
 
-- `onMount()` is called when the page loads
-- `onDestroy()` is called before navigating away
+- `onMount()` is called after the page HTML is injected, can be used to query, manipulate DOM and set up event listeners.
+- `onDestroy()` is called before the page HTML is removed, can be used to clean up event listeners.
 
 ```ts
-export function onMount(): void {}
-export function onDestroy(): void {}
+console.log("Page not loaded yet")
+
+export function onMount(): void {
+  console.log("Page loaded")
+}
+
+export function onDestroy(): void {
+  console.log("Page will be removed")
+}
 ```
 
 ### Run

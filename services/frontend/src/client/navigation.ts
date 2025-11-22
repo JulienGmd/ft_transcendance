@@ -31,7 +31,7 @@ async function getPage(path: string): Promise<string | undefined> {
  * - Update URL and history
  */
 async function navigate(to: string, pushHistory = true): Promise<void> {
-  // Unload previous scripts
+  // Call onDestroy on previous modules
   loadedModules.forEach((m) => m.onDestroy?.())
   loadedModules = []
 
@@ -53,15 +53,15 @@ async function navigate(to: string, pushHistory = true): Promise<void> {
   // Remove scripts from HTML
   scripts.forEach((s) => s.remove())
 
-  // Set HTML content
+  // Load modules
+  for (const scriptUrl of scriptsUrls)
+    loadedModules.push(await import(scriptUrl))
+
+  // Inject HTML into #app
   app.innerHTML = doc.body.innerHTML
 
-  // Load scripts
-  for (const scriptUrl of scriptsUrls) {
-    const module = await import(scriptUrl)
-    module.onMount?.()
-    loadedModules.push(module)
-  }
+  // Call onMount on modules
+  loadedModules.forEach((m) => m.onMount?.())
 
   // Update URL and history
   if (pushHistory)
