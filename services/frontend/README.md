@@ -5,7 +5,7 @@ SPA frontend with client-side routing and auto-import features.
 ## Features
 
 - Client-side SPA routing with page caching
-- Auto script import with `<!-- script -->` comment
+- Script loading with lifecycle hooks (`onMount`, `onDestroy`)
 - TypeScript compilation (server + client)
 - Tailwind CSS processing
 - Live reload in development
@@ -19,44 +19,20 @@ src/
 
 public/
 ├── _index.html       # SPA template  
-└── *.html            # Page content
-```
-
-## Development
-
-```bash
-# Local development
-npm i && npm run dev
-
-# Docker development  
-make dev
-```
-
-## Production
-
-```bash
-# Local build
-npm i && npm run build && npm start
-
-# Docker production
-make start
+├── *.html            # Page content
+└── assets/           # Static assets (images, fonts, etc.)
 ```
 
 ## Usage
 
-### Routing
-
-URLs map directly to files in the `public/` and `dist/public/` directories:
-
-- `/user/info` serves `/public/user/info.html`
-- Auto script import loads `/dist/public/user/info.js`, which is transpiled from `src/client/user/info.ts`
-
 ### Navigation
 
+URLs map directly to files in the `public/` directories.
 Use standard anchor tags for SPA navigation:
 
 ```html
-<a href="/some/page">Link</a>
+<!-- On click, `/public/user/info.html` will be injected in #app -->
+<a href="/user/info">Link</a>
 ```
 
 ### Styling
@@ -65,26 +41,55 @@ Use Tailwind classes inline:
 
 ```html
 <div class="bg-blue-500 text-white p-4 rounded">
-  Content here
+  Some content
 </div>
 ```
 
-### Auto Script Import
+### Script Loading
 
-Add `<!-- script -->` to the first line of HTML files to auto-import corresponding JavaScript files (the file path must match, e.g., `public/some/page.html` imports `dist/public/some/page.js`, which is transpiled from `src/client/some/page.ts`).
+Scripts are extracted from `<script src="...">` tags in the HTML and loaded dynamically.
 
-The `onMount()` function is called when the page loads, and `onDestroy()` is called before navigating away:
+Notes:
+
+- JS and CSS files are served on the `/public/*` routes, even if they are in `dist/public/.
+- The scripts can have imports and they will be resolved correctly.
+
+```html
+<!-- This will load `dist/public/page.js`, which is transpiled from `src/client/page.ts` -->
+<script src ="/public/page.js"></script>
+```
+
+Lifecycle events:
+
+- `onMount()` is called when the page loads
+- `onDestroy()` is called before navigating away
 
 ```ts
 export function onMount(): void {}
 export function onDestroy(): void {}
 ```
 
+### Run
+
+```sh
+npm i && npm run dev # Local development
+make dev # Docker development
+```
+
+## Production
+
+### Run
+
+```bash
+npm i && npm run build && npm start # Local build
+make start # Docker production
+```
+
 ## Configuration
 
 These are set in Dockerfile.
 
-| Variable   | Default       | Description |
-| ---------- | ------------- | ----------- |
-| `PORT`     | `3000`        | Server port |
-| `NODE_ENV` | `development` | Environment |
+| Variable   | Description | Development   | Production   |
+| ---------- | ----------- | ------------- | ------------ |
+| `PORT`     | Server port | `3000`        | `3000`       |
+| `NODE_ENV` | Environment | `development` | `production` |

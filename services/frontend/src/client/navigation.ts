@@ -1,6 +1,6 @@
 const app: HTMLElement = document.getElementById("app")!
 const pages: Record<string, string> = {}
-let currentScript: { onMount?: () => void; onDestroy?: () => void } | null = null
+let loadedModules: { onMount?: () => void; onDestroy?: () => void }[] = []
 
 if (!app)
   throw new Error("App element not found")
@@ -10,7 +10,7 @@ if (!app)
  * @param path The path of the page (e.g. /user/info)
  * @returns The HTML content of the page or undefined if not found
  */
-async function getPage(path: string) {
+async function getPage(path: string): Promise<string | undefined> {
   if (path === "/")
     path = "/home"
 
@@ -24,22 +24,43 @@ async function getPage(path: string) {
   return pages[path]
 }
 
-/** Navigate to a different page, fetching content if necessary, updating the URL and history */
-async function navigate(to: string, pushHistory = true) {
-  // Unload old page script
-  currentScript?.onDestroy?.()
+/** Navigate to a different page:
+ * - Fetch content if not cached
+ * - Load scripts
+ * - Load HTML into #app
+ * - Update URL and history
+ */
+async function navigate(to: string, pushHistory = true): Promise<void> {
+  // Unload previous scripts
+  loadedModules.forEach((m) => m.onDestroy?.())
+  loadedModules = []
 
-  // Set html
+  // Get page content
   const page = await getPage(to)
-  app.innerHTML = page || "<h1>404 Not Found</h1>"
+  if (!page) {
+    app.innerHTML = "<h1>404 Not Found</h1>"
+    if (pushHistory)
+      window.history.pushState({}, "", to)
+    return
+  }
 
-  // Load new page script
-  if (page.startsWith("<!-- script -->")) {
-    const scriptUrl = to === "/" ? "/public/home.js" : `/public${to}.js`
-    currentScript = await import(scriptUrl)
-    currentScript?.onMount?.()
-  } else {
-    currentScript = null
+  // Extract scripts URLs
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(page, "text/html")
+  const scripts = Array.from(doc.querySelectorAll("script"))
+  const scriptsUrls = scripts.map((s) => s.src).filter((src) => src)
+
+  // Remove scripts from HTML
+  scripts.forEach((s) => s.remove())
+
+  // Set HTML content
+  app.innerHTML = doc.body.innerHTML
+
+  // Load scripts
+  for (const scriptUrl of scriptsUrls) {
+    const module = await import(scriptUrl)
+    module.onMount?.()
+    loadedModules.push(module)
   }
 
   // Update URL and history
@@ -48,7 +69,7 @@ async function navigate(to: string, pushHistory = true) {
 }
 
 /** @returns true if the <a> should be handled by the SPA navigation */
-function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent) {
+function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent): boolean {
   return a.origin === location.origin // Same website
     && a.target !== "_blank" // Not target blank (this is used to open link in new tab)
     && e.button === 0 // Left click
