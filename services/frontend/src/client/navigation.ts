@@ -32,7 +32,8 @@ async function navigate(route: string, pushHistory = true): Promise<void> {
   // Get page HTML (will use cache if preloaded)
   let page = await fetchHtml(route)
   if (!page) {
-    app.innerHTML = "<h1>404 Not Found</h1>" // TODO make server send that page if route not found
+    // This should never happens because 404.html should be in `page`.
+    app.innerHTML = "<h1>Error 404: Not Found</h1>"
     if (pushHistory)
       window.history.pushState({}, "", route)
     return
@@ -61,6 +62,10 @@ async function navigate(route: string, pushHistory = true): Promise<void> {
 async function fetchHtml(route: string): Promise<string | null> {
   route = route === "/" ? "/home" : route
   const res = await fetch(`/public${route}.html`)
+  if (res.status === 404) {
+    // Server returns 404.html with 404 status for missing pages
+    return await res.text()
+  }
   if (!res.ok)
     return null
   return await res.text()

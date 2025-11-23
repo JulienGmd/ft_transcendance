@@ -52,7 +52,13 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
     res.header("cache-control", "max-age=31536000")
     res.type(mimeType).send(content)
   } catch (error) {
-    res.status(404).type("application/json").send({ error: "File not found" })
+    if (filePath.endsWith(".html")) {
+      const content = await readFile(ROOT_DIR + "/public/404.html", "utf-8")
+      res.header("cache-control", "max-age=31536000")
+      res.status(404).type("text/html").send(content)
+    } else {
+      res.status(404).type("application/json").send({ error: "File not found" })
+    }
   }
 })
 
