@@ -1,71 +1,86 @@
 const app: HTMLElement = document.getElementById("app")!
-const pages: Record<string, string> = {}
 let loadedModules: { onMount?: () => void; onDestroy?: () => void }[] = []
 
 if (!app)
   throw new Error("App element not found")
 
 /**
- * Fetch or retrieve from cache the HTML content of a page
- * @param path The path of the page (e.g. /user/info)
- * @returns The HTML content of the page or undefined if not found
+ * Preload the page HTML and scripts (safe to call multiple times, this will not redo requests)
+ * @param route The page route ('/', '/login', etc.)
  */
-async function getPage(path: string): Promise<string | undefined> {
-  if (path === "/")
-    path = "/home"
+async function preload(route: string): Promise<void> {
+  // Preload page (cached by browser because Cache-Control header is set in Caddyfile)
+  const page = await fetchHtml(route)
+  if (!page)
+    return
 
-  if (!pages.hasOwnProperty(path)) {
-    // Fetch the page content if not cached
-    const res = await fetch(`/public${path}.html`)
-    if (res.ok)
-      pages[path] = await res.text()
-  }
-
-  return pages[path]
+  // Preload scripts (import cached file by default, but it makes top level code execute immediately)
+  const { scriptsUrls } = await extractScripts(page)
+  for (const scriptUrl of scriptsUrls)
+    await import(scriptUrl)
 }
 
-/** Navigate to a different page:
- * - Fetch content if not cached
- * - Load scripts
- * - Load HTML into #app
- * - Update URL and history
+/**
+ * @param route The page route ('/', '/login', etc.)
+ * @param pushHistory Whether to push the new route to browser history (default: true)
  */
-async function navigate(to: string, pushHistory = true): Promise<void> {
+async function navigate(route: string, pushHistory = true): Promise<void> {
   // Call onDestroy on previous modules
   loadedModules.forEach((m) => m.onDestroy?.())
   loadedModules = []
 
-  // Get page content
-  const page = await getPage(to)
+  // Get page HTML (will use cache if preloaded)
+  let page = await fetchHtml(route)
   if (!page) {
-    app.innerHTML = "<h1>404 Not Found</h1>"
+    app.innerHTML = "<h1>404 Not Found</h1>" // TODO make server send that page if route not found
     if (pushHistory)
-      window.history.pushState({}, "", to)
+      window.history.pushState({}, "", route)
     return
   }
 
-  // Extract scripts URLs
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(page, "text/html")
-  const scripts = Array.from(doc.querySelectorAll("script"))
-  const scriptsUrls = scripts.map((s) => s.src).filter((src) => src)
-
-  // Remove scripts from HTML
-  scripts.forEach((s) => s.remove())
-
-  // Load modules
+  // Load modules (will use cache if preloaded)
+  const { newPage, scriptsUrls: scriptsUrls } = await extractScripts(page)
   for (const scriptUrl of scriptsUrls)
     loadedModules.push(await import(scriptUrl))
 
   // Inject HTML into #app
-  app.innerHTML = doc.body.innerHTML
+  app.innerHTML = newPage
 
   // Call onMount on modules
   loadedModules.forEach((m) => m.onMount?.())
 
   // Update URL and history
   if (pushHistory)
-    window.history.pushState({}, "", to)
+    window.history.pushState({}, "", route)
+}
+
+/**
+ * @param route The page route ('/', '/login', etc.)
+ * @returns the page HTML, either from cache or by fetching it
+ */
+async function fetchHtml(route: string): Promise<string | null> {
+  route = route === "/" ? "/home" : route
+  const res = await fetch(`/public${route}.html`)
+  if (!res.ok)
+    return null
+  return await res.text()
+}
+
+/**
+ * @param page The page HTML
+ * @returns The page HTML with script tags removed and the scripts URLs
+ */
+async function extractScripts(page: string): Promise<{ newPage: string; scriptsUrls: string[] }> {
+  // Get scripts URLs
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(page, "text/html")
+  const scripts = Array.from(doc.querySelectorAll("script"))
+  const scriptsUrls = scripts.map((s) => s.src).filter((src) => src)
+
+  // Remove scripts from doc
+  scripts.forEach((s) => s.remove())
+
+  return { newPage: doc.body.innerHTML, scriptsUrls }
 }
 
 /** @returns true if the <a> should be handled by the SPA navigation */
@@ -97,7 +112,7 @@ document.addEventListener("mouseover", (e) => {
     return
 
   e.preventDefault()
-  getPage(a.pathname)
+  preload(a.pathname)
 })
 
 /** When clicking a handled <a>, navigate to the page */

@@ -23,6 +23,7 @@ localhost, :80, :443 {
 			tls_trusted_ca_certs /certs/cert.pem
 		}
 	}
+
 	reverse_proxy /* https://frontend:3000 {
 		transport http {
 			tls

@@ -18,6 +18,7 @@ fastify.setErrorHandler((err, req, res) => {
   res.status(500).type("application/json").send({ error: "Internal Server Error" })
 })
 
+// In development, log all requests
 fastify.addHook("onRequest", async (req, rep) => {
   if (NODE_ENV === "production")
     return
@@ -25,6 +26,15 @@ fastify.addHook("onRequest", async (req, rep) => {
     return
 
   console.log(`${req.method} ${req.url}`)
+})
+
+// In production, add header to tell browsers to cache all OK responses for 1 year
+fastify.addHook("onSend", async (req, rep) => {
+  if (NODE_ENV !== "production")
+    return
+
+  if (rep.statusCode === 200 && rep.getHeader("content-type"))
+    rep.header("cache-control", "max-age=31536000")
 })
 
 // By default, all routes serve _index.html

@@ -53,6 +53,7 @@ Notes:
 
 - JS and CSS files are served on the `/public/*` routes, even if they are in `dist/public/.
 - The scripts can have imports and they will be resolved correctly.
+- **Important:** Scripts are preloaded on `<a>` hover, so top level code will execute before the page is loaded, use lifecycle hooks instead.
 
 ```html
 <!-- Load `dist/public/page.js` (transpiled from `src/client/page.ts`) -->
