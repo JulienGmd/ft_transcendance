@@ -13,9 +13,11 @@ async function reloadIfFilesChanged(): Promise<void> {
       return
     }
 
-    // Compare timestamps
-    if (!shallowEqual(timestamps, lastTimestamps))
-      window.location.reload()
+    // Force reload (delete cache) if timestamps have changed
+    if (!shallowEqual(timestamps, lastTimestamps)) {
+      // @ts-ignore DOM lib definitions don't include the forceReload parameter, but the browsers support it
+      window.location.reload(true)
+    }
 
     lastTimestamps = timestamps
   } catch (error) {

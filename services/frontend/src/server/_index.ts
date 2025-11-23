@@ -28,15 +28,6 @@ fastify.addHook("onRequest", async (req, rep) => {
   console.log(`${req.method} ${req.url}`)
 })
 
-// In production, add header to tell browsers to cache all OK responses for 1 year
-fastify.addHook("onSend", async (req, rep) => {
-  if (NODE_ENV !== "production")
-    return
-
-  if (rep.statusCode === 200 && rep.getHeader("content-type"))
-    rep.header("cache-control", "max-age=31536000")
-})
-
 // By default, all routes serve _index.html
 fastify.get("/*", async (req, res) => {
   let content = await readFile(ROOT_DIR + "/public/_index.html", "utf-8")
@@ -45,6 +36,7 @@ fastify.get("/*", async (req, res) => {
   if (NODE_ENV !== "production")
     content = content.replace("</head>", '<script src="/public/liveReload.js"></script></head>')
 
+  res.header("cache-control", "max-age=31536000")
   res.type("text/html").send(content)
 })
 
@@ -57,6 +49,7 @@ fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   try {
     const content = await readFile(ROOT_DIR + `/${dir}/${filePath}`, "utf-8")
     const mimeType = getMimeType(filePath)
+    res.header("cache-control", "max-age=31536000")
     res.type(mimeType).send(content)
   } catch (error) {
     res.status(404).type("application/json").send({ error: "File not found" })

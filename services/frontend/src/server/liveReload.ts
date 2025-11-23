@@ -19,7 +19,6 @@ export async function enableLiveReload(fastify: FastifyInstance) {
       ROOT_DIR + "dist/public",
     ]
     const timestamps = await getFilesTimestamps(dirs)
-    res.header("cache-control", "no-cache")
     res.type("application/json").send(timestamps)
   })
 
