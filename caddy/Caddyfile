@@ -14,7 +14,8 @@
 	}
 }
 
-localhost, :80, :443 {
+# TODO remettre https grace a la magie noire
+:8080 {
 	# auth, frontend are the docker-compose service names (they are on the same network)
 	reverse_proxy /auth/* https://auth:3000 {
 		transport http {

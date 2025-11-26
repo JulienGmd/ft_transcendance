@@ -1,3 +1,5 @@
+all: start
+
 setup:
 	if [ ! -f node_modules ]; then \
 		npm ci; \
@@ -8,6 +10,8 @@ setup:
 		SERVICES=$$(docker compose config --services | sed 's/^/DNS:/' | paste -sd ',' -); \
 		openssl req -x509 -newkey rsa:2048 -nodes -keyout certs/key.pem -out certs/cert.pem -days 365 -subj "/CN=internal" -addext "subjectAltName=DNS:localhost,$${SERVICES}"; \
 	fi
+# Export UID and GID so container user match with host user
+	export UID=$$(id -u) && export GID=$$(id -g) && echo "Using UID=$$UID and GID=$$GID"
 
 # This will use docker-compose.dev.yml on top of docker-compose.yml, which defines the Dockerfile stage to development and mount volumes for live code reloading.
 dev: setup

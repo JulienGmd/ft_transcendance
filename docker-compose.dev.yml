@@ -11,6 +11,9 @@ services:
   frontend:
     build:
       target: development
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
     volumes:
       - ./services/frontend:/app
       - /app/node_modules

@@ -9,9 +9,8 @@ services:
     cap_add:
       - NET_ADMIN
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "8080:8080"
+      - "8080:8080/udp"
     volumes:
       - ./caddy:/etc/caddy
       - ./certs/cert.pem:/certs/cert.pem:ro # ro = read-only

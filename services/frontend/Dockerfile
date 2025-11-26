@@ -1,7 +1,7 @@
 FROM node:20-alpine AS base
-# User node have UID=1000 and GID=1000, which corresponds to default user on host
-# This fix permissions issues when mounting volumes (e.g. can't rm the dirs dist and node_modules created by docker from host)
-USER node
+ARG UID=1000
+ARG GID=1000
+RUN apk add --no-cache shadow && rm -rf /home/node && usermod -u $UID node && groupmod -g $GID node
 WORKDIR /app
 COPY package*.json ./
 
