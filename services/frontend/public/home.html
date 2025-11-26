@@ -5,7 +5,20 @@
   <div class="flex items-center justify-between">
     <!-- &nbsp; is a small space (because the regular space is ignored when the span is empty) -->
     <div class="font-orbitron text-3xl font-black">$&nbsp;<span class="anim-typewriter">./TRANSCENDENCE</span></div>
-    <a id="header-links" class="font-orbitron hover-skew animate-slide-left hidden" href="/login">LOGIN</a>
+    
+    <!-- Login button (shown when not authenticated) -->
+    <a id="login-link" class="font-orbitron hover-skew animate-slide-left hidden" href="/login">LOGIN</a>
+    
+    <!-- User profile (shown when authenticated) -->
+    <div id="user-profile" class="font-orbitron animate-slide-left hidden items-center gap-3">
+      <span id="user-email" class="text-text-muted text-sm"></span>
+      <div class="flex items-center gap-2">
+        <div class="bg-primary flex h-10 w-10 items-center justify-center rounded-full text-white font-bold">
+          <span id="user-avatar"></span>
+        </div>
+        <button id="logout-btn" class="hover-skew text-sm text-red-400 hover:text-red-300 transition">LOGOUT</button>
+      </div>
+    </div>
   </div>
   <div class="flex flex-1">
     <div id="content" class="hidden flex-1 items-center justify-between">

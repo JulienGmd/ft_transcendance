@@ -35,6 +35,9 @@ services:
     build: ./services/auth/
     volumes:
       - ./certs:/certs:ro
+      - ./services/auth/.env:/app/.env:ro
+    env_file:
+      - ./services/auth/.env
     depends_on: # TODO remove if not using nats
       - nats
     networks:

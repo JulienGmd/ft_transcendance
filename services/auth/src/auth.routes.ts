@@ -6,13 +6,14 @@ import bcrypt from 'bcrypt';
 import { verifyJWT } from './jwt';
 import { generate2FASecret, generate2FAQrCode, verify2FACode, generateSimple2FACode, send2FACodeSMS, send2FACodeEmail, verifySimple2FACode } from './2fa';
 import { isValidEmail, isValidPassword } from './validation';
+import BetterSqlite3 from 'better-sqlite3';
 
 type FastifyInstanceWithDB = FastifyInstance & { db: any };
 
 // Stockage temporaire des codes 2FA SMS/email (à remplacer par Redis/DB en prod)
 const twoFACodeStore: Record<string, { code: string, expiresAt: number }> = {};
 
-export async function authRoutes(fastify: FastifyInstanceWithDB) {
+export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
   // 1. Redirection vers Google
   fastify.get('/auth/google', async (request: FastifyRequest, reply: FastifyReply) => {
     reply.redirect(getGoogleAuthUrl());
@@ -31,10 +32,32 @@ export async function authRoutes(fastify: FastifyInstanceWithDB) {
         process.env.JWT_SECRET!,
         { expiresIn: '1h' }
       );
-      reply.send({ token, user });
+      // Redirect to frontend with token in URL
+      reply.redirect(`https://localhost:8080/home?token=${token}`);
     } catch (err) {
-      reply.status(500).send('Erreur OAuth2');
+      console.error('Google OAuth error:', err);
+      reply.redirect('https://localhost:8080/login?error=oauth_failed');
     }
+  });
+
+  fastify.post('/auth/register', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { email, password } = request.body as { email: string; password: string };
+    if (!email || !password) return reply.status(400).send('Email ou mot de passe manquant');
+    if (!isValidEmail(email)) return reply.status(400).send('Email invalide');
+    if (!isValidPassword(password)) return reply.status(400).send('Mot de passe trop faible');
+    // Création d'un compte classique
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log("Registering user:", email);
+    const user = findOrCreateClassicUser(email, passwordHash);
+    console.log("User registered:", user);
+
+    // Génération d'un JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET!,
+      { expiresIn: '1h' }
+    );
+    reply.send({ token, user });
   });
 
   // 3. Connexion classique (email + mot de passe)
@@ -45,7 +68,7 @@ export async function authRoutes(fastify: FastifyInstanceWithDB) {
     if (!isValidPassword(password)) return reply.status(400).send('Mot de passe trop faible');
     // Ici, on suppose que le mot de passe reçu est en clair et doit être hashé pour la création
     // et comparé au hash pour la connexion. Si déjà hashé côté client, adapter !
-    let user = fastify.db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
     if (!user) {
       // Création d'un compte classique
       const passwordHash = await bcrypt.hash(password, 10);
@@ -95,9 +118,7 @@ export async function authRoutes(fastify: FastifyInstanceWithDB) {
     if (!userId || !secret || !token) return reply.status(400).send('Paramètres manquants');
     if (!verify2FACode(secret, token)) return reply.status(401).send('Code 2FA invalide');
     // Sauvegarde du secret et activation dans la base
-    const db = require('better-sqlite3')('auth.db');
     db.prepare('UPDATE users SET twofa_secret = ?, twofa_enabled = TRUE WHERE id = ?').run(secret, userId);
-    db.close();
     reply.send({ success: true });
   });
 

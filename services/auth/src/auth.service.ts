@@ -34,12 +34,18 @@ export function findOrCreateGoogleUser(profile: { id: string; email: string; }):
 
 export function findOrCreateClassicUser(email: string, passwordHash: string): User {
   const db = new Database('auth.db');
+  console.log('Finding or creating classic user with email:', email);
   let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
   if (!user) {
     // No user exists, create new classic user
+    console.log('No existing user found, creating new classic user.');
     const stmt = db.prepare(`INSERT INTO users (google_id, email, password_hash, twofa_enabled) VALUES (NULL, ?, ?, FALSE)`);
+    console.log('Running insert statement for new classic user.');
     const info = stmt.run(email, passwordHash);
+    console.log('Insert statement executed, retrieving new user.'); 
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid) as User;
+    console.log('New classic user created with ID:', user.id);
+    console.log('Created new classic user with ID:', user.id);
   } else {
     // User exists: check if it's a Google-only account (no password)
     if (!user.password_hash && user.google_id) {

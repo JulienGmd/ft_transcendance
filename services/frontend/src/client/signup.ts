@@ -7,6 +7,7 @@ let confirmPassword: HTMLInputElement | null = null
 let emailError: HTMLElement | null = null
 let passwordError: HTMLElement | null = null
 let confirmPasswordError: HTMLElement | null = null
+let googleSignupBtn: HTMLButtonElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form")
@@ -16,11 +17,13 @@ export function onMount(): void {
   emailError = document.getElementById("email-error")
   passwordError = document.getElementById("password-error")
   confirmPasswordError = document.getElementById("confirm-password-error")
+  googleSignupBtn = document.getElementById("google-signup-btn") as HTMLButtonElement | null
 
   form?.addEventListener("submit", onSubmit)
   email?.addEventListener("input", validateEmail)
   password?.addEventListener("input", validatePassword)
   confirmPassword?.addEventListener("input", validateConfirmPassword)
+  googleSignupBtn?.addEventListener("click", handleGoogleSignup)
 }
 
 export function onDestroy(): void {
@@ -28,6 +31,7 @@ export function onDestroy(): void {
   email?.removeEventListener("input", validateEmail)
   password?.removeEventListener("input", validatePassword)
   confirmPassword?.removeEventListener("input", validateConfirmPassword)
+  googleSignupBtn?.removeEventListener("click", handleGoogleSignup)
 }
 
 function onSubmit(e: Event): void {
@@ -38,10 +42,35 @@ function onSubmit(e: Event): void {
   if (!form?.checkValidity())
     return
 
-  // TODO check email not already used -> just do the register request ?
-  // TODO validate email page
-  // -> websocket to redirect once its confirmed ?
-  // -> click on link from email that say "Thanks for confirming" and then redirect to home ?
+  fetch("auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: email?.value,
+      password: password?.value,
+    }),
+  }).then((response) => {
+    if (response.ok) {
+      // Registration successful
+      console.log("Registration successful")
+      return response.json()
+    } else {
+      // Registration failed
+      console.log("Registration failed")
+      throw new Error("Registration failed")
+    }
+  }).then((data) => {
+    // Store the token and redirect to home
+    if (data.token) {
+      localStorage.setItem("authToken", data.token)
+      window.location.href = "/home"
+    }
+  }).catch((error) => {
+    console.error("Error during registration request:", error)
+    alert("Registration failed. Please try again.")
+  })
 }
 
 function validateEmail(): void {
@@ -80,4 +109,10 @@ function validateConfirmPassword(): void {
     confirmPasswordError!.textContent = "Passwords do not match"
     confirmPasswordError!.classList.remove("hidden")
   }
+}
+
+function handleGoogleSignup(e: Event): void {
+  e.preventDefault()
+  // Redirect to Google OAuth (same endpoint as login - backend handles create/login automatically)
+  window.location.href = "/auth/google"
 }

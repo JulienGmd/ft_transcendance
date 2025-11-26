@@ -1,21 +1,22 @@
+import Database from 'better-sqlite3';
+
 export function initDb() {
-    const Database = require('better-sqlite3');
     const db = new Database('auth.db');
 
     // Migration 1: Create users table
     db.prepare(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            google_id TEXT NOT NULL UNIQUE,
+            google_id TEXT UNIQUE,
             email TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
+            password_hash TEXT,
             twofa_secret TEXT,
             twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
             sms_2fa_code TEXT,
             sms_2fa_expires_at INTEGER,
             email_2fa_code TEXT,
             email_2fa_expires_at INTEGER,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_timestamp,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     `).run();
@@ -32,5 +33,5 @@ export function initDb() {
     `).run();
 
     console.log('Database migrated successfully');
-    db.close();
+    return (db);
 }
