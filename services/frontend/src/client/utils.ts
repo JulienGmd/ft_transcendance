@@ -7,3 +7,7 @@ export function isValidPassword(password: string): boolean {
   // Minimum 8 chars, 1 letter and 1 number
   return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)
 }
+
+export async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
