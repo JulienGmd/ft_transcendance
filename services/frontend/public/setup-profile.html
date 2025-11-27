@@ -1,0 +1,48 @@
+<script src="/public/setup-profile.js"></script>
+<script src="/public/components/formInput.js"></script>
+<script src="/public/components/shieldIcon.js"></script>
+<script src="/public/components/userIcon.js"></script>
+
+<div class="grid min-h-screen place-items-center p-4">
+  <!-- Setup Profile Card -->
+  <div class="bg-surface w-full space-y-8 rounded-2xl p-8 shadow-2xl sm:max-w-96">
+    <!-- Header -->
+    <div class="space-y-2 text-center">
+      <div
+        class="from-primary to-primary-dark mx-auto grid size-16 place-items-center rounded-full bg-linear-to-r shadow-lg"
+      >
+        <shield-icon class="size-10"></shield-icon>
+      </div>
+      <h1 class="text-2xl font-bold">Welcome!</h1>
+      <p class="text-text-muted">Choose your username to complete your profile</p>
+    </div>
+
+    <!-- Setup Form -->
+    <form class="flex flex-col gap-6">
+      <!-- Avatar Upload -->
+      <div class="flex flex-col items-center gap-4">
+        <div id="avatar-preview" class="bg-primary flex h-24 w-24 items-center justify-center rounded-full text-white font-bold text-3xl overflow-hidden">
+          <span id="avatar-letter">?</span>
+          <img id="avatar-image" class="hidden h-full w-full object-cover" alt="Avatar">
+        </div>
+        <label for="avatar-input" class="button-secondary cursor-pointer text-sm">
+          Choose Avatar
+          <input type="file" id="avatar-input" accept="image/*" class="hidden">
+        </label>
+        <p class="text-text-muted text-xs">Optional - You can upload an image or keep the default</p>
+      </div>
+
+      <form-input type="text" _id="username" label="Username" icon="user" autocomplete="username"></form-input>
+      
+      <div class="text-text-muted text-xs">
+        <p>Username must:</p>
+        <ul class="list-disc list-inside mt-1">
+          <li>Be between 3 and 20 characters</li>
+          <li>Contain only letters, numbers, and underscores</li>
+        </ul>
+      </div>
+
+      <button type="submit" class="button">Continue</button>
+    </form>
+  </div>
+</div>

@@ -2,6 +2,8 @@ import Database from 'better-sqlite3';
 
 export interface User {
   id: number;
+  username?: string | null;
+  avatar?: string | null;
   google_id: string;
   email: string;
   password_hash: string | null;
@@ -56,4 +58,25 @@ export function findOrCreateClassicUser(email: string, passwordHash: string): Us
   }
   db.close();
   return user as User;
+}
+
+export function setUsername(userId: number, username: string, avatar?: string): User | null {
+  const db = new Database('auth.db');
+  
+  // Check if username is already taken
+  const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User;
+  if (existingUser && existingUser.id !== userId) {
+    db.close();
+    return null; // Username already taken
+  }
+  
+  // Update username and avatar
+  if (avatar) {
+    db.prepare('UPDATE users SET username = ?, avatar = ? WHERE id = ?').run(username, avatar, userId);
+  } else {
+    db.prepare('UPDATE users SET username = ? WHERE id = ?').run(username, userId);
+  }
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User;
+  db.close();
+  return user;
 }

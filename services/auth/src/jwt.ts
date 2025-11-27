@@ -16,3 +16,11 @@ export function verifyJWT(request: FastifyRequest, reply: FastifyReply, done: (e
     reply.status(401).send('Token invalide');
   }
 }
+
+export function verifyToken(token: string): any {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET!);
+  } catch (err) {
+    throw new Error('Token invalide');
+  }
+}

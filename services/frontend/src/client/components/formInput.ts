@@ -4,6 +4,15 @@ class FormInput extends HTMLElement {
     const _id = this.getAttribute("_id") || ""
     const label = this.getAttribute("label") || ""
     const icon = this.getAttribute("icon") || ""
+    
+    // Determine autocomplete value based on field type and id
+    let autocomplete = this.getAttribute("autocomplete") || ""
+    if (!autocomplete) {
+      if (_id === "email") autocomplete = "email"
+      else if (_id === "password") autocomplete = "current-password"
+      else if (_id === "confirm-password") autocomplete = "new-password"
+      else if (type === "password") autocomplete = "current-password"
+    }
 
     this.innerHTML = `
       <div class="relative">
@@ -11,6 +20,7 @@ class FormInput extends HTMLElement {
           type="${type}"
           name="${_id}"
           id="${_id}"
+          ${autocomplete ? `autocomplete="${autocomplete}"` : ''}
           required
           class="bg-background/50 border-background/40 focus:border-primary peer h-14 w-full rounded-xl border-2 px-4 pt-6 pb-2 placeholder-transparent transition outline-none"
           placeholder="${label}"

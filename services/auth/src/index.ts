@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import Fastify from "fastify"
+import cookie from "@fastify/cookie"
 import { initDb } from "./db/init";
 import { authRoutes } from "./auth.routes"
+import { matchRoutes } from "./match.routes"
 import { readFileSync } from "fs"
 
 try {
@@ -13,10 +15,17 @@ try {
     },
   })
 
+  // Register cookie plugin
+  await fastify.register(cookie, {
+    secret: process.env.JWT_SECRET, // for signing cookies
+    parseOptions: {}
+  })
+
   const db = initDb();
 
   // Initialize and migrate database
   await authRoutes(fastify, db);
+  await matchRoutes(fastify, db);
 
   // Start server
   await fastify.listen({ port: 3000, host: "0.0.0.0" })

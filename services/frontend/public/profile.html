@@ -1,0 +1,74 @@
+<script src="/public/profile.js"></script>
+<script src="/public/components/userIcon.js"></script>
+
+<div class="grid min-h-screen place-items-center p-4">
+  <!-- Profile Card -->
+  <div class="bg-surface w-full max-w-4xl space-y-8 rounded-2xl p-8 shadow-2xl">
+    <!-- Header with Avatar and Username -->
+    <div class="flex items-center gap-6 border-b border-surface-light pb-6">
+      <!-- Avatar -->
+      <div id="avatar-container" class="bg-primary flex h-24 w-24 items-center justify-center rounded-full text-white font-bold text-3xl overflow-hidden shadow-lg">
+        <span id="avatar-letter">?</span>
+        <img id="avatar-image" class="hidden h-full w-full object-cover" alt="Avatar">
+      </div>
+      
+      <!-- User Info -->
+      <div class="flex-1">
+        <h1 id="username" class="text-3xl font-bold text-white mb-2">Loading...</h1>
+        <p id="email" class="text-text-muted text-sm">Loading...</p>
+      </div>
+      
+      <!-- Edit Profile Button -->
+      <button id="edit-profile-btn" class="button-secondary">
+        Edit Profile
+      </button>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Total Matches -->
+      <div class="bg-surface-light rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-primary mb-2" id="total-matches">0</div>
+        <div class="text-text-muted text-sm">Total Matches</div>
+      </div>
+      
+      <!-- Wins -->
+      <div class="bg-surface-light rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-green-400 mb-2" id="total-wins">0</div>
+        <div class="text-text-muted text-sm">Wins</div>
+      </div>
+      
+      <!-- Win Rate -->
+      <div class="bg-surface-light rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-yellow-400 mb-2" id="win-rate">0%</div>
+        <div class="text-text-muted text-sm">Win Rate</div>
+      </div>
+      
+      <!-- Global Precision -->
+      <div class="bg-surface-light rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-blue-400 mb-2" id="global-precision">0%</div>
+        <div class="text-text-muted text-sm">Global Precision</div>
+      </div>
+    </div>
+
+    <!-- Match History Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-bold text-white">Match History</h2>
+      
+      <!-- Match History List -->
+      <div id="match-history" class="space-y-3">
+        <!-- Matches will be inserted here dynamically -->
+        <div class="text-text-muted text-center py-8">
+          No matches yet
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to Home Button -->
+    <div class="pt-4 border-t border-surface-light">
+      <button id="back-home-btn" class="button-secondary w-full">
+        Back to Home
+      </button>
+    </div>
+  </div>
+</div>

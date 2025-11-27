@@ -47,6 +47,7 @@ function onSubmit(e: Event): void {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: 'include', // Include cookies
     body: JSON.stringify({
       email: email?.value,
       password: password?.value,
@@ -62,9 +63,11 @@ function onSubmit(e: Event): void {
       throw new Error("Registration failed")
     }
   }).then((data) => {
-    // Store the token and redirect to home
-    if (data.token) {
-      localStorage.setItem("authToken", data.token)
+    // Token is now in cookie
+    // Check if user needs to setup profile
+    if (data.needsSetup) {
+      window.location.href = "/setup-profile"
+    } else {
       window.location.href = "/home"
     }
   }).catch((error) => {

@@ -14,6 +14,7 @@ services:
     volumes:
       - ./caddy:/etc/caddy
       - ./certs/cert.pem:/certs/cert.pem:ro # ro = read-only
+      - ./certs/key.pem:/certs/key.pem:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

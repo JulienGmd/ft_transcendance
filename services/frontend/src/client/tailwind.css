@@ -49,6 +49,10 @@
     @apply from-primary to-primary-dark block rounded-xl bg-linear-to-r px-6 py-3 font-bold shadow-lg transition hover:scale-[1.02] hover:shadow-xl active:scale-[0.98];
   }
 
+  .button-secondary {
+    @apply bg-surface hover:bg-surface/80 block rounded-xl px-6 py-2 font-medium shadow-md transition hover:scale-[1.02] hover:shadow-lg active:scale-[0.98];
+  }
+
   .hover-skew {
     @apply origin-bottom-left transition hover:-skew-x-12;
   }
