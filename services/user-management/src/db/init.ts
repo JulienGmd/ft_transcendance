@@ -14,6 +14,8 @@ export function initDb() {
             password_hash TEXT,
             twofa_secret TEXT,
             twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            twofa_method TEXT DEFAULT 'none',
+            phone_number TEXT,
             sms_2fa_code TEXT,
             sms_2fa_expires_at INTEGER,
             email_2fa_code TEXT,

@@ -18,8 +18,8 @@
 https://localhost:8080 {
 	tls /certs/cert.pem /certs/key.pem
 	
-	# auth, frontend are the docker-compose service names (they are on the same network)
-	reverse_proxy /auth/* https://auth:3000 {
+	# user-management, frontend are the docker-compose service names (they are on the same network)
+	reverse_proxy /auth/* https://user-management:3000 {
 		transport http {
 			tls
 			# the cert is mounted in this docker and all services, and used to verify the self-signed cert
@@ -27,23 +27,23 @@ https://localhost:8080 {
 		}
 	}
 	
-	# Redirect matches API to auth service
-	reverse_proxy /matches/* https://auth:3000 {
+	# Redirect matches API to user-management service
+	reverse_proxy /matches/* https://user-management:3000 {
 		transport http {
 			tls
 			tls_trusted_ca_certs /certs/cert.pem
 		}
 	}
 	
-	# Redirect my-matches and my-stats to auth service
-	reverse_proxy /my-matches https://auth:3000 {
+	# Redirect my-matches and my-stats to user-management service
+	reverse_proxy /my-matches https://user-management:3000 {
 		transport http {
 			tls
 			tls_trusted_ca_certs /certs/cert.pem
 		}
 	}
 	
-	reverse_proxy /my-stats https://auth:3000 {
+	reverse_proxy /my-stats https://user-management:3000 {
 		transport http {
 			tls
 			tls_trusted_ca_certs /certs/cert.pem

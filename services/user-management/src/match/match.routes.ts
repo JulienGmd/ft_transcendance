@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import BetterSqlite3 from 'better-sqlite3';
-import { verifyToken } from './jwt';
+import { verifyToken } from '../auth/jwt';
 import { 
   createMatch, 
   getPlayerMatchHistory, 

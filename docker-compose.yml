@@ -19,7 +19,7 @@ services:
       - caddy_config:/config
     depends_on:
       - nats
-      - auth
+      - user-management
       - frontend
       # Add services here
     networks:
@@ -32,13 +32,13 @@ services:
       - internal
     restart: unless-stopped
 
-  auth:
-    build: ./services/auth/
+  user-management:
+    build: ./services/user-management/
     volumes:
       - ./certs:/certs:ro
-      - ./services/auth/.env:/app/.env:ro
+      - ./services/user-management/.env:/app/.env:ro
     env_file:
-      - ./services/auth/.env
+      - ./services/user-management/.env
     depends_on: # TODO remove if not using nats
       - nats
     networks:

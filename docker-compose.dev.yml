@@ -1,14 +1,14 @@
 # This file is used to override or add some properties to docker-compose.yml.
 
 services:
-  auth:
+  user-management:
     build:
       target: development     # use development stage in Dockerfile
       args:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
     volumes:
-      - ./services/auth:/app  # sync local folder to docker's /app folder
+      - ./services/user-management:/app  # sync local folder to docker's /app folder
       - /app/node_modules     # don't sync node_modules
 
   frontend:

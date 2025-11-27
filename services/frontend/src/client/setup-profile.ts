@@ -6,6 +6,17 @@ let avatarImage: HTMLImageElement | null = null
 let avatarLetter: HTMLElement | null = null
 let avatarBase64: string | null = null
 
+let twofaCheckbox: HTMLInputElement | null = null
+let qrContainer: HTMLElement | null = null
+let totpVerifyInput: HTMLInputElement | null = null
+let qrCodeImg: HTMLImageElement | null = null
+let totpSecretCode: HTMLElement | null = null
+
+let totpSecret: string | null = null
+let currentTwofa: boolean = false
+let initialTwofaState: boolean = false // État initial de la 2FA
+let isDisabling2FA: boolean = false // Pour savoir si on désactive la 2FA
+
 export async function onMount(): Promise<void> {
   form = document.querySelector("form")
   username = document.getElementById("username") as HTMLInputElement | null
@@ -13,18 +24,20 @@ export async function onMount(): Promise<void> {
   avatarInput = document.getElementById("avatar-input") as HTMLInputElement | null
   avatarImage = document.getElementById("avatar-image") as HTMLImageElement | null
   avatarLetter = document.getElementById("avatar-letter")
-
-  // Token is now in httpOnly cookie, no need to get it from URL
-  // We'll verify authentication by calling /auth/me
+  
+  twofaCheckbox = document.getElementById("enable-2fa") as HTMLInputElement | null
+  qrContainer = document.getElementById("qr-container")
+  totpVerifyInput = document.getElementById("totp_verify") as HTMLInputElement | null
+  qrCodeImg = document.getElementById("qr-code") as HTMLImageElement | null
+  totpSecretCode = document.getElementById("totp-secret")
 
   // Verify authentication and load user data
   try {
     const response = await fetch("/auth/me", {
-      credentials: 'include' // Important: include cookies
+      credentials: 'include'
     })
     
     if (!response.ok) {
-      // Not authenticated, redirect to login
       window.location.href = "/login"
       return
     }
@@ -34,7 +47,6 @@ export async function onMount(): Promise<void> {
     
     if (userData.username && username) {
       username.value = userData.username
-      // Update avatar letter
       if (avatarLetter) {
         avatarLetter.textContent = userData.username.charAt(0).toUpperCase()
       }
@@ -45,9 +57,15 @@ export async function onMount(): Promise<void> {
       avatarImage.classList.remove("hidden")
       avatarLetter.classList.add("hidden")
     }
+    
+    // Charger l'état de la 2FA
+    if (userData.twofa_enabled && twofaCheckbox) {
+      twofaCheckbox.checked = true
+      currentTwofa = true
+      initialTwofaState = true
+    }
   } catch (err) {
     console.error("Error loading user data:", err)
-    // Error, redirect to login
     window.location.href = "/login"
     return
   }
@@ -55,46 +73,108 @@ export async function onMount(): Promise<void> {
   form?.addEventListener("submit", onSubmit)
   username?.addEventListener("input", handleUsernameChange)
   avatarInput?.addEventListener("change", handleAvatarChange)
+  twofaCheckbox?.addEventListener("change", handle2FAToggle)
 }
 
 export function onDestroy(): void {
   form?.removeEventListener("submit", onSubmit)
   username?.removeEventListener("input", handleUsernameChange)
   avatarInput?.removeEventListener("change", handleAvatarChange)
+  twofaCheckbox?.removeEventListener("change", handle2FAToggle)
 }
 
-function onSubmit(e: Event): void {
+async function handle2FAToggle(e: Event): Promise<void> {
+  const target = e.target as HTMLInputElement
+  currentTwofa = target.checked
+  
+  // Déterminer si on est en train de désactiver la 2FA
+  isDisabling2FA = initialTwofaState && !currentTwofa
+  
+  // Hide/show QR container and remove/add required
+  if (totpVerifyInput) totpVerifyInput.removeAttribute('required')
+  qrContainer?.classList.add("hidden")
+  
+  if (currentTwofa && !initialTwofaState) {
+    // Activer la 2FA : générer un nouveau secret TOTP et QR code
+    try {
+      const response = await fetch("/auth/2fa/setup", {
+        method: "POST",
+        credentials: 'include'
+      })
+      
+      if (!response.ok) throw new Error("Failed to setup 2FA")
+      
+      const data = await response.json()
+      totpSecret = data.secret
+      
+      if (qrCodeImg) qrCodeImg.src = data.qrCode
+      if (totpSecretCode) totpSecretCode.textContent = data.secret
+      
+      qrContainer?.classList.remove("hidden")
+      if (totpVerifyInput) totpVerifyInput.setAttribute('required', 'required')
+    } catch (error) {
+      console.error("Error setting up TOTP:", error)
+      alert("Failed to setup authenticator app. Please try again.")
+      // Reset checkbox
+      if (twofaCheckbox) twofaCheckbox.checked = false
+      currentTwofa = false
+    }
+  } else if (isDisabling2FA) {
+    // Désactiver la 2FA : pas besoin de code de vérification
+    console.log("Disabling 2FA...")
+  }
+  // Si currentTwofa && initialTwofaState : l'utilisateur garde la 2FA activée, ne rien faire
+}
+
+async function onSubmit(e: Event): Promise<void> {
   e.preventDefault()
   e.stopPropagation()
 
-  if (!form?.checkValidity())
-    return
+  if (!form?.checkValidity()) return
 
-  fetch("auth/set-username", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: 'include', // Include cookies
-    body: JSON.stringify({
-      username: username?.value,
-      avatar: avatarBase64,
-    }),
-  }).then((response) => {
-    if (response.ok) {
-      console.log("Username set successfully")
-      return response.json()
-    } else {
-      console.log("Username setting failed")
-      return response.text().then(text => { throw new Error(text) })
+  // Validate 2FA specific fields - seulement si on active une nouvelle 2FA
+  if (currentTwofa && !initialTwofaState && (!totpVerifyInput?.value || totpVerifyInput.value.trim() === "")) {
+    alert("Please enter the 6-digit code from your authenticator app")
+    return
+  }
+
+  const requestBody: any = {
+    username: username?.value,
+    avatar: avatarBase64,
+  }
+
+  // Gérer les différents cas de 2FA
+  if (currentTwofa && !initialTwofaState) {
+    // Cas 1 : Activer la 2FA (nouvelle activation)
+    requestBody.totp_secret = totpSecret
+    requestBody.totp_code = totpVerifyInput?.value
+  } else if (isDisabling2FA) {
+    // Cas 2 : Désactiver la 2FA
+    requestBody.disable_2fa = true
+  }
+  // Cas 3 : Garder la 2FA activée (currentTwofa && initialTwofaState) - ne rien ajouter
+
+  try {
+    const response = await fetch("auth/set-username", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: 'include',
+      body: JSON.stringify(requestBody),
+    })
+    
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(text || "Failed to set username")
     }
-  }).then((data) => {
-    // Redirect to home (token is automatically updated in cookie by server)
+    
+    const data = await response.json()
     window.location.href = "/home"
-  }).catch((error) => {
+  } catch (error: any) {
     console.error("Error setting username:", error)
     alert(error.message || "Failed to set username. Please try again.")
-  })
+  }
 }
 
 function handleAvatarChange(e: Event): void {

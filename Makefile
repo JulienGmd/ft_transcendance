@@ -16,8 +16,8 @@ setup:
 # This will use docker-compose.dev.yml on top of docker-compose.yml, which defines the Dockerfile stage to development and mount volumes for live code reloading.
 dev: setup
 	@echo "Cleaning auth database..."
-	@docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d auth 2>/dev/null || true
-	@docker compose exec -T auth rm -f /app/auth.db 2>/dev/null || true
+	@docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d user-management 2>/dev/null || true
+	@docker compose exec -T user-management rm -f /app/auth.db 2>/dev/null || true
 	@docker compose down 2>/dev/null || true
 	@echo "Starting services..."
 	clear && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build --remove-orphans

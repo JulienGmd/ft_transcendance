@@ -4,15 +4,12 @@ import { getGoogleAuthUrl, getGoogleProfile } from './google';
 import { findOrCreateGoogleUser, findOrCreateClassicUser, setUsername } from './auth.service';
 import bcrypt from 'bcrypt';
 import { verifyJWT, verifyToken } from './jwt';
-import { generate2FASecret, generate2FAQrCode, verify2FACode, generateSimple2FACode, send2FACodeSMS, send2FACodeEmail, verifySimple2FACode } from './2fa';
+import { generate2FASecret, generate2FAQrCode, verify2FACode } from './2fa';
 import { isValidEmail, isValidPassword } from './validation';
 import BetterSqlite3 from 'better-sqlite3';
 import Database from 'better-sqlite3';
 
 type FastifyInstanceWithDB = FastifyInstance & { db: any };
-
-// Stockage temporaire des codes 2FA SMS/email (à remplacer par Redis/DB en prod)
-const twoFACodeStore: Record<string, { code: string, expiresAt: number }> = {};
 
 export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
   // 1. Redirection vers Google
@@ -38,6 +35,26 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
       console.log('[OAuth] Finding or creating user...');
       const user = findOrCreateGoogleUser({ id: profile.id, email: profile.email });
       console.log('[OAuth] User:', user.id, user.email, 'username:', user.username);
+      
+      // Vérifier si la 2FA TOTP est activée
+      const twoFAEnabled = user.twofa_enabled || false;
+      
+      if (twoFAEnabled && user.twofa_secret) {
+        // 2FA TOTP est activée, rediriger vers la page de validation 2FA
+        // Stocker temporairement l'userId dans un cookie temporaire
+        reply.setCookie('tempUserId', String(user.id), {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 300 // 5 minutes
+        });
+        
+        // Rediriger vers une page de validation 2FA
+        console.log('[OAuth] Redirecting to 2FA verification page');
+        reply.redirect(`https://localhost:8080/login?twofa=totp&email=${encodeURIComponent(user.email)}`);
+        return;
+      }
       
       // Génération d'un JWT
       const token = jwt.sign(
@@ -127,7 +144,21 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
         return reply.status(401).send('Identifiants invalides');
       }
     }
-    // Génération d'un JWT
+    
+    // Vérifier si la 2FA est activée
+    const twoFAEnabled = user.twofa_enabled || false;
+    
+    if (twoFAEnabled && user.twofa_secret) {
+      // 2FA TOTP est activée, ne pas donner de token complet
+      // Retourner un état temporaire
+      return reply.send({
+        needsTwoFA: true,
+        userId: user.id,
+        email: user.email
+      });
+    }
+    
+    // Pas de 2FA, génération du JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET!,
@@ -152,7 +183,13 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
 
   // Set username (for users who don't have one yet, typically after Google OAuth)
   fastify.post('/auth/set-username', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { username, avatar } = request.body as { username: string; avatar?: string };
+    const { username, avatar, totp_secret, totp_code, disable_2fa } = request.body as { 
+      username: string; 
+      avatar?: string;
+      totp_secret?: string;
+      totp_code?: string;
+      disable_2fa?: boolean;
+    };
     
     // Get token from cookie
     const token = request.cookies.authToken;
@@ -176,12 +213,41 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
       return reply.status(400).send('Username can only contain letters, numbers, and underscores');
     }
     
+    // Validate TOTP if provided (activation de la 2FA)
+    if (totp_secret && totp_code) {
+      if (!verify2FACode(totp_secret, totp_code)) {
+        return reply.status(400).send('Invalid verification code. Please try again.');
+      }
+    }
+    
     const user = setUsername(decoded.userId, username, avatar);
     if (!user) {
       return reply.status(409).send('Username already taken');
     }
     
-    // Generate new token with username (don't include avatar to avoid token size issues)
+    // Gérer les modifications de 2FA
+    if (disable_2fa) {
+      // Désactiver la 2FA
+      const stmt = db.prepare(`
+        UPDATE users 
+        SET twofa_enabled = ?,
+            twofa_secret = ?
+        WHERE id = ?
+      `);
+      stmt.run(0, null, decoded.userId);
+    } else if (totp_secret && totp_code) {
+      // Activer la 2FA avec le nouveau secret
+      const stmt = db.prepare(`
+        UPDATE users 
+        SET twofa_enabled = ?,
+            twofa_secret = ?
+        WHERE id = ?
+      `);
+      stmt.run(1, totp_secret, decoded.userId);
+    }
+    // Si ni disable_2fa ni totp_secret : garder l'état actuel de la 2FA
+    
+    // Generate new token with username
     const newToken = jwt.sign(
       { userId: user.id, email: user.email, username: user.username },
       process.env.JWT_SECRET!,
@@ -260,12 +326,28 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
 
   // 5. Génération du secret et du QR code 2FA
   fastify.post('/auth/2fa/setup', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email } = request.body as { email: string };
-    if (!email) return reply.status(400).send('Email manquant');
-    if (!isValidEmail(email)) return reply.status(400).send('Email invalide');
-    const secret = generate2FASecret(email);
-    const qr = await generate2FAQrCode(secret.otpauth_url!);
-    reply.send({ secret: secret.base32, otpauth_url: secret.otpauth_url, qr });
+    // Get token from cookie
+    const token = request.cookies.authToken;
+    if (!token) {
+      return reply.status(401).send('Non authentifié');
+    }
+    
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch (err) {
+      return reply.status(401).send('Token invalide');
+    }
+    
+    // Get user email from database
+    const user = db.prepare('SELECT email FROM users WHERE id = ?').get(decoded.userId) as { email: string } | undefined;
+    if (!user) {
+      return reply.status(404).send('Utilisateur non trouvé');
+    }
+    
+    const secret = generate2FASecret(user.email);
+    const qrCode = await generate2FAQrCode(secret.otpauth_url!);
+    reply.send({ secret: secret.base32, otpauth_url: secret.otpauth_url, qrCode });
   });
 
   // 6. Activation de la 2FA (sauvegarde du secret)
@@ -275,6 +357,74 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     if (!verify2FACode(secret, token)) return reply.status(401).send('Code 2FA invalide');
     // Sauvegarde du secret et activation dans la base
     db.prepare('UPDATE users SET twofa_secret = ?, twofa_enabled = TRUE WHERE id = ?').run(secret, userId);
+    reply.send({ success: true });
+  });
+
+  // Nouvelle route: Activer la 2FA depuis le profil (avec authentification)
+  fastify.post('/auth/2fa/profile/enable', async (request: FastifyRequest, reply: FastifyReply) => {
+    // Get token from cookie
+    const authToken = request.cookies.authToken;
+    if (!authToken) {
+      return reply.status(401).send('Non authentifié');
+    }
+    
+    let decoded;
+    try {
+      decoded = verifyToken(authToken);
+    } catch (err) {
+      return reply.status(401).send('Token invalide');
+    }
+    
+    const { secret, code } = request.body as { secret: string; code: string };
+    if (!secret || !code) {
+      return reply.status(400).send('Secret et code requis');
+    }
+    
+    // Vérifier le code TOTP
+    if (!verify2FACode(secret, code)) {
+      return reply.status(401).send('Code 2FA invalide');
+    }
+    
+    // Activer la 2FA
+    db.prepare('UPDATE users SET twofa_secret = ?, twofa_enabled = TRUE WHERE id = ?').run(secret, decoded.userId);
+    
+    reply.send({ success: true });
+  });
+
+  // Nouvelle route: Désactiver la 2FA depuis le profil
+  fastify.post('/auth/2fa/profile/disable', async (request: FastifyRequest, reply: FastifyReply) => {
+    // Get token from cookie
+    const authToken = request.cookies.authToken;
+    if (!authToken) {
+      return reply.status(401).send('Non authentifié');
+    }
+    
+    let decoded;
+    try {
+      decoded = verifyToken(authToken);
+    } catch (err) {
+      return reply.status(401).send('Token invalide');
+    }
+    
+    const { code } = request.body as { code: string };
+    if (!code) {
+      return reply.status(400).send('Code de vérification requis');
+    }
+    
+    // Récupérer l'utilisateur
+    const user = db.prepare('SELECT twofa_secret, twofa_enabled FROM users WHERE id = ?').get(decoded.userId) as any;
+    if (!user || !user.twofa_enabled || !user.twofa_secret) {
+      return reply.status(400).send('2FA non activée');
+    }
+    
+    // Vérifier le code TOTP
+    if (!verify2FACode(user.twofa_secret, code)) {
+      return reply.status(401).send('Code 2FA invalide');
+    }
+    
+    // Désactiver la 2FA
+    db.prepare('UPDATE users SET twofa_secret = NULL, twofa_enabled = FALSE WHERE id = ?').run(decoded.userId);
+    
     reply.send({ success: true });
   });
 
@@ -288,45 +438,92 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     reply.send({ success: true });
   });
 
-  // Générer et envoyer un code 2FA par SMS
-  fastify.post('/auth/2fa/sms/send', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { phone } = request.body as { phone: string };
-    if (!phone) return reply.status(400).send('Numéro manquant');
-    const { code, expiresAt } = generateSimple2FACode();
-    twoFACodeStore[phone] = { code, expiresAt };
-    await send2FACodeSMS(phone, code);
-    reply.send({ success: true });
-  });
-
-  // Générer et envoyer un code 2FA par email
-  fastify.post('/auth/2fa/email/send', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email } = request.body as { email: string };
-    if (!email) return reply.status(400).send('Email manquant');
-    if (!isValidEmail(email)) return reply.status(400).send('Email invalide');
-    const { code, expiresAt } = generateSimple2FACode();
-    twoFACodeStore[email] = { code, expiresAt };
-    await send2FACodeEmail(email, code);
-    reply.send({ success: true });
-  });
-
-  // Vérifier le code 2FA reçu par SMS
-  fastify.post('/auth/2fa/sms/verify', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { phone, code } = request.body as { phone: string, code: string };
-    const entry = twoFACodeStore[phone];
-    if (!entry) return reply.status(400).send('Aucun code envoyé');
-    if (!verifySimple2FACode(code, entry.code, entry.expiresAt)) return reply.status(401).send('Code invalide ou expiré');
-    delete twoFACodeStore[phone];
-    reply.send({ success: true });
-  });
-
-  // Vérifier le code 2FA reçu par email
-  fastify.post('/auth/2fa/email/verify', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email, code } = request.body as { email: string, code: string };
-    const entry = twoFACodeStore[email];
-    if (!entry) return reply.status(400).send('Aucun code envoyé');
-    if (!verifySimple2FACode(code, entry.code, entry.expiresAt)) return reply.status(401).send('Code invalide ou expiré');
-    delete twoFACodeStore[email];
-    reply.send({ success: true });
+  // Nouvelle route: Vérification du code 2FA lors du login et génération du token complet
+  fastify.post('/auth/2fa/login/verify', async (request: FastifyRequest, reply: FastifyReply) => {
+    console.log('[2FA Login Verify] Request received');
+    console.log('[2FA Login Verify] Body:', request.body);
+    console.log('[2FA Login Verify] Cookies:', request.cookies);
+    
+    const { userId, code } = request.body as { 
+      userId?: number; 
+      code: string;
+    };
+    
+    // Récupérer userId depuis le cookie temporaire ou depuis le body
+    let finalUserId = userId;
+    if (!finalUserId) {
+      const tempUserId = request.cookies.tempUserId;
+      console.log('[2FA Login Verify] No userId in body, checking cookie:', tempUserId);
+      if (tempUserId) {
+        finalUserId = parseInt(tempUserId, 10);
+      }
+    }
+    
+    console.log('[2FA Login Verify] Final userId:', finalUserId);
+    
+    if (!finalUserId || !code) {
+      console.log('[2FA Login Verify] Missing parameters');
+      return reply.status(400).send('Paramètres manquants');
+    }
+    
+    // Récupérer l'utilisateur
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(finalUserId) as any;
+    if (!user) {
+      console.log('[2FA Login Verify] User not found');
+      return reply.status(404).send('Utilisateur non trouvé');
+    }
+    
+    console.log('[2FA Login Verify] User found:', user.email);
+    
+    // Vérifier le code TOTP
+    if (!user.twofa_enabled || !user.twofa_secret) {
+      return reply.status(400).send('2FA TOTP non activée');
+    }
+    
+    const isValid = verify2FACode(user.twofa_secret, code);
+    
+    if (!isValid) {
+      console.log('[2FA Login Verify] Invalid code');
+      return reply.status(401).send('Code 2FA invalide ou expiré');
+    }
+    
+    console.log('[2FA Login Verify] Code valid, generating token');
+    
+    // Code valide, générer le token complet
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, username: user.username },
+      process.env.JWT_SECRET!,
+      { expiresIn: '1h' }
+    );
+    
+    // Set cookie with token
+    reply.setCookie('authToken', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 3600
+    });
+    
+    // Clear temp cookie if it exists
+    reply.clearCookie('tempUserId', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax'
+    });
+    
+    // Retourner les infos utilisateur
+    reply.send({ 
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar
+      },
+      needsSetup: !user.username
+    });
   });
 
   // Rafraîchissement du token JWT
