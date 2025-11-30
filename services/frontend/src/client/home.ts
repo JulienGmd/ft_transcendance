@@ -1,5 +1,4 @@
 import { navigate } from "./router.js"
-import { sleep } from "./utils.js"
 
 // TODO import from shared types
 interface UserData {
@@ -13,14 +12,25 @@ interface UserData {
 let logoutBtn: HTMLButtonElement | null
 
 export async function onMount(): Promise<void> {
-  const showAfterEls = document.querySelectorAll("[show-after]")
+  // Disable long animations on subsequent visits
+  if (!localStorage.getItem("visitedHome"))
+    localStorage.setItem("visitedHome", "true")
+  else {
+    // Disable typewriter animation
+    const typeWriterEls = Array.from(document.querySelectorAll<HTMLElement>(".anim-typewriter"))
+    typeWriterEls.forEach((el) => {
+      el.classList.remove("anim-typewriter")
+      el.parentElement?.classList.add("animate-slide-right")
+    })
 
-  showAfterEls.forEach(async (el) => {
-    const sleepTime = parseInt(el.getAttribute("show-after") || "0")
-    await sleep(sleepTime * 1000)
-    el.classList.remove("hidden")
-    el.classList.add("flex")
-  })
+    // Reduce all animation delays by 5s
+    // *= is substring match operator
+    const animDelayEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-delay-']"))
+    animDelayEls.forEach((el) => {
+      const delay = window.getComputedStyle(el).animationDelay
+      el.style.animationDelay = `${parseFloat(delay) - 5}s`
+    })
+  }
 
   const loginLink = document.querySelector("#login") as HTMLAnchorElement | null
   const profileContainer = document.querySelector("#profile-container") as HTMLDivElement | null
@@ -28,6 +38,8 @@ export async function onMount(): Promise<void> {
   logoutBtn = document.querySelector("#logout-btn") as HTMLButtonElement | null
 
   logoutBtn?.addEventListener("click", logout)
+
+  // If logged in, show profile else show login
 
   // TODO causing 502 if not logged in.
   // -> Add bool IsLoggedIn to localStorage ?
