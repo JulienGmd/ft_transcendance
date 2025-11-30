@@ -12,7 +12,7 @@ interface UserData {
 let logoutBtn: HTMLButtonElement | null
 
 export async function onMount(): Promise<void> {
-  // Disable long animations on subsequent visits
+  // Reduce total animation duration on subsequent visits
   if (!localStorage.getItem("visitedHome"))
     localStorage.setItem("visitedHome", "true")
   else {
@@ -20,7 +20,7 @@ export async function onMount(): Promise<void> {
     const typeWriterEls = Array.from(document.querySelectorAll<HTMLElement>(".anim-typewriter"))
     typeWriterEls.forEach((el) => {
       el.classList.remove("anim-typewriter")
-      el.parentElement?.classList.add("animate-slide-right")
+      el.classList.add("animate-slide-right")
     })
 
     // Reduce all animation delays by 5s
@@ -28,7 +28,7 @@ export async function onMount(): Promise<void> {
     const animDelayEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-delay-']"))
     animDelayEls.forEach((el) => {
       const delay = window.getComputedStyle(el).animationDelay
-      el.style.animationDelay = `${parseFloat(delay) - 5}s`
+      el.style.animationDelay = `${parseFloat(delay) - 3}s`
     })
   }
 

@@ -18,8 +18,6 @@ async function animateTypeWriterEls(): Promise<void> {
     el.textContent = ""
   })
 
-  await sleep(1500)
-
   data.forEach(({ el, text }) => {
     let index = 0
 
