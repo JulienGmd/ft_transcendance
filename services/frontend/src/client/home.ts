@@ -1,4 +1,4 @@
-import { navigate } from "./navigation.js"
+import { navigate } from "./router.js"
 import { sleep } from "./utils.js"
 
 // TODO import from shared types
