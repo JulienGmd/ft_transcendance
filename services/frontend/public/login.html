@@ -1,21 +1,14 @@
 <script src="/public/login.js"></script>
 <script src="/public/components/formInput.js"></script>
-<script src="/public/components/shieldIcon.js"></script>
 <script src="/public/components/userIcon.js"></script>
 <script src="/public/components/lockIcon.js"></script>
 <script src="/public/components/googleIcon.js"></script>
 
-<div class="grid min-h-screen place-items-center p-4">
-  <!-- Login Card -->
-  <div class="bg-surface w-full space-y-8 rounded-2xl p-8 shadow-2xl sm:max-w-96">
+<div class="grid min-h-screen place-items-center p-8">
+  <div class="w-full space-y-8 sm:max-w-96">
     <!-- Header -->
-    <div class="space-y-2 text-center">
-      <div
-        class="from-primary to-primary-dark mx-auto grid size-16 place-items-center rounded-full bg-linear-to-r shadow-lg"
-      >
-        <shield-icon class="size-10"></shield-icon>
-      </div>
-      <h1 class="text-2xl font-bold">Login</h1>
+    <div class="flex flex-col items-center space-y-4">
+      <h1 class="font-orbitron text-3xl font-bold">LOGIN</h1>
       <p class="text-text-muted">Sign in to your Transcendence account</p>
     </div>
 
@@ -23,50 +16,26 @@
     <form class="flex flex-col gap-6" action="/auth/login" method="post">
       <form-input type="text" _id="email" label="Email" icon="user"></form-input>
       <form-input type="password" _id="password" label="Password" icon="lock"></form-input>
-
-      <!-- Additional Options -->
-      <div class="flex items-center justify-between text-sm">
-        <!-- TODO -->
-        <label class="flex cursor-pointer items-center space-x-2">
-          <input
-            type="checkbox"
-            class="text-primary bg-background border-surface focus:ring-primary h-4 w-4 rounded border-2 outline-none focus:ring-2"
-          />
-          <span class="text-text-muted">Remember me</span>
-        </label>
-        <!-- TODO -->
-        <a href="#" class="text-primary hover:text-primary-dark transition">Forgot password?</a>
-      </div>
-
-      <!-- Login Button -->
       <button type="submit" class="button">Sign In</button>
+      <a href="#" class="link text-sm">Forgot password?</a>
     </form>
 
     <!-- Divider -->
-    <div class="relative">
-      <div class="absolute inset-0 flex items-center">
-        <div class="border-text-muted/20 w-full border-t"></div>
-      </div>
-      <div class="relative flex justify-center">
-        <span class="bg-surface text-text-muted px-4 text-sm">Or continue with</span>
-      </div>
+    <div class="relative flex justify-center">
+      <div class="border-text-muted/20 absolute inset-x-0 top-1/2 border-t"></div>
+      <span class="bg-background text-text-muted relative px-4 text-sm">Or continue with</span>
     </div>
 
     <!-- OAuth Options -->
-    <div class="grid place-items-center">
-      <button
-        id="google-login-btn"
-        class="bg-background/50 border-background/40 group hover:bg-background/60 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-6 transition active:scale-[0.98]"
-      >
-        <google-icon class="size-5"></google-icon>
-        <span class="group-hover:text-primary transition-colors">Google</span>
-      </button>
-    </div>
+    <button class="button-secondary w-full">
+      <google-icon class="block size-5"></google-icon>
+      <span>Google</span>
+    </button>
 
     <!-- Footer -->
     <div class="text-text-muted text-center text-sm">
       Don't have an account?
-      <a href="/signup" class="text-primary hover:text-primary-dark transition"> Sign up </a>
+      <a href="/signup" class="link">Sign up</a>
     </div>
   </div>
 </div>
