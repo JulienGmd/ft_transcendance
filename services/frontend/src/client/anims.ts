@@ -23,7 +23,7 @@ async function animateTypeWriterEls(): Promise<void> {
   data.forEach(({ el, text }) => {
     let index = 0
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       if (!el) {
         clearInterval(interval)
         return
@@ -33,6 +33,7 @@ async function animateTypeWriterEls(): Promise<void> {
       index++
       if (index >= text.length) {
         clearInterval(interval)
+        await sleep(2000)
         el.classList.remove("anim-typewriter")
       }
     }, 150)

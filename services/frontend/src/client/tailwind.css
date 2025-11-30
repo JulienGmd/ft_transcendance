@@ -30,6 +30,12 @@
   --animate-slide-left: slideLeft 0.6s ease-out backwards;
 }
 
+/* ----- Custom utilities --------------------------------------------------- */
+
+@utility animate-delay-* {
+  animation-delay: --value([*]);
+}
+
 /* ----- Base styles -------------------------------------------------------- */
 
 @layer base {
@@ -39,6 +45,10 @@
 
   body {
     @apply bg-background text-text font-sans;
+  }
+
+  button {
+    @apply cursor-pointer;
   }
 }
 

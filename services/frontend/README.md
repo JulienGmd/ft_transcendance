@@ -62,13 +62,13 @@ Notes:
 
 Lifecycle events:
 
-- `onMount()` is called after the page HTML is injected, can be used to query, manipulate DOM and set up event listeners.
+- `onMount()` is called after the page HTML is injected, can be used to query, manipulate DOM and set up event listeners. Can be async.
 - `onDestroy()` is called before the page HTML is removed, can be used to clean up event listeners.
 
 ```ts
 console.log("Page not loaded yet")
 
-export function onMount(): void {
+export async function onMount(): Promise<void> {
   console.log("Page loaded")
 }
 

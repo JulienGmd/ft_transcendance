@@ -24,7 +24,7 @@ async function preload(route: string): Promise<void> {
  * @param route The page route ('/', '/login', etc.)
  * @param pushHistory Whether to push the new route to browser history (default: true)
  */
-async function navigate(route: string, pushHistory = true): Promise<void> {
+export async function navigate(route: string, pushHistory = true): Promise<void> {
   // Call onDestroy on previous modules
   loadedModules.forEach((m) => m.onDestroy?.())
   loadedModules = []
