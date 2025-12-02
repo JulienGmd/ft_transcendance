@@ -39,14 +39,6 @@
 /* ----- Base styles -------------------------------------------------------- */
 
 @layer base {
-  html {
-    @apply scroll-smooth antialiased;
-  }
-
-  body {
-    @apply bg-background text-text font-sans;
-  }
-
   button {
     @apply cursor-pointer;
   }

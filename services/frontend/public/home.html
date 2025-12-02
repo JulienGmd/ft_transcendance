@@ -1,47 +1,10 @@
 <script src="/public/home.js"></script>
-<script src="/public/anims.js"></script>
 
-<div class="mx-auto flex min-h-screen max-w-5xl flex-col p-4">
-  <div class="flex items-center justify-between">
-    <a href="/" class="anim-typewriter font-orbitron text-3xl font-black">TRANSCENDENCE</a>
-
-    <div class="animate-slide-left animate-delay-[3.2s]">
-      <!-- Login button (shown when not authenticated) -->
-      <a id="login" class="hover-skew font-orbitron" href="/login">LOGIN</a>
-
-      <!-- User profile (shown when authenticated) -->
-      <div id="profile-container" class="group relative">
-        <!-- Profile link -->
-        <a href="/profile">
-          <span class="sr-only">Profile</span>
-          <img id="avatar" src="https://www.gravatar.com/avatar/?d=mp" alt="User Avatar" class="size-10 rounded-full" />
-        </a>
-
-        <!-- Dropdown menu -->
-        <div class="absolute top-full right-0 hidden pt-2 group-hover:block">
-          <div class="bg-surface size-full w-32 rounded-md shadow-lg *:first:pt-4 *:last:pb-4">
-            <button id="logout-btn" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="flex flex-1">
-    <div class="flex flex-1 items-center justify-between">
-      <!-- Navigation menu -->
-      <nav class="font-orbitron flex flex-col gap-4 text-2xl font-bold">
-        <a class="hover-skew animate-slide-right animate-delay-[3.4s]" href="#">PLAY</a>
-        <a class="hover-skew animate-slide-right animate-delay-[3.6s]" href="#">FRIENDS</a>
-        <a class="hover-skew animate-slide-right animate-delay-[3.8s]" href="#">LEADERBOARD</a>
-      </nav>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="mt-8">
-    <p class="text-text-muted text-center text-sm">© 2025 TRANSCENDENCE. All rights reserved.</p>
-  </footer>
+<div class="flex flex-1 flex-col justify-center">
+  <!-- Navigation menu -->
+  <nav class="font-orbitron grid gap-4 text-2xl font-bold">
+    <a class="hover-skew animate-slide-right animate-delay-[0.0s]" href="#">PLAY</a>
+    <a class="hover-skew animate-slide-right animate-delay-[0.2s]" href="#">FRIENDS</a>
+    <a class="hover-skew animate-slide-right animate-delay-[0.4s]" href="#">LEADERBOARD</a>
+  </nav>
 </div>

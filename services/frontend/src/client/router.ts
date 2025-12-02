@@ -47,6 +47,9 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
   // Inject HTML into #app
   app.innerHTML = newPage
 
+  // Dispatch event for persistent scripts to react to page load
+  window.dispatchEvent(new CustomEvent("pageLoaded"))
+
   // Call onMount on modules
   loadedModules.forEach((m) => m.onMount?.())
 
