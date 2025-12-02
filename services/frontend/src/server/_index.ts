@@ -1,10 +1,12 @@
 import Fastify from "fastify"
-import { readFileSync } from "fs"
-import { readFile } from "fs/promises"
+import { existsSync, readFileSync } from "fs"
 
 import { NODE_ENV, PORT, ROOT_DIR } from "./config.js"
 import { enableLiveReload } from "./liveReload.js"
 import { getMimeType } from "./utils.js"
+
+const DIST_PUBLIC_DIR = ROOT_DIR + "/dist/public"
+const PUBLIC_DIR = ROOT_DIR + "/public"
 
 const fastify = Fastify({
   https: {
@@ -30,7 +32,7 @@ fastify.addHook("onRequest", async (req, rep) => {
 
 // By default, all routes serve _index.html
 fastify.get("/*", async (req, res) => {
-  let content = await readFile(ROOT_DIR + "/public/_index.html", "utf-8")
+  let content = readFileSync(`${PUBLIC_DIR}/_index.html`, "utf-8")
 
   // Inject live reload script in development
   if (NODE_ENV !== "production")
@@ -41,21 +43,23 @@ fastify.get("/*", async (req, res) => {
   res.type("text/html").send(content)
 })
 
-// /public/* serve static files (js, css from `dist/public`, others from `public`)
+// Serve files from /public or /dist/public
 fastify.get<{ Params: { "*": string } }>("/public/*", async (req, res) => {
   const filePath = req.params["*"] || ""
-  const ext = filePath.split(".").pop() || ""
-  const dir = (ext === "js" || ext === "css") ? "dist/public" : "public"
 
   try {
-    const content = await readFile(ROOT_DIR + `/${dir}/${filePath}`, "utf-8")
+    let content = ""
+    if (existsSync(`${DIST_PUBLIC_DIR}/${filePath}`))
+      content = readFileSync(`${DIST_PUBLIC_DIR}/${filePath}`, "utf-8")
+    else
+      content = readFileSync(`${PUBLIC_DIR}/${filePath}`, "utf-8")
     const mimeType = getMimeType(filePath)
     if (NODE_ENV === "production")
       res.header("cache-control", "max-age=31536000")
     res.type(mimeType).send(content)
   } catch (error) {
     if (filePath.endsWith(".html")) {
-      const content = await readFile(ROOT_DIR + "/public/404.html", "utf-8")
+      const content = readFileSync(`${PUBLIC_DIR}/404.html`, "utf-8")
       if (NODE_ENV === "production")
         res.header("cache-control", "max-age=31536000")
       res.status(404).type("text/html").send(content)

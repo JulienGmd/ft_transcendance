@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify"
-import fs from "fs/promises"
+import { readdirSync, statSync } from "fs"
 
 import { ROOT_DIR } from "./config.js"
 
@@ -15,8 +15,8 @@ export async function enableLiveReload(fastify: FastifyInstance) {
 
   fastify.get("/dev/file-timestamps", async (req, res) => {
     const dirs = [
-      ROOT_DIR + "public",
-      ROOT_DIR + "dist/public",
+      ROOT_DIR + "/public",
+      ROOT_DIR + "/dist/public",
     ]
     const timestamps = await getFilesTimestamps(dirs)
     res.type("application/json").send(timestamps)
@@ -29,14 +29,14 @@ async function getFilesTimestamps(dirs: string[]): Promise<Record<string, number
   const timestamps: Record<string, number> = {}
 
   for (const dir of dirs) {
-    const files = await fs.readdir(dir, { withFileTypes: true, recursive: true })
+    const files = readdirSync(dir, { withFileTypes: true, recursive: true })
 
     for (const file of files) {
       if (file.isDirectory())
         continue
 
       const absPath = file.parentPath + "/" + file.name
-      const stat = await fs.stat(absPath)
+      const stat = statSync(absPath)
       timestamps[absPath] = stat.mtime.getTime()
     }
   }
