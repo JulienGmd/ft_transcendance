@@ -64,7 +64,7 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
  */
 async function fetchHtml(route: string): Promise<string | null> {
   route = route === "/" ? "/home" : route
-  const res = await fetch(`/public${route}.html`)
+  const res = await fetch(`/public/pages${route}.html`)
   if (res.status === 404) {
     // Server returns 404.html with 404 status for missing pages
     return await res.text()
@@ -102,7 +102,7 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent): boolean {
 // ----------------------------------------------------------------------------
 
 // On first navigation, /public/_index.html and this script will be served,
-// if url is /user, this navigate will then display /public/user inside #app
+// if url is /user, this navigate will then display /public/pages/user inside #app
 navigate(window.location.pathname)
 
 /** Handle browser navigation (back/forward buttons) */

@@ -34,7 +34,7 @@ fastify.get("/*", async (req, res) => {
 
   // Inject live reload script in development
   if (NODE_ENV !== "production")
-    content = content.replace("</head>", '<script src="/public/liveReload.js"></script></head>')
+    content = content.replace("</head>", '<script src="/public/persistent/liveReload.js"></script></head>')
 
   if (NODE_ENV === "production")
     res.header("cache-control", "max-age=31536000")

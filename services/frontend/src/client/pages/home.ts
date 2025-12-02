@@ -1,4 +1,4 @@
-import { navigate } from "./router.js"
+import { navigate } from "../persistent/router.js"
 
 // TODO import from shared types
 interface UserData {
@@ -46,5 +46,5 @@ export function onDestroy(): void {
 
 async function logout(): Promise<void> {
   await fetch("/auth/logout", { method: "POST", credentials: "include" })
-  navigate("/") // Always reload page
+  navigate("/") // Always reload page // TODO this will not refresh the header
 }

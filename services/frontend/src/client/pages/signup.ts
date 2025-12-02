@@ -1,4 +1,4 @@
-import { isValidEmail, isValidPassword } from "./utils.js"
+import { isValidEmail, isValidPassword } from "../utils.js"
 
 let form: HTMLFormElement | null = null
 let email: HTMLInputElement | null = null
@@ -47,7 +47,7 @@ function onSubmit(e: Event): void {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: 'include', // Include cookies
+    credentials: "include", // Include cookies
     body: JSON.stringify({
       email: email?.value,
       password: password?.value,
@@ -65,11 +65,10 @@ function onSubmit(e: Event): void {
   }).then((data) => {
     // Token is now in cookie
     // Check if user needs to setup profile
-    if (data.needsSetup) {
+    if (data.needsSetup)
       window.location.href = "/setup-profile"
-    } else {
+    else
       window.location.href = "/home"
-    }
   }).catch((error) => {
     console.error("Error during registration request:", error)
     alert("Registration failed. Please try again.")

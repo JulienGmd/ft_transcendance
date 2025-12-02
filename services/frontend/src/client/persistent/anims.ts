@@ -1,4 +1,4 @@
-import { sleep } from "./utils.js"
+import { sleep } from "../utils.js"
 
 animateTypeWriterEls()
 window.addEventListener("pageLoaded", onPageLoaded)
@@ -44,9 +44,8 @@ function onPageLoaded(): void {
   ) {
     // ... increase all animation delays by 3s to let time for the header typewriter animation to finish
     // *= is substring match operator
-    // TODO get les elements avec "[class*='animate-']" plutot
-    const animDelayEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-delay-']"))
-    animDelayEls.forEach((el) => {
+    const animEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-']"))
+    animEls.forEach((el) => {
       const delay = window.getComputedStyle(el).animationDelay
       el.style.animationDelay = `${parseFloat(delay) + 3}s`
     })

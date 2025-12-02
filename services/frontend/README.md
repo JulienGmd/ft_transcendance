@@ -31,7 +31,7 @@ URLs map directly to files in the `public/` directories.
 Use standard anchor tags for SPA navigation:
 
 ```html
-<!-- On click, `/public/user/info.html` will be injected in #app -->
+<!-- On click, `/public/pages/user/info.html` will be injected in #app -->
 <a href="/user/info">Link</a>
 ```
 
@@ -56,8 +56,8 @@ Notes:
 - **Important:** Scripts are preloaded on `<a>` hover, so top level code will execute before the page is loaded, use lifecycle hooks instead.
 
 ```html
-<!-- Load `dist/public/page.js` (transpiled from `src/client/page.ts`) -->
-<script src="/public/page.js"></script>
+<!-- Load `dist/public/pages/user.js` (transpiled from `src/client/pages/user.ts`) -->
+<script src="/public/pages/user.js"></script>
 ```
 
 Lifecycle events:
