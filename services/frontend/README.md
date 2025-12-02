@@ -6,28 +6,42 @@ SPA frontend with client-side routing and auto-import features.
 
 - Client-side SPA routing with page caching
 - Script loading with lifecycle hooks (`onMount`, `onDestroy`)
-- TypeScript compilation (server + client)
+- TypeScript compilation
 - Tailwind CSS processing
 - Live reload in development
 
 ## Structure
 
 ```
-src/
-├── server/           # Fastify server
-└── client/           # Client TypeScript
-
-public/
-├── _index.html       # SPA template  
-├── *.html            # Page content
-└── assets/           # Static assets (images, fonts, etc.)
+./
+├─ tsconfig.json         # Server typescript config
+├─ tsconfig.client.json  # Client typescript config
+│
+├─ src/
+│  ├─ server/            # Fastify server - serve public files
+│  └─ client/
+│     ├─ tailwind.css    # Theme, base styles, custom classes, etc.
+│     ├─ components/     # Reusable HTML components
+│     ├─ pages/          # Scripts that have onMount and onDestroy hooks
+│     └─ persistent/     # Scripts that persist across page navigation
+│  
+├─ public/
+│  ├─ _index.html        # SPA template
+│  ├─ pages/             # Pages content
+│  └─ assets/            # Static assets (images, fonts, etc.)
+│
+└─ dist/
+   ├─ server/            # Transpiled `src/server/**.ts`
+   └─ public/
+      ├─ styles.css      # Processed `src/client/tailwind.css`
+      └─ ...             # Transpiled `src/client/**.ts`
 ```
 
 ## Usage
 
 ### Navigation
 
-URLs map directly to files in the `public/` directories.
+URLs map directly to files in the `public/pages/` directories.
 Use standard anchor tags for SPA navigation:
 
 ```html
@@ -51,7 +65,6 @@ Scripts are extracted from `<script src="...">` tags in the HTML and loaded dyna
 
 Notes:
 
-- JS and CSS files are served on the `/public/*` routes, even if they are in `dist/public/.
 - The scripts can have imports and they will be resolved correctly.
 - **Important:** Scripts are preloaded on `<a>` hover, so top level code will execute before the page is loaded, use lifecycle hooks instead.
 
@@ -60,7 +73,7 @@ Notes:
 <script src="/public/pages/user.js"></script>
 ```
 
-Lifecycle events:
+Lifecycle hooks:
 
 - `onMount()` is called after the page HTML is injected, can be used to query, manipulate DOM and set up event listeners. Can be async.
 - `onDestroy()` is called before the page HTML is removed, can be used to clean up event listeners.
