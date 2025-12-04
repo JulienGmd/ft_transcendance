@@ -1,12 +1,16 @@
 import { navigate } from "../persistent/router.js"
 import { post, validateFormInput } from "../utils.js"
 
+// TODO rediriger si deja co ?
+
 let form: HTMLFormElement | null = null
+let formError: HTMLElement | null = null
 let codeInput: HTMLInputElement | null = null
 let codeInputError: HTMLElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form") as HTMLFormElement
+  formError = document.getElementById("form-error")
   codeInput = document.getElementById("code") as HTMLInputElement
   codeInputError = document.getElementById("code-error") as HTMLElement
 
@@ -41,10 +45,12 @@ async function onSubmit(e: Event): Promise<void> {
     code: codeInput?.value,
   })
   if (!data) {
-    // TODO show red message
-    alert("Invalid or expired code. Please try again.")
+    formError!.textContent = "The code is invalid. Please try again."
+    formError?.classList.remove("hidden")
     return
   }
+
+  formError?.classList.add("hidden")
 
   navigate("/home")
 }

@@ -1,7 +1,10 @@
 import { navigate } from "../persistent/router.js"
 import { isValidEmail, isValidPassword, post, validateFormInput } from "../utils.js"
 
+// TODO rediriger si deja co
+
 let form: HTMLFormElement | null = null
+let formError: HTMLElement | null = null
 let username: HTMLInputElement | null = null
 let usernameError: HTMLElement | null = null
 let email: HTMLInputElement | null = null
@@ -14,6 +17,7 @@ let googleBtn: HTMLButtonElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form")
+  formError = document.getElementById("form-error")
   username = document.getElementById("username") as HTMLInputElement | null
   usernameError = document.getElementById("username-error")
   email = document.getElementById("email") as HTMLInputElement | null
@@ -87,10 +91,12 @@ async function onSubmit(e: Event): Promise<void> {
     password: password?.value,
   })
   if (!data) {
-    // TODO afficher un message rouge dans le formulaire
-    alert("Registration failed. Please try again.")
+    formError!.textContent = "Signup failed. Please try again."
+    formError?.classList.remove("hidden")
     return
   }
+
+  formError?.classList.add("hidden")
 
   navigate("/home")
 }

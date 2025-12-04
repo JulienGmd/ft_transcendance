@@ -1,7 +1,10 @@
 import { navigate } from "../persistent/router.js"
 import { isValidEmail, post, validateFormInput } from "../utils.js"
 
+// TODO rediriger si deja co
+
 let form: HTMLFormElement | null = null
+let formError: HTMLElement | null = null
 let email: HTMLInputElement | null = null
 let emailError: HTMLElement | null = null
 let password: HTMLInputElement | null = null
@@ -9,6 +12,7 @@ let googleBtn: HTMLButtonElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form")
+  formError = document.getElementById("form-error")
   email = document.getElementById("email") as HTMLInputElement | null
   emailError = document.getElementById("email-error")
   password = document.getElementById("password") as HTMLInputElement | null
@@ -42,10 +46,12 @@ async function onSubmit(e: Event): Promise<void> {
     password: password?.value,
   })
   if (!data) {
-    // TODO afficher un message rouge dans le formulaire
-    alert("Login failed. Please check your credentials.")
+    formError!.textContent = "Login failed. Please check your credentials."
+    formError?.classList.remove("hidden")
     return
   }
+
+  formError?.classList.add("hidden")
 
   if (data.needsTwoFA) {
     navigate("/2fa")
