@@ -4,7 +4,7 @@
 <script src="/public/components/lockIcon.js"></script>
 <script src="/public/components/googleIcon.js"></script>
 
-<div class="grid min-h-screen place-items-center p-8">
+<div class="grid flex-1 place-items-center p-8">
   <div class="animate-slide-up w-full space-y-8 sm:max-w-96">
     <!-- Header -->
     <div class="flex flex-col items-center space-y-4">
@@ -14,8 +14,15 @@
 
     <!-- Login Form -->
     <form class="flex flex-col gap-6" action="/auth/login" method="post">
-      <form-input type="text" _id="email" label="Email" icon="user"></form-input>
-      <form-input type="password" _id="password" label="Password" icon="lock"></form-input>
+      <form-input type="text" _id="email" required label="Email" icon="user" autocomplete="email"></form-input>
+      <form-input
+        type="password"
+        _id="password"
+        required
+        label="Password"
+        icon="lock"
+        autocomplete="current-password"
+      ></form-input>
       <button type="submit" class="button">Sign In</button>
       <a href="#" class="link text-sm">Forgot password?</a>
     </form>
@@ -35,7 +42,7 @@
     <!-- Footer -->
     <div class="text-text-muted text-center text-sm">
       Don't have an account?
-      <a href="/signup" class="link">Sign up</a>
+      <a href="/signup" class="link">Sign Up</a>
     </div>
   </div>
 </div>
