@@ -31,13 +31,13 @@ class FormInput extends HTMLElement {
         />
         <label
           for="${_id}"
-          class="text-text-muted peer-focus:text-primary peer-hover:text-primary pointer-events-none absolute top-2 left-4 text-xs transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs"
+          class="text-text-muted peer-focus:text-primary pointer-events-none absolute top-2 left-4 text-xs transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs"
         >
           ${label}
         </label>
         ${
       icon
-        ? `<div class="text-text-muted pointer-events-none peer-hover:text-primary peer-focus:text-primary absolute top-1/2 right-4 size-5 -translate-y-1/2 transition"><${icon}-icon /></div>`
+        ? `<div class="text-text-muted pointer-events-none peer-focus:text-primary absolute top-1/2 right-4 size-5 -translate-y-1/2 transition"><${icon}-icon /></div>`
         : ""
     }
       </div>
