@@ -52,11 +52,6 @@ async function onSubmit(e: Event): Promise<void> {
     return
   }
 
-  // TODO make this more robust, maybe pass the username in signup in the form directly, so we dont need to go to that page.
-  // Then we can add 2fa in the profile page
-  // if (data.needsSetup)
-  //   navigate("/setup-profile")
-  // else
   navigate("/home")
 }
 

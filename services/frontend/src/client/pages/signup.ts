@@ -2,6 +2,8 @@ import { navigate } from "../persistent/router.js"
 import { isValidEmail, isValidPassword, post, validateFormInput } from "../utils.js"
 
 let form: HTMLFormElement | null = null
+let username: HTMLInputElement | null = null
+let usernameError: HTMLElement | null = null
 let email: HTMLInputElement | null = null
 let emailError: HTMLElement | null = null
 let password: HTMLInputElement | null = null
@@ -12,6 +14,8 @@ let googleBtn: HTMLButtonElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form")
+  username = document.getElementById("username") as HTMLInputElement | null
+  usernameError = document.getElementById("username-error")
   email = document.getElementById("email") as HTMLInputElement | null
   emailError = document.getElementById("email-error")
   password = document.getElementById("password") as HTMLInputElement | null
@@ -21,6 +25,7 @@ export function onMount(): void {
   googleBtn = document.getElementById("google-signup-btn") as HTMLButtonElement | null
 
   form?.addEventListener("submit", onSubmit)
+  username?.addEventListener("input", validateUsername)
   email?.addEventListener("input", validateEmail)
   password?.addEventListener("input", validatePassword)
   confirmPassword?.addEventListener("input", validateConfirmPassword)
@@ -29,10 +34,20 @@ export function onMount(): void {
 
 export function onDestroy(): void {
   form?.removeEventListener("submit", onSubmit)
+  username?.removeEventListener("input", validateUsername)
   email?.removeEventListener("input", validateEmail)
   password?.removeEventListener("input", validatePassword)
   confirmPassword?.removeEventListener("input", validateConfirmPassword)
   googleBtn?.removeEventListener("click", loginWithGoogle)
+}
+
+function validateUsername(): void {
+  validateFormInput(
+    username!,
+    usernameError!,
+    (value) => value.length === 0 || value.length >= 3,
+    "Username must be at least 3 characters long",
+  )
 }
 
 function validateEmail(): void {
@@ -67,6 +82,7 @@ async function onSubmit(e: Event): Promise<void> {
     return
 
   const data = await post("/auth/register", {
+    username: username?.value,
     email: email?.value,
     password: password?.value,
   })
@@ -76,11 +92,6 @@ async function onSubmit(e: Event): Promise<void> {
     return
   }
 
-  // TODO make this more robust, maybe pass the username in signup in the form directly, so we dont need to go to that page.
-  // Then we can add 2fa in the profile page
-  // if (data.needsSetup)
-  //   navigate("/setup-profile")
-  // else
   navigate("/home")
 }
 
