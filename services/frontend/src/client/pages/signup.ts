@@ -1,29 +1,30 @@
-import { isValidEmail, isValidPassword } from "../utils.js"
+import { navigate } from "../persistent/router.js"
+import { isValidEmail, isValidPassword, post, validateFormInput } from "../utils.js"
 
 let form: HTMLFormElement | null = null
 let email: HTMLInputElement | null = null
-let password: HTMLInputElement | null = null
-let confirmPassword: HTMLInputElement | null = null
 let emailError: HTMLElement | null = null
+let password: HTMLInputElement | null = null
 let passwordError: HTMLElement | null = null
+let confirmPassword: HTMLInputElement | null = null
 let confirmPasswordError: HTMLElement | null = null
-let googleSignupBtn: HTMLButtonElement | null = null
+let googleBtn: HTMLButtonElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form")
   email = document.getElementById("email") as HTMLInputElement | null
-  password = document.getElementById("password") as HTMLInputElement | null
-  confirmPassword = document.getElementById("confirm-password") as HTMLInputElement | null
   emailError = document.getElementById("email-error")
+  password = document.getElementById("password") as HTMLInputElement | null
   passwordError = document.getElementById("password-error")
+  confirmPassword = document.getElementById("confirm-password") as HTMLInputElement | null
   confirmPasswordError = document.getElementById("confirm-password-error")
-  googleSignupBtn = document.getElementById("google-signup-btn") as HTMLButtonElement | null
+  googleBtn = document.getElementById("google-signup-btn") as HTMLButtonElement | null
 
   form?.addEventListener("submit", onSubmit)
   email?.addEventListener("input", validateEmail)
   password?.addEventListener("input", validatePassword)
   confirmPassword?.addEventListener("input", validateConfirmPassword)
-  googleSignupBtn?.addEventListener("click", handleGoogleSignup)
+  googleBtn?.addEventListener("click", loginWithGoogle)
 }
 
 export function onDestroy(): void {
@@ -31,10 +32,33 @@ export function onDestroy(): void {
   email?.removeEventListener("input", validateEmail)
   password?.removeEventListener("input", validatePassword)
   confirmPassword?.removeEventListener("input", validateConfirmPassword)
-  googleSignupBtn?.removeEventListener("click", handleGoogleSignup)
+  googleBtn?.removeEventListener("click", loginWithGoogle)
 }
 
-function onSubmit(e: Event): void {
+function validateEmail(): void {
+  validateFormInput(email!, emailError!, (value) => value.length === 0 || isValidEmail(value), "Invalid email format")
+}
+
+function validatePassword(): void {
+  validateFormInput(
+    password!,
+    passwordError!,
+    (value) => value.length === 0 || isValidPassword(value),
+    "Password must be at least 8 characters long with at least 1 number and 1 letter",
+  )
+  validateConfirmPassword()
+}
+
+function validateConfirmPassword(): void {
+  validateFormInput(
+    confirmPassword!,
+    confirmPasswordError!,
+    (value) => value.length === 0 || password!.value === value,
+    "Passwords do not match",
+  )
+}
+
+async function onSubmit(e: Event): Promise<void> {
   e.preventDefault()
   e.stopPropagation()
 
@@ -42,79 +66,27 @@ function onSubmit(e: Event): void {
   if (!form?.checkValidity())
     return
 
-  fetch("auth/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include", // Include cookies
-    body: JSON.stringify({
-      email: email?.value,
-      password: password?.value,
-    }),
-  }).then((response) => {
-    if (response.ok) {
-      // Registration successful
-      console.log("Registration successful")
-      return response.json()
-    } else {
-      // Registration failed
-      console.log("Registration failed")
-      throw new Error("Registration failed")
-    }
-  }).then((data) => {
-    // Token is now in cookie
-    // Check if user needs to setup profile
-    if (data.needsSetup)
-      window.location.href = "/setup-profile"
-    else
-      window.location.href = "/home"
-  }).catch((error) => {
-    console.error("Error during registration request:", error)
-    alert("Registration failed. Please try again.")
+  const data = await post("/auth/register", {
+    email: email?.value,
+    password: password?.value,
   })
-}
-
-function validateEmail(): void {
-  if (email?.value.length === 0 || isValidEmail(email!.value)) {
-    email?.setCustomValidity("")
-    emailError!.textContent = ""
-    emailError!.classList.add("hidden")
-  } else {
-    email?.setCustomValidity("Invalid email format")
-    emailError!.textContent = "Invalid email format"
-    emailError!.classList.remove("hidden")
-  }
-}
-
-function validatePassword(): void {
-  if (password?.value.length === 0 || isValidPassword(password!.value)) {
-    password?.setCustomValidity("")
-    passwordError!.textContent = ""
-    passwordError!.classList.add("hidden")
-  } else {
-    password?.setCustomValidity("Password must be at least 8 characters long with at least 1 number and 1 letter")
-    passwordError!.textContent = "Password must be at least 8 characters long with at least 1 number and 1 letter"
-    passwordError!.classList.remove("hidden")
+  if (!data) {
+    // TODO afficher un message rouge dans le formulaire
+    alert("Registration failed. Please try again.")
+    return
   }
 
-  validateConfirmPassword()
+  // Token is now in cookie
+  // Check if user needs to setup profile
+  // TODO make this more robust, maybe pass the username in the form directly, so we dont need to go to that page.
+  if (data.needsSetup)
+    navigate("/setup-profile")
+  else
+    navigate("/home")
 }
 
-function validateConfirmPassword(): void {
-  if (confirmPassword?.value.length === 0 || password?.value === confirmPassword?.value) {
-    confirmPassword?.setCustomValidity("")
-    confirmPasswordError!.textContent = ""
-    confirmPasswordError!.classList.add("hidden")
-  } else {
-    confirmPassword?.setCustomValidity("Passwords do not match")
-    confirmPasswordError!.textContent = "Passwords do not match"
-    confirmPasswordError!.classList.remove("hidden")
-  }
-}
-
-function handleGoogleSignup(e: Event): void {
-  e.preventDefault()
-  // Redirect to Google OAuth (same endpoint as login - backend handles create/login automatically)
+function loginWithGoogle(e: Event): void {
+  // This will redirect to google OAuth page, so we are about to exit the website,
+  // it's fine to do non SPA navigation here.
   window.location.href = "/auth/google"
 }
