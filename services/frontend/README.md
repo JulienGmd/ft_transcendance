@@ -61,12 +61,11 @@ Use Tailwind classes inline:
 
 ### Script Loading
 
-Scripts are extracted from `<script src="...">` tags in the HTML and loaded dynamically.
+#### Pages scripts
 
-Notes:
+Pages scripts (`src/client/pages`) are extracted from `<script src="...">` tags in the HTML and loaded dynamically. They can have imports and they will be resolved correctly.
 
-- The scripts can have imports and they will be resolved correctly.
-- **Important:** Scripts are preloaded on `<a>` hover, so top level code will execute before the page is loaded, use lifecycle hooks instead.
+Note: Pages scripts are preloaded on `<a>` hover, so top level code will execute before the page is loaded, use lifecycle hooks instead.
 
 ```html
 <!-- Load `dist/public/pages/user.js` (transpiled from `src/client/pages/user.ts`) -->
@@ -87,6 +86,20 @@ export async function onMount(): Promise<void> {
 
 export function onDestroy(): void {
   console.log("Page will be removed")
+}
+```
+
+#### Persistent scripts
+
+Persistent scripts should be imported in _index.html. `onPageLoaded` window event can be used to detect page changes:
+
+```ts
+window.addEventListener("onPageLoaded", onPageLoaded)
+
+function onPageLoaded(): void {
+  console.log("New page loaded:", detail.newPageUrl)
+  // To call only once:
+  // window.removeEventListener("onPageLoaded", onPageLoaded)
 }
 ```
 
