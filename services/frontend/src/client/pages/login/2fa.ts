@@ -1,5 +1,5 @@
-import { navigate } from "../persistent/router.js"
-import { post, validateFormInput } from "../utils.js"
+import { navigate } from "../../persistent/router.js"
+import { post, validateFormInput } from "../../utils.js"
 
 // TODO rediriger si deja co ?
 

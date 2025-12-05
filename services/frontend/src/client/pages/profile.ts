@@ -6,6 +6,7 @@ import { get, isValidUsername, post } from "../utils.js"
 interface UserData {
   id: number
   email: string
+  twofa_enabled: boolean
   username?: string | null
   avatar?: string | null
   google_id?: string | null
@@ -33,31 +34,41 @@ interface StatsData {
   globalPrecision: number
 }
 
+let userData: UserData = {
+  id: 0,
+  email: "",
+  twofa_enabled: false,
+}
+
 let avatarFile: HTMLInputElement | null = null
 let usernameInput: HTMLInputElement | null = null
+let twofaButtonEl: HTMLButtonElement | null
 
 export async function onMount(): Promise<void> {
   avatarFile = document.getElementById("avatar-file") as HTMLInputElement | null
   usernameInput = document.getElementById("username") as HTMLInputElement | null
+  twofaButtonEl = document.getElementById("2fa-button") as HTMLButtonElement | null
 
   avatarFile?.addEventListener("change", onAvatarFileChange)
   usernameInput?.addEventListener("keyup", onUsernameInput)
+  twofaButtonEl?.addEventListener("click", on2FAButtonClick)
 
-  const userData = await loadUserInfo()
-  if (!userData) {
+  const _userData = await loadUserInfo()
+  if (!_userData) {
     navigate("/login")
     return
   }
-  displayUserInfo(userData)
+  userData = _userData
+  displayUserInfo()
 
-  console.log(userData.id)
+  // console.log(userData.id)
 
   // const stats = {
   //   totalMatches: 42,
   //   totalWins: 27,
   //   globalPrecision: 85.3,
   // }
-  const stats = await loadStats(userData.id)
+  const stats = await loadStats()
   if (stats)
     displayStats(stats)
 
@@ -89,14 +100,15 @@ export async function onMount(): Promise<void> {
   //     player2_username: "Me",
   //   },
   // ]
-  const matches = await loadMatchHistory(userData.id)
+  const matches = await loadMatchHistory()
   if (matches)
-    displayMatchHistory(matches, userData.id)
+    displayMatchHistory(matches)
 }
 
 export function onDestroy(): void {
   avatarFile?.removeEventListener("change", onAvatarFileChange)
   usernameInput?.removeEventListener("keyup", onUsernameInput)
+  twofaButtonEl?.removeEventListener("click", on2FAButtonClick)
 }
 
 async function loadUserInfo(): Promise<UserData | null> {
@@ -104,13 +116,13 @@ async function loadUserInfo(): Promise<UserData | null> {
   return data ? data.user : null
 }
 
-async function loadMatchHistory(userId: number): Promise<MatchData[]> {
-  const data = await get(`/matches/player/${userId}?limit=10`)
+async function loadMatchHistory(): Promise<MatchData[]> {
+  const data = await get(`/matches/player/${userData.id}?limit=10`)
   return data ? data.matches : []
 }
 
-async function loadStats(userId: number): Promise<StatsData> {
-  const data = await get(`/matches/player/${userId}/stats`)
+async function loadStats(): Promise<StatsData> {
+  const data = await get(`/matches/player/${userData.id}/stats`)
   return data ? data.stats : {
     totalMatches: 0,
     totalWins: 0,
@@ -118,17 +130,18 @@ async function loadStats(userId: number): Promise<StatsData> {
   }
 }
 
-function displayUserInfo(userData: UserData): void {
+function displayUserInfo(): void {
   const usernameEl = document.getElementById("username") as HTMLInputElement | null
   const emailEl = document.getElementById("email") as HTMLSpanElement | null
 
   usernameEl!.value = userData.username || "Anonymous"
   emailEl!.textContent = userData.email
+  twofaButtonEl!.textContent = userData.twofa_enabled ? "enabled" : "disabled"
 
-  updateAvatar(userData)
+  updateAvatar()
 }
 
-function updateAvatar(userData: UserData): void {
+function updateAvatar(): void {
   const avatarImg = document.getElementById("avatar-image") as HTMLImageElement | null
   const avatarLetter = document.getElementById("avatar-letter") as HTMLSpanElement | null
 
@@ -157,15 +170,15 @@ function displayStats(stats: StatsData): void {
   globalPrecisionEl!.textContent = `${stats.globalPrecision.toFixed(1)}%`
 }
 
-function displayMatchHistory(matches: MatchData[], userId: number): void {
+function displayMatchHistory(matches: MatchData[]): void {
   const matchHistoryEl = document.getElementById("match-history")
 
   if (matches.length === 0)
     return
 
   matchHistoryEl!.innerHTML = matches.map((match) => {
-    const isPlayer1 = match.player1_id === userId
-    const isWinner = match.winner_id === userId
+    const isPlayer1 = match.player1_id === userData.id
+    const isWinner = match.winner_id === userData.id
     const userName = isPlayer1 ? match.player1_username : match.player2_username
     const opponentName = isPlayer1 ? match.player2_username : match.player1_username
     const userScore = isPlayer1 ? match.player1_score : match.player2_score
@@ -224,6 +237,8 @@ function onAvatarFileChange(): void {
       return
     }
 
+    userData.avatar = result
+
     avatarImg!.src = result
     avatarImg?.classList.remove("hidden")
     avatarLetter?.classList.add("hidden")
@@ -249,8 +264,26 @@ async function onUsernameInput(e: KeyboardEvent): Promise<void> {
     return
   }
 
-  updateAvatar(data.user)
+  userData.username = username
+
+  updateAvatar()
   header.update()
 
   usernameInput?.blur() // unfocus
+}
+
+async function on2FAButtonClick(): Promise<void> {
+  if (userData.twofa_enabled) {
+    if (!confirm("Do you want to disable 2FA?"))
+      return
+
+    const data = await post("/auth/disable-2fa", {})
+    if (!data) {
+      alert("Failed to disable 2FA. Please try again.")
+      return
+    }
+    twofaButtonEl!.textContent = "Disabled"
+  } else {
+    navigate("/login/setup-2fa")
+  }
 }

@@ -21,8 +21,8 @@
         <span id="avatar-letter" class="text-3xl font-bold">?</span>
         <img id="avatar-image" class="hidden size-full object-cover" alt="Avatar" />
       </button>
-      <!-- Username and email -->
       <div>
+        <!-- Username -->
         <label for="username" class="sr-only">Username</label>
         <input
           type="text"
@@ -31,7 +31,13 @@
           class="focus:border-primary hover:border-surface w-full rounded-md border-2 border-transparent px-2 py-1 text-2xl font-bold outline-none"
           value="Loading..."
         />
-        <p id="email" class="text-text-muted px-2 text-sm">Loading...</p>
+        <!-- Email -->
+        <p id="email" class="text-text-muted pl-2 text-sm">Loading...</p>
+        <!-- 2FA -->
+        <div class="text-text-muted pt-2 pl-2 text-sm">
+          Two-Factor Authentication is
+          <button id="2fa-button" class="text-primary font-bold">Loading...</button>
+        </div>
       </div>
     </div>
 
@@ -41,7 +47,7 @@
       <div class="grid grid-cols-1 gap-8 pt-10 text-center md:grid-cols-4">
         <!-- Total Matches -->
         <div>
-          <div class="text-primary font-orbitron text-2xl font-bold" id="total-matches">0</div>
+          <div class="font-orbitron text-2xl font-bold" id="total-matches">0</div>
           <div class="text-text-muted mt-2 text-sm">Total Matches</div>
         </div>
         <!-- Wins -->

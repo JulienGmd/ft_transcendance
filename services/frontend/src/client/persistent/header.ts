@@ -18,8 +18,6 @@ const logoutBtn = document.querySelector("#header-logout-btn") as HTMLButtonElem
 logoutBtn?.addEventListener("click", logout)
 window.addEventListener("pageLoaded", update)
 
-update()
-
 export async function update(): Promise<void> {
   // If logged in, show profile else show login
 
