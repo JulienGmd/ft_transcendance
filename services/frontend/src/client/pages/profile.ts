@@ -120,11 +120,16 @@ async function loadStats(userId: number): Promise<StatsData> {
 function displayUserInfo(userData: UserData): void {
   const usernameEl = document.getElementById("username") as HTMLInputElement | null
   const emailEl = document.getElementById("email") as HTMLSpanElement | null
-  const avatarImg = document.getElementById("avatar-image") as HTMLImageElement | null
-  const avatarLetter = document.getElementById("avatar-letter") as HTMLSpanElement | null
 
   usernameEl!.value = userData.username || "Anonymous"
   emailEl!.textContent = userData.email
+
+  updateAvatar(userData)
+}
+
+function updateAvatar(userData: UserData): void {
+  const avatarImg = document.getElementById("avatar-image") as HTMLImageElement | null
+  const avatarLetter = document.getElementById("avatar-letter") as HTMLSpanElement | null
 
   if (userData.avatar) {
     avatarImg!.src = userData.avatar
@@ -243,5 +248,7 @@ async function onUsernameInput(e: KeyboardEvent): Promise<void> {
     return
   }
 
-  usernameInput?.blur()
+  updateAvatar(data.user)
+
+  usernameInput?.blur() // unfocus
 }
