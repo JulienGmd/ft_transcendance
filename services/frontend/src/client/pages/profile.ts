@@ -1,5 +1,7 @@
-import { sleep } from "../utils.js"
+import { navigate } from "../persistent/router.js"
+import { get, isValidUsername, post } from "../utils.js"
 
+// TODO shared type
 interface UserData {
   id: number
   email: string
@@ -8,6 +10,7 @@ interface UserData {
   google_id?: string | null
 }
 
+// TODO shared type
 interface MatchData {
   id: number
   player1_id: number
@@ -22,185 +25,116 @@ interface MatchData {
   player2_username?: string
 }
 
+// TODO shared type
 interface StatsData {
   totalMatches: number
   totalWins: number
   globalPrecision: number
 }
 
-let editProfileBtn: HTMLButtonElement | null = null
-let backHomeBtn: HTMLButtonElement | null = null
+let avatarFile: HTMLInputElement | null = null
+let usernameInput: HTMLInputElement | null = null
 
 export async function onMount(): Promise<void> {
-  await sleep(500)
+  avatarFile = document.getElementById("avatar-file") as HTMLInputElement | null
+  usernameInput = document.getElementById("username") as HTMLInputElement | null
 
-  editProfileBtn = document.getElementById("edit-profile-btn") as HTMLButtonElement | null
-  backHomeBtn = document.getElementById("back-home-btn") as HTMLButtonElement | null
+  avatarFile?.addEventListener("change", onAvatarFileChange)
+  usernameInput?.addEventListener("keyup", onUsernameInput)
 
-  // Load user data
-  await loadUserProfile()
+  const userData = await loadUserInfo()
+  if (!userData) {
+    navigate("/login")
+    return
+  }
+  displayUserInfo(userData)
 
-  // Add event listeners
-  editProfileBtn?.addEventListener("click", handleEditProfile)
-  backHomeBtn?.addEventListener("click", handleBackHome)
+  console.log(userData.id)
+
+  // const stats = {
+  //   totalMatches: 42,
+  //   totalWins: 27,
+  //   globalPrecision: 85.3,
+  // }
+  const stats = await loadStats(userData.id)
+  if (stats)
+    displayStats(stats)
+
+  // const matches = [
+  //   {
+  //     id: 0,
+  //     player1_id: 4,
+  //     player2_id: 1,
+  //     player1_score: 10,
+  //     player2_score: 5,
+  //     player1_precision: 96,
+  //     player2_precision: 78,
+  //     winner_id: 4,
+  //     created_at: new Date().toISOString(),
+  //     player1_username: "Me",
+  //     player2_username: "You",
+  //   },
+  //   {
+  //     id: 1,
+  //     player1_id: 2,
+  //     player2_id: 4,
+  //     player1_score: 10,
+  //     player2_score: 7,
+  //     player1_precision: 92,
+  //     player2_precision: 78,
+  //     winner_id: 2,
+  //     created_at: new Date().toISOString(),
+  //     player1_username: "You",
+  //     player2_username: "Me",
+  //   },
+  // ]
+  const matches = await loadMatchHistory(userData.id)
+  if (matches)
+    displayMatchHistory(matches, userData.id)
 }
 
 export function onDestroy(): void {
-  editProfileBtn?.removeEventListener("click", handleEditProfile)
-  backHomeBtn?.removeEventListener("click", handleBackHome)
+  avatarFile?.removeEventListener("change", onAvatarFileChange)
+  usernameInput?.removeEventListener("keyup", onUsernameInput)
 }
 
-async function loadUserProfile(): Promise<void> {
-  try {
-    // Fetch user info
-    const response = await fetch("/auth/me", {
-      credentials: "include",
-    })
+async function loadUserInfo(): Promise<UserData | null> {
+  const data = await get("/auth/me")
+  return data ? data.user : null
+}
 
-    if (!response.ok) {
-      // Not authenticated, redirect to login
-      window.location.href = "/login"
-      return
-    }
+async function loadMatchHistory(userId: number): Promise<MatchData[]> {
+  const data = await get(`/matches/player/${userId}?limit=10`)
+  return data ? data.matches : []
+}
 
-    const data = await response.json()
-    const userData: UserData = data.user
-
-    // Display user info
-    displayUserInfo(userData)
-
-    // Load match history and stats
-    await loadMatchHistory(userData.id)
-    await loadStats(userData.id)
-  } catch (error) {
-    console.error("Error loading profile:", error)
-    window.location.href = "/login"
+async function loadStats(userId: number): Promise<StatsData> {
+  const data = await get(`/matches/player/${userId}/stats`)
+  return data ? data.stats : {
+    totalMatches: 0,
+    totalWins: 0,
+    globalPrecision: 0,
   }
 }
 
 function displayUserInfo(userData: UserData): void {
-  const usernameEl = document.getElementById("username")
-  const emailEl = document.getElementById("email")
-  const avatarContainer = document.getElementById("avatar-container")
-  const avatarImage = document.getElementById("avatar-image") as HTMLImageElement | null
-  const avatarLetter = document.getElementById("avatar-letter")
+  const usernameEl = document.getElementById("username") as HTMLInputElement | null
+  const emailEl = document.getElementById("email") as HTMLSpanElement | null
+  const avatarImg = document.getElementById("avatar-image") as HTMLImageElement | null
+  const avatarLetter = document.getElementById("avatar-letter") as HTMLSpanElement | null
 
-  // Display username
-  if (usernameEl)
-    usernameEl.textContent = userData.username || "No username"
+  usernameEl!.value = userData.username || "Anonymous"
+  emailEl!.textContent = userData.email
 
-  // Display email
-  if (emailEl)
-    emailEl.textContent = userData.email
-
-  // Display avatar
-  if (userData.avatar && avatarImage && avatarLetter) {
-    avatarImage.src = userData.avatar
-    avatarImage.classList.remove("hidden")
-    avatarLetter.classList.add("hidden")
-  } else if (avatarLetter && userData.username)
-    avatarLetter.textContent = userData.username.charAt(0).toUpperCase()
-  else if (avatarLetter)
-    avatarLetter.textContent = userData.email.charAt(0).toUpperCase()
-}
-
-async function loadMatchHistory(userId: number): Promise<void> {
-  try {
-    // Fetch match history from API
-    const response = await fetch(`/matches/player/${userId}?limit=10`, {
-      credentials: "include",
-    })
-
-    if (!response.ok)
-      throw new Error("Failed to fetch match history")
-
-    const data = await response.json()
-    const matches: MatchData[] = data.matches || []
-
-    displayMatchHistory(matches, userId)
-  } catch (error) {
-    console.error("Error loading match history:", error)
-    // Display empty state on error
-    displayMatchHistory([], userId)
-  }
-}
-
-function displayMatchHistory(matches: MatchData[], userId: number): void {
-  const matchHistoryEl = document.getElementById("match-history")
-  if (!matchHistoryEl)
-    return
-
-  if (matches.length === 0) {
-    matchHistoryEl.innerHTML = `
-      <div class="text-text-muted text-center py-8">
-        No matches yet
-      </div>
-    `
-    return
-  }
-
-  matchHistoryEl.innerHTML = matches.map((match) => {
-    const isPlayer1 = match.player1_id === userId
-    const isWinner = match.winner_id === userId
-    const userName = isPlayer1 ? (match.player1_username || "You") : (match.player2_username || "You")
-    const opponentName = isPlayer1 ? (match.player2_username || "Unknown") : (match.player1_username || "Unknown")
-    const userScore = isPlayer1 ? match.player1_score : match.player2_score
-    const opponentScore = isPlayer1 ? match.player2_score : match.player1_score
-    const userPrecision = isPlayer1 ? (match as any).player1_precision : (match as any).player2_precision
-    const date = new Date(match.created_at).toLocaleDateString()
-
-    return `
-      <div class="rounded-xl p-4 flex items-center justify-between border" style="background-color: ${
-      isWinner ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)"
-    }; border-color: ${isWinner ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)"};">
-        <div class="flex items-center gap-4">
-          <div class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl" style="background-color: ${
-      isWinner ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
-    };">
-            ${isWinner ? "W" : "L"}
-          </div>
-          <div>
-            <div class="text-white font-semibold text-lg">${userName} vs ${opponentName}</div>
-            <div class="text-text-muted text-sm">${date}</div>
-          </div>
-        </div>
-        <div class="text-right">
-          <div class="font-bold text-xl mb-1" style="color: ${
-      isWinner ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
-    };">${userScore} - ${opponentScore}</div>
-          <div class="text-text-muted text-sm">Precision: ${userPrecision.toFixed(1)}%</div>
-        </div>
-      </div>
-    `
-  }).join("")
-}
-
-async function loadStats(userId: number): Promise<void> {
-  try {
-    // Fetch stats from API
-    const response = await fetch(`/matches/player/${userId}/stats`, {
-      credentials: "include",
-    })
-
-    if (!response.ok)
-      throw new Error("Failed to fetch stats")
-
-    const data = await response.json()
-    const stats: StatsData = data.stats || {
-      totalMatches: 0,
-      totalWins: 0,
-      globalPrecision: 0,
-    }
-
-    displayStats(stats)
-  } catch (error) {
-    console.error("Error loading stats:", error)
-    // Display default stats on error
-    displayStats({
-      totalMatches: 0,
-      totalWins: 0,
-      globalPrecision: 0,
-    })
+  if (userData.avatar) {
+    avatarImg!.src = userData.avatar
+    avatarImg?.classList.remove("hidden")
+  } else if (userData.username) {
+    avatarLetter!.textContent = userData.username.charAt(0).toUpperCase()
+    avatarLetter?.classList.remove("hidden")
+  } else {
+    avatarLetter!.textContent = userData.email.charAt(0).toUpperCase()
+    avatarLetter?.classList.remove("hidden")
   }
 }
 
@@ -210,25 +144,104 @@ function displayStats(stats: StatsData): void {
   const winRateEl = document.getElementById("win-rate")
   const globalPrecisionEl = document.getElementById("global-precision")
 
-  if (totalMatchesEl)
-    totalMatchesEl.textContent = stats.totalMatches.toString()
+  totalMatchesEl!.textContent = stats.totalMatches.toString()
+  totalWinsEl!.textContent = stats.totalWins.toString()
+  const winRate = stats.totalMatches > 0 ? (stats.totalWins / stats.totalMatches * 100) : 0
+  winRateEl!.textContent = `${winRate.toFixed(1)}%`
+  globalPrecisionEl!.textContent = `${stats.globalPrecision.toFixed(1)}%`
+}
 
-  if (totalWinsEl)
-    totalWinsEl.textContent = stats.totalWins.toString()
+function displayMatchHistory(matches: MatchData[], userId: number): void {
+  const matchHistoryEl = document.getElementById("match-history")
 
-  if (winRateEl) {
-    const winRate = stats.totalMatches > 0 ? (stats.totalWins / stats.totalMatches * 100) : 0
-    winRateEl.textContent = `${winRate.toFixed(1)}%`
+  if (matches.length === 0)
+    return
+
+  matchHistoryEl!.innerHTML = matches.map((match) => {
+    const isPlayer1 = match.player1_id === userId
+    const isWinner = match.winner_id === userId
+    const userName = isPlayer1 ? match.player1_username : match.player2_username
+    const opponentName = isPlayer1 ? match.player2_username : match.player1_username
+    const userScore = isPlayer1 ? match.player1_score : match.player2_score
+    const opponentScore = isPlayer1 ? match.player2_score : match.player1_score
+    const userPrecision = isPlayer1 ? match.player1_precision : match.player2_precision
+    const date = new Date(match.created_at).toLocaleDateString()
+
+    return `
+      <div class="rounded-lg p-4 flex items-center justify-between border border-surface shadow-2xl">
+        <div>
+          <div
+            class="font-semibold text-lg"
+            style="color: ${isWinner ? "var(--color-success)" : "var(--color-error)"};"
+          >
+            ${userName} vs ${opponentName}
+          </div>
+          <div class="text-text-muted text-sm">${date}</div>
+        </div>
+        <div class="text-right">
+          <div
+            class="font-bold text-xl mb-1"
+            style="color: ${isWinner ? "var(--color-success)" : "var(--color-error)"};"
+          >
+            ${userScore} - ${opponentScore}
+          </div>
+          <div class="text-text-muted text-sm">Precision: ${userPrecision.toFixed(1)}%</div>
+        </div>
+      </div>
+    `
+  }).join("")
+}
+
+function onAvatarFileChange(): void {
+  const avatarImg = document.getElementById("avatar-image") as HTMLImageElement | null
+  const avatarLetter = document.getElementById("avatar-letter") as HTMLSpanElement | null
+  const file = avatarFile?.files?.[0]
+  if (!file)
+    return
+
+  // Limit file size to 2MB
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Image must be less than 2MB")
+    avatarFile!.value = ""
+    return
   }
 
-  if (globalPrecisionEl)
-    globalPrecisionEl.textContent = `${stats.globalPrecision.toFixed(1)}%`
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const result = e.target?.result as string
+
+    const data = await post("/auth/set-avatar", {
+      avatar: result,
+    })
+    if (!data) {
+      alert("Failed to upload avatar. Please try again.")
+      return
+    }
+
+    avatarImg!.src = result
+    avatarImg?.classList.remove("hidden")
+    avatarLetter?.classList.add("hidden")
+  }
+  reader.readAsDataURL(file)
 }
 
-function handleEditProfile(): void {
-  window.location.href = "/setup-profile"
-}
+async function onUsernameInput(e: KeyboardEvent): Promise<void> {
+  if (e.key !== "Enter")
+    return
 
-function handleBackHome(): void {
-  window.location.href = "/home"
+  const username = usernameInput?.value || ""
+  if (!isValidUsername(username)) {
+    alert("Invalid username. It must be 3-20 characters long and can only contain letters, numbers, and underscores.")
+    return
+  }
+
+  const data = await post("/auth/set-username", {
+    username,
+  })
+  if (!data) {
+    alert("Failed to set username. Please try again.")
+    return
+  }
+
+  usernameInput?.blur()
 }

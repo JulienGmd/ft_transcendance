@@ -18,25 +18,21 @@
 
         <div class="animate-slide-left animate-delay-[0.2s]">
           <!-- Login button (shown when not authenticated) -->
-          <a id="login" class="hover-skew font-orbitron" href="/login">LOGIN</a>
+          <a id="header-login" class="hover-skew font-orbitron" href="/login">LOGIN</a>
 
           <!-- User profile (shown when authenticated) -->
-          <div id="profile-container" class="group relative">
+          <div id="header-profile-container" class="group relative">
             <!-- Profile link -->
-            <a href="/profile">
+            <a href="/profile" class="bg-primary grid size-12 place-items-center overflow-hidden rounded-full">
               <span class="sr-only">Profile</span>
-              <img
-                id="avatar"
-                src="https://www.gravatar.com/avatar/?d=mp"
-                alt="User Avatar"
-                class="size-10 rounded-full"
-              />
+              <img id="header-avatar-img" alt="User Avatar" class="hidden size-full rounded-full object-cover" />
+              <span id="header-avatar-letter" class="hidden text-2xl font-bold">?</span>
             </a>
 
             <!-- Dropdown menu -->
             <div class="absolute top-full right-0 hidden pt-2 group-hover:block">
               <div class="bg-surface size-full w-32 rounded-md shadow-lg *:first:pt-4 *:last:pb-4">
-                <button id="logout-btn" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">
+                <button id="header-logout-btn" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">
                   Logout
                 </button>
               </div>
@@ -50,7 +46,7 @@
       </div>
 
       <!-- Footer -->
-      <footer class="mt-8">
+      <footer class="mt-16">
         <p class="text-text-muted text-center text-sm">© 2025 TRANSCENDENCE. All rights reserved.</p>
       </footer>
     </div>

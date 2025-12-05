@@ -55,7 +55,12 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+export function isValidUsername(username: string): boolean {
+  // 3-20 chars, letters, numbers, underscores
+  return /^[a-zA-Z0-9_]{3,20}$/.test(username)
+}
+
 export function isValidPassword(password: string): boolean {
-  // Minimum 8 chars, 1 letter and 1 number
+  // 8+ chars, 1 letter and 1 number
   return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)
 }

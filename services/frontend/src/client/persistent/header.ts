@@ -9,12 +9,11 @@ interface UserData {
   google_id?: string | null
 }
 
-let logoutBtn: HTMLButtonElement | null
-
-const loginLink = document.querySelector("#login") as HTMLAnchorElement | null
-const profileContainer = document.querySelector("#profile-container") as HTMLDivElement | null
-const avatarImg = document.querySelector("#avatar") as HTMLImageElement | null
-logoutBtn = document.querySelector("#logout-btn") as HTMLButtonElement | null
+const loginLink = document.querySelector("#header-login") as HTMLAnchorElement | null
+const profileContainer = document.querySelector("#header-profile-container") as HTMLDivElement | null
+const avatarImg = document.querySelector("#header-avatar-img") as HTMLImageElement | null
+const avatarLetter = document.querySelector("#header-avatar-letter") as HTMLSpanElement | null
+const logoutBtn = document.querySelector("#header-logout-btn") as HTMLButtonElement | null
 
 logoutBtn?.addEventListener("click", logout)
 
@@ -29,8 +28,16 @@ if (response.ok) {
   const data = await response.json()
   const userData: UserData = data.user
 
-  if (avatarImg && userData.avatar)
-    avatarImg.src = userData.avatar
+  if (userData.avatar) {
+    avatarImg!.src = userData.avatar
+    avatarImg?.classList.remove("hidden")
+  } else if (userData.username) {
+    avatarLetter!.textContent = userData.username.charAt(0).toUpperCase()
+    avatarLetter?.classList.remove("hidden")
+  } else {
+    avatarLetter!.textContent = userData.email.charAt(0).toUpperCase()
+    avatarLetter?.classList.remove("hidden")
+  }
 
   loginLink?.classList.add("hidden")
   profileContainer?.classList.remove("hidden")
