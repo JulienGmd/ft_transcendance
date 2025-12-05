@@ -103,7 +103,7 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent): boolean {
 
 // On first navigation, /public/_index.html and this script will be served,
 // if url is /user, this navigate will then display /public/pages/user inside #app
-navigate(window.location.pathname)
+navigate(window.location.pathname, false)
 
 /** Handle browser navigation (back/forward buttons) */
 window.addEventListener("popstate", () => {
