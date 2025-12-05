@@ -16,37 +16,42 @@ const avatarLetter = document.querySelector("#header-avatar-letter") as HTMLSpan
 const logoutBtn = document.querySelector("#header-logout-btn") as HTMLButtonElement | null
 
 logoutBtn?.addEventListener("click", logout)
+window.addEventListener("pageLoaded", update)
 
-// If logged in, show profile else show login
+update()
 
-// TODO causing 502 if not logged in.
-// -> Add bool IsLoggedIn to localStorage ?
-// -> or check cookie ?
-const response = await fetch("/auth/me", { credentials: "include" })
+export async function update(): Promise<void> {
+  // If logged in, show profile else show login
 
-if (response.ok) {
-  const data = await response.json()
-  const userData: UserData = data.user
+  // TODO causing 502 if not logged in.
+  // -> Add bool IsLoggedIn to localStorage ?
+  // -> or check cookie ?
+  const response = await fetch("/auth/me", { credentials: "include" })
 
-  if (userData.avatar) {
-    avatarImg!.src = userData.avatar
-    avatarImg?.classList.remove("hidden")
-  } else if (userData.username) {
-    avatarLetter!.textContent = userData.username.charAt(0).toUpperCase()
-    avatarLetter?.classList.remove("hidden")
+  if (response.ok) {
+    const data = await response.json()
+    const userData: UserData = data.user
+
+    if (userData.avatar) {
+      avatarImg!.src = userData.avatar
+      avatarImg?.classList.remove("hidden")
+    } else if (userData.username) {
+      avatarLetter!.textContent = userData.username.charAt(0).toUpperCase()
+      avatarLetter?.classList.remove("hidden")
+    } else {
+      avatarLetter!.textContent = userData.email.charAt(0).toUpperCase()
+      avatarLetter?.classList.remove("hidden")
+    }
+
+    loginLink?.classList.add("hidden")
+    profileContainer?.classList.remove("hidden")
   } else {
-    avatarLetter!.textContent = userData.email.charAt(0).toUpperCase()
-    avatarLetter?.classList.remove("hidden")
+    profileContainer?.classList.add("hidden")
+    loginLink?.classList.remove("hidden")
   }
-
-  loginLink?.classList.add("hidden")
-  profileContainer?.classList.remove("hidden")
-} else {
-  profileContainer?.classList.add("hidden")
-  loginLink?.classList.remove("hidden")
 }
 
 async function logout(): Promise<void> {
   await fetch("/auth/logout", { method: "POST", credentials: "include" })
-  navigate("/") // Always reload page // TODO this will not refresh the header
+  navigate("/")
 }

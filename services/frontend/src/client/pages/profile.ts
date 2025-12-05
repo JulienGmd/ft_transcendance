@@ -1,3 +1,4 @@
+import * as header from "../persistent/header.js"
 import { navigate } from "../persistent/router.js"
 import { get, isValidUsername, post } from "../utils.js"
 
@@ -249,6 +250,7 @@ async function onUsernameInput(e: KeyboardEvent): Promise<void> {
   }
 
   updateAvatar(data.user)
+  header.update()
 
   usernameInput?.blur() // unfocus
 }
