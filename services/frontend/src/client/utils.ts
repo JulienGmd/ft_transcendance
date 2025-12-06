@@ -1,8 +1,10 @@
+import { ApiEndpoint } from "../../../../types/types"
+
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export async function get(url: string): Promise<any | null> {
+export async function get<T extends ApiEndpoint<any, any>>(url: string): Promise<T["res"] | null> {
   const res = await fetch(url, {
     method: "GET",
     headers: {
@@ -17,7 +19,7 @@ export async function get(url: string): Promise<any | null> {
   return await res.json()
 }
 
-export async function post(url: string, body: Record<string, any>): Promise<any | null> {
+export async function post<T extends ApiEndpoint<any, any>>(url: string, body: T["req"]): Promise<T["res"] | null> {
   const res = await fetch(url, {
     method: "POST",
     headers: {

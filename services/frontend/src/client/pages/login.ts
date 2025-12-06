@@ -1,3 +1,4 @@
+import { ApiUserLoginPostEndpoint } from "../../../../../types/auth.js"
 import { navigate } from "../persistent/router.js"
 import { isValidEmail, post, validateFormInput } from "../utils.js"
 
@@ -41,9 +42,9 @@ async function onSubmit(e: Event): Promise<void> {
   if (!form?.checkValidity())
     return
 
-  const data = await post("/auth/login", {
-    email: email?.value,
-    password: password?.value,
+  const data = await post<ApiUserLoginPostEndpoint>("/api/user/login", {
+    email: email!.value,
+    password: password!.value,
   })
   if (!data) {
     formError!.textContent = "Login failed. Please check your credentials."

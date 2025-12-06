@@ -1,3 +1,4 @@
+import { ApiUserLogoutPostEndpoint, ApiUserMeGetEndpoint } from "../../../../../types/auth.js"
 import { navigate } from "../persistent/router.js"
 import { get, post } from "../utils.js"
 
@@ -21,7 +22,7 @@ window.addEventListener("pageLoaded", update)
 
 // Show profile button or login link
 export async function update(): Promise<void> {
-  const data = await get("/auth/me")
+  const data = await get<ApiUserMeGetEndpoint>("/api/user/me")
 
   if (data) {
     const userData: UserData = data.user
@@ -46,6 +47,6 @@ export async function update(): Promise<void> {
 }
 
 async function logout(): Promise<void> {
-  await post("/auth/logout", {})
+  await post<ApiUserLogoutPostEndpoint>("/api/user/logout", {})
   navigate("/")
 }

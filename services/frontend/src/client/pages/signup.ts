@@ -1,3 +1,4 @@
+import { ApiUserRegisterPostEndpoint } from "../../../../../types/auth.js"
 import { navigate } from "../persistent/router.js"
 import { isValidEmail, isValidPassword, post, validateFormInput } from "../utils.js"
 
@@ -85,10 +86,10 @@ async function onSubmit(e: Event): Promise<void> {
   if (!form?.checkValidity())
     return
 
-  const data = await post("/auth/register", {
-    username: username?.value,
-    email: email?.value,
-    password: password?.value,
+  const data = await post<ApiUserRegisterPostEndpoint>("/api/user/register", {
+    username: username!.value,
+    email: email!.value,
+    password: password!.value,
   })
   if (!data) {
     formError!.textContent = "Signup failed. Please try again."

@@ -1,3 +1,4 @@
+import type { ApiUser2FAVerifyPostEndpoint } from "../../../../../../types/auth.js"
 import { navigate } from "../../persistent/router.js"
 import { post, validateFormInput } from "../../utils.js"
 
@@ -41,8 +42,8 @@ async function onSubmit(e: Event): Promise<void> {
     return
 
   // note: userId is sent with cookies
-  const data = await post("/auth/2fa/login/verify", {
-    code: codeInput?.value,
+  const data = await post<ApiUser2FAVerifyPostEndpoint>("/api/user/2fa/verify", {
+    code: codeInput!.value,
   })
   if (!data) {
     formError!.textContent = "The code is invalid. Please try again."
