@@ -15,7 +15,6 @@
 
 # TODO remettre https grace a la magie noire
 https://localhost:8080 {
-	tls /certs/cert.pem /certs/key.pem
 
 	# user-management, frontend are the docker-compose service names (they are on the same network)
 	reverse_proxy /auth/* https://user-management:3000 {
