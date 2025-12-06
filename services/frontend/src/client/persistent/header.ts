@@ -1,4 +1,5 @@
 import { navigate } from "../persistent/router.js"
+import { get, post } from "../utils.js"
 
 // TODO import from shared types
 interface UserData {
@@ -18,16 +19,11 @@ const logoutBtn = document.querySelector("#header-logout-btn") as HTMLButtonElem
 logoutBtn?.addEventListener("click", logout)
 window.addEventListener("pageLoaded", update)
 
+// Show profile button or login link
 export async function update(): Promise<void> {
-  // If logged in, show profile else show login
+  const data = await get("/auth/me")
 
-  // TODO causing 502 if not logged in.
-  // -> Add bool IsLoggedIn to localStorage ?
-  // -> or check cookie ?
-  const response = await fetch("/auth/me", { credentials: "include" })
-
-  if (response.ok) {
-    const data = await response.json()
+  if (data) {
     const userData: UserData = data.user
 
     if (userData.avatar) {
@@ -50,6 +46,6 @@ export async function update(): Promise<void> {
 }
 
 async function logout(): Promise<void> {
-  await fetch("/auth/logout", { method: "POST", credentials: "include" })
+  await post("/auth/logout", {})
   navigate("/")
 }

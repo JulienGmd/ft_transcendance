@@ -35,8 +35,12 @@ fastify.get("/*", async (req, res) => {
   let content = readFileSync(`${PUBLIC_DIR}/_index.html`, "utf-8")
 
   // Inject live reload script in development
-  if (NODE_ENV !== "production")
-    content = content.replace("</head>", '<script src="/public/persistent/liveReload.js"></script></head>')
+  if (NODE_ENV !== "production") {
+    content = content.replace(
+      "</head>",
+      '<script defer type="module" src="/public/persistent/liveReload.js"></script></head>',
+    )
+  }
 
   if (NODE_ENV === "production")
     res.header("cache-control", "max-age=31536000")

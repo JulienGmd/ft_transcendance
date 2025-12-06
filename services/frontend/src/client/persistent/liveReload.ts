@@ -1,11 +1,12 @@
+import { get } from "../utils.js"
+
 let lastTimestamps: Record<string, number> = {}
 
 async function reloadIfFilesChanged(): Promise<void> {
   try {
-    const res = await fetch("/dev/file-timestamps")
-    if (!res.ok)
+    const timestamps = (await get("/dev/file-timestamps")) as Record<string, number> | null
+    if (!timestamps)
       return
-    const timestamps: Record<string, number> = await res.json()
 
     // Initial load
     if (Object.keys(lastTimestamps).length === 0) {
@@ -21,7 +22,7 @@ async function reloadIfFilesChanged(): Promise<void> {
 
     lastTimestamps = timestamps
   } catch (error) {
-    // Skip
+    console.error("Error checking file timestamps for live reload:", error)
   }
 }
 

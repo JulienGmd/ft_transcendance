@@ -11,7 +11,7 @@ export async function get(url: string): Promise<any | null> {
     credentials: "include", // Include cookies
   })
   if (!res.ok) {
-    console.error(`GET request to ${url} failed with status ${res.status} (${await res.text()})`)
+    console.error(`GET ${url} failed with status ${res.status}: ${await res.text()}`)
     return null
   }
   return await res.json()
@@ -27,7 +27,7 @@ export async function post(url: string, body: Record<string, any>): Promise<any 
     body: JSON.stringify(body),
   })
   if (!res.ok) {
-    console.error(`POST request to ${url} failed with status ${res.status} (${await res.text()})`)
+    console.error(`POST ${url} failed with status ${res.status}: ${await res.text()}`)
     return null
   }
   return await res.json()
