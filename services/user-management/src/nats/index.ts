@@ -1,3 +1,3 @@
-export { closeNats, getCodec, getNatsClient, initNats } from "./connection"
-export { setupMatchSubscribers } from "./match.subscriber"
-export { Topics } from "./topics"
+export { closeNats, getCodec, getNatsClient, initNats } from "./connection.js"
+export { setupMatchSubscribers } from "./match.subscriber.js"
+export { Topics } from "./topics.js"

@@ -1,6 +1,6 @@
 import BetterSqlite3 from "better-sqlite3"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
-import { verifyToken } from "../auth/jwt"
+import { verifyToken } from "../auth/jwt.js"
 import {
   createMatch,
   getAllMatches,
@@ -8,7 +8,7 @@ import {
   getPlayerMatchHistory,
   getPlayerStats,
   MatchWithUsernames,
-} from "./match.service"
+} from "./match.service.js"
 
 // Mapper les données de la base vers le format attendu par le frontend
 function mapMatchForFrontend(match: MatchWithUsernames) {

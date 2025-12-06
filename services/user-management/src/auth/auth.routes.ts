@@ -1,15 +1,12 @@
 import bcrypt from "bcrypt"
 import BetterSqlite3 from "better-sqlite3"
-import Database from "better-sqlite3"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
-import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa"
-import { findOrCreateClassicUser, findOrCreateGoogleUser, setUsername } from "./api/user.service"
-import { getGoogleAuthUrl, getGoogleProfile } from "./google"
-import { verifyJWT, verifyToken } from "./jwt"
-import { isValidEmail, isValidPassword } from "./validation"
-
-type FastifyInstanceWithDB = FastifyInstance & { db: any }
+import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
+import { findOrCreateClassicUser, findOrCreateGoogleUser, setUsername } from "./auth.service.js"
+import { getGoogleAuthUrl, getGoogleProfile } from "./google.js"
+import { verifyToken } from "./jwt.js"
+import { isValidEmail, isValidPassword } from "./validation.js"
 
 export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
   // 1. Redirection vers Google

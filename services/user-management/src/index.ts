@@ -2,10 +2,10 @@ import "dotenv/config"
 import cookie from "@fastify/cookie"
 import Fastify from "fastify"
 import { readFileSync } from "fs"
-import { authRoutes } from "./auth/auth.routes"
-import { initDb } from "./db/init"
-import { matchRoutes } from "./match/match.routes"
-import { closeNats, initNats, setupMatchSubscribers } from "./nats"
+import { authRoutes } from "./auth/auth.routes.js"
+import { initDb } from "./db/init.js"
+import { matchRoutes } from "./match/match.routes.js"
+import { closeNats, initNats, setupMatchSubscribers } from "./nats/index.js"
 
 try {
   // Create HTTPS server (/certs mounted from ./certs in docker-compose.yml)

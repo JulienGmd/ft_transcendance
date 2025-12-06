@@ -1,7 +1,7 @@
 import type Database from "better-sqlite3"
-import { createMatch } from "../match/match.service"
-import { getCodec, getNatsClient } from "./connection"
-import { Topics } from "./topics"
+import { createMatch } from "../match/match.service.js"
+import { getCodec, getNatsClient } from "./connection.js"
+import { Topics } from "./topics.js"
 
 interface MatchCreatePayload {
   player1Id: number
@@ -26,8 +26,6 @@ export function setupMatchSubscribers(db: Database.Database): void {
   const codec = getCodec()
 
   console.log("🎮 Setting up NATS match subscribers...")
-
-  // Subscriber pour créer un match
   ;(async () => {
     const sub = nc.subscribe(Topics.MATCH.CREATE)
     console.log(`📡 Listening on ${Topics.MATCH.CREATE}`)
