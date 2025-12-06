@@ -2,6 +2,20 @@ import bcrypt from "bcrypt"
 import BetterSqlite3 from "better-sqlite3"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
+import type {
+  ApiUser2FAEnablePostRequest,
+  ApiUser2FAEnablePostResponse,
+  ApiUser2FASetupPostResponse,
+  ApiUserLoginPostRequest,
+  ApiUserLoginPostResponse,
+  ApiUserLogoutPostResponse,
+  ApiUserMeGetResponse,
+  ApiUserRegisterPostRequest,
+  ApiUserRegisterPostResponse,
+  ApiUserSetusernamePostRequest,
+  ApiUserSetusernamePostResponse,
+  User,
+} from "../../../../types/auth.js"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
 import { findOrCreateClassicUser, findOrCreateGoogleUser, setUsername } from "./auth.service.js"
 import { getGoogleAuthUrl, getGoogleProfile } from "./google.js"
@@ -10,12 +24,12 @@ import { isValidEmail, isValidPassword } from "./validation.js"
 
 export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
   // 1. Redirection vers Google
-  fastify.get("/api/user/google", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/auth/google", async (request: FastifyRequest, reply: FastifyReply) => {
     reply.redirect(getGoogleAuthUrl())
   })
 
   // 2. Callback Google
-  fastify.get("/api/user/google/callback", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/auth/google/callback", async (request: FastifyRequest, reply: FastifyReply) => {
     const code = (request.query as any).code as string
     console.log("[OAuth] Received callback with code:", code ? "present" : "missing")
 
@@ -89,7 +103,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   fastify.post("/api/user/register", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email, password } = request.body as { email: string; password: string }
+    const { email, password } = request.body as ApiUserRegisterPostRequest
     if (!email || !password)
       return reply.status(400).send("Email ou mot de passe manquant")
     if (!isValidEmail(email))
@@ -118,16 +132,13 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
       maxAge: 3600, // 1 hour in seconds
     })
 
-    // Indiquer au frontend s'il faut rediriger vers setup-profile
-    reply.send({
-      user,
-      needsSetup: !user.username, // true si l'utilisateur n'a pas de username
-    })
+    const response: ApiUserRegisterPostResponse = { user }
+    reply.send(response)
   })
 
   // 3. Connexion classique (email + mot de passe)
   fastify.post("/api/user/login", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email, password } = request.body as { email: string; password: string }
+    const { email, password } = request.body as ApiUserLoginPostRequest
     if (!email || !password)
       return reply.status(400).send("Email ou mot de passe manquant")
     if (!isValidEmail(email))
@@ -153,11 +164,11 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     if (twoFAEnabled && user.twofa_secret) {
       // 2FA TOTP est activée, ne pas donner de token complet
       // Retourner un état temporaire
-      return reply.send({
+      const response: ApiUserLoginPostResponse = {
         needsTwoFA: true,
-        userId: user.id,
-        email: user.email,
-      })
+      }
+
+      return reply.send(response)
     }
 
     // Pas de 2FA, génération du JWT
@@ -176,22 +187,13 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
       maxAge: 3600, // 1 hour in seconds
     })
 
-    // Indiquer au frontend s'il faut rediriger vers setup-profile
-    reply.send({
-      user,
-      needsSetup: !user.username, // true si l'utilisateur n'a pas de username
-    })
+    const response: ApiUserLoginPostResponse = { user, needsTwoFA: false }
+    reply.send(response)
   })
 
   // Set username (for users who don't have one yet, typically after Google OAuth)
   fastify.post("/api/user/set-username", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { username, avatar, totp_secret, totp_code, disable_2fa } = request.body as {
-      username: string
-      avatar?: string
-      totp_secret?: string
-      totp_code?: string
-      disable_2fa?: boolean
-    }
+    const { username, avatar, totp_secret, totp_code, disable_2fa } = request.body as ApiUserSetusernamePostRequest
 
     // Get token from cookie
     const token = request.cookies.authToken
@@ -260,7 +262,8 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
       maxAge: 3600,
     })
 
-    reply.send({ user })
+    const response: ApiUserSetusernamePostResponse = { success: true }
+    reply.send(response)
   })
 
   // Get user info from token
@@ -288,7 +291,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     // Get user from database to get latest info including avatar
     const user = db.prepare("SELECT id, username, avatar, email, google_id, twofa_enabled FROM users WHERE id = ?").get(
       decoded.userId,
-    )
+    ) as User
 
     if (!user) {
       console.log("[/api/user/me] User not found in DB")
@@ -296,7 +299,8 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     }
 
     console.log("[/api/user/me] User found:", user.username)
-    reply.send({ user })
+    const response: ApiUserMeGetResponse = { user }
+    reply.send(response)
   })
 
   // 4. Connexion Google (fusion possible)
@@ -346,19 +350,26 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
 
     const secret = generate2FASecret(user.email)
     const qrCode = await generate2FAQrCode(secret.otpauth_url!)
-    reply.send({ secret: secret.base32, otpauth_url: secret.otpauth_url, qrCode })
+
+    const response: ApiUser2FASetupPostResponse = {
+      secret: secret.base32,
+      qrCode,
+    }
+    reply.send(response)
   })
 
   // 6. Activation de la 2FA (sauvegarde du secret)
   fastify.post("/api/user/2fa/enable", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { userId, secret, token } = request.body as { userId: number; secret: string; token: string }
-    if (!userId || !secret || !token)
+    const { userId, secret, totp } = request.body as ApiUser2FAEnablePostRequest
+    if (!userId || !secret || !totp)
       return reply.status(400).send("Paramètres manquants")
-    if (!verify2FACode(secret, token))
+    if (!verify2FACode(secret, totp))
       return reply.status(401).send("Code 2FA invalide")
     // Sauvegarde du secret et activation dans la base
     db.prepare("UPDATE users SET twofa_secret = ?, twofa_enabled = TRUE WHERE id = ?").run(secret, userId)
-    reply.send({ success: true })
+
+    const response: ApiUser2FAEnablePostResponse = { success: true }
+    reply.send(response)
   })
 
   // Nouvelle route: Activer la 2FA depuis le profil (avec authentification)
@@ -575,7 +586,9 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
       })
 
       console.log("[Logout] Logout complete")
-      reply.send({ success: true })
+
+      const response: ApiUserLogoutPostResponse = { success: true }
+      reply.send(response)
     } catch (error) {
       console.error("[Logout] Error during logout:", error)
       reply.status(500).send({ error: "Logout failed" })

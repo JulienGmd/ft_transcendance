@@ -2,12 +2,12 @@ import Database from "better-sqlite3"
 
 export interface User {
   id: number
-  username?: string | null
-  avatar?: string | null
+  username?: string
+  avatar?: string
   google_id: string
   email: string
-  password_hash: string | null
-  twofa_secret?: string | null
+  password_hash: string
+  twofa_secret?: string
   twofa_enabled: boolean
   created_at: string
   updated_at: string

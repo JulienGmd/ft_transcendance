@@ -24,6 +24,14 @@ https://localhost:8080 {
 		}
 	}
 
+	# Routes that redirects the user (/auth/google, /auth/google/callback)
+	reverse_proxy /auth/* https://user-management:3000 {
+		transport http {
+			tls
+			tls_trust_pool file /certs/cert.pem
+		}
+	}
+
 	reverse_proxy /* https://frontend:3000 {
 		transport http {
 			tls
