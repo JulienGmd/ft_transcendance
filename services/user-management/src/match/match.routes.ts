@@ -29,7 +29,7 @@ function mapMatchForFrontend(match: MatchWithUsernames) {
 
 export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
   // Créer un nouveau match
-  fastify.post("/matches", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/matches", async (request: FastifyRequest, reply: FastifyReply) => {
     const { player1Id, player2Id, precisionPlayer1, precisionPlayer2, scoreP1, scoreP2 } = request.body as {
       player1Id: number
       player2Id: number
@@ -56,7 +56,7 @@ export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Da
   })
 
   // Récupérer l'historique des matchs d'un joueur
-  fastify.get("/matches/player/:playerId", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/matches/player/:playerId", async (request: FastifyRequest, reply: FastifyReply) => {
     const { playerId } = request.params as { playerId: string }
     const limit = parseInt((request.query as any).limit || "10")
 
@@ -71,7 +71,7 @@ export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Da
   })
 
   // Récupérer les statistiques d'un joueur
-  fastify.get("/matches/player/:playerId/stats", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/matches/player/:playerId/stats", async (request: FastifyRequest, reply: FastifyReply) => {
     const { playerId } = request.params as { playerId: string }
 
     try {
@@ -84,7 +84,7 @@ export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Da
   })
 
   // Récupérer un match par son ID
-  fastify.get("/matches/:matchId", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/matches/:matchId", async (request: FastifyRequest, reply: FastifyReply) => {
     const { matchId } = request.params as { matchId: string }
 
     try {
@@ -99,7 +99,7 @@ export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Da
   })
 
   // Récupérer tous les matchs
-  fastify.get("/matches", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/matches", async (request: FastifyRequest, reply: FastifyReply) => {
     const limit = parseInt((request.query as any).limit || "50")
 
     try {
@@ -113,7 +113,7 @@ export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Da
   })
 
   // Route protégée : récupérer les matchs de l'utilisateur connecté
-  fastify.get("/my-matches", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/my-matches", async (request: FastifyRequest, reply: FastifyReply) => {
     const token = request.cookies.authToken
     if (!token)
       return reply.status(401).send({ error: "Not authenticated" })
@@ -131,7 +131,7 @@ export async function matchRoutes(fastify: FastifyInstance, db: BetterSqlite3.Da
   })
 
   // Route protégée : récupérer les stats de l'utilisateur connecté
-  fastify.get("/my-stats", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/my-stats", async (request: FastifyRequest, reply: FastifyReply) => {
     const token = request.cookies.authToken
     if (!token)
       return reply.status(401).send({ error: "Not authenticated" })

@@ -4,7 +4,7 @@ import Database from "better-sqlite3"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa"
-import { findOrCreateClassicUser, findOrCreateGoogleUser, setUsername } from "./auth.service"
+import { findOrCreateClassicUser, findOrCreateGoogleUser, setUsername } from "./api/user.service"
 import { getGoogleAuthUrl, getGoogleProfile } from "./google"
 import { verifyJWT, verifyToken } from "./jwt"
 import { isValidEmail, isValidPassword } from "./validation"
@@ -13,12 +13,12 @@ type FastifyInstanceWithDB = FastifyInstance & { db: any }
 
 export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
   // 1. Redirection vers Google
-  fastify.get("/auth/google", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/google", async (request: FastifyRequest, reply: FastifyReply) => {
     reply.redirect(getGoogleAuthUrl())
   })
 
   // 2. Callback Google
-  fastify.get("/auth/google/callback", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get("/api/user/google/callback", async (request: FastifyRequest, reply: FastifyReply) => {
     const code = (request.query as any).code as string
     console.log("[OAuth] Received callback with code:", code ? "present" : "missing")
 
@@ -91,7 +91,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     }
   })
 
-  fastify.post("/auth/register", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/register", async (request: FastifyRequest, reply: FastifyReply) => {
     const { email, password } = request.body as { email: string; password: string }
     if (!email || !password)
       return reply.status(400).send("Email ou mot de passe manquant")
@@ -129,7 +129,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // 3. Connexion classique (email + mot de passe)
-  fastify.post("/auth/login", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/login", async (request: FastifyRequest, reply: FastifyReply) => {
     const { email, password } = request.body as { email: string; password: string }
     if (!email || !password)
       return reply.status(400).send("Email ou mot de passe manquant")
@@ -187,7 +187,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Set username (for users who don't have one yet, typically after Google OAuth)
-  fastify.post("/auth/set-username", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/set-username", async (request: FastifyRequest, reply: FastifyReply) => {
     const { username, avatar, totp_secret, totp_code, disable_2fa } = request.body as {
       username: string
       avatar?: string
@@ -267,24 +267,24 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Get user info from token
-  fastify.get("/auth/me", async (request: FastifyRequest, reply: FastifyReply) => {
-    console.log("[/auth/me] Request received")
-    console.log("[/auth/me] Cookies:", request.cookies)
+  fastify.get("/api/user/me", async (request: FastifyRequest, reply: FastifyReply) => {
+    console.log("[/api/user/me] Request received")
+    console.log("[/api/user/me] Cookies:", request.cookies)
 
     // Get token from cookie
     const token = request.cookies.authToken
     if (!token) {
-      console.log("[/auth/me] No token in cookie")
+      console.log("[/api/user/me] No token in cookie")
       return reply.status(401).send("Token manquant")
     }
 
-    console.log("[/auth/me] Token found, verifying...")
+    console.log("[/api/user/me] Token found, verifying...")
     let decoded
     try {
       decoded = verifyToken(token)
-      console.log("[/auth/me] Token verified, userId:", decoded.userId)
+      console.log("[/api/user/me] Token verified, userId:", decoded.userId)
     } catch (err) {
-      console.log("[/auth/me] Token verification failed:", err)
+      console.log("[/api/user/me] Token verification failed:", err)
       return reply.status(401).send("Token invalide")
     }
 
@@ -294,16 +294,16 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
     )
 
     if (!user) {
-      console.log("[/auth/me] User not found in DB")
+      console.log("[/api/user/me] User not found in DB")
       return reply.status(404).send("Utilisateur non trouvé")
     }
 
-    console.log("[/auth/me] User found:", user.username)
+    console.log("[/api/user/me] User found:", user.username)
     reply.send({ user })
   })
 
   // 4. Connexion Google (fusion possible)
-  fastify.post("/auth/google", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/google", async (request: FastifyRequest, reply: FastifyReply) => {
     const { id, email } = request.body as { id: string; email: string }
     if (!id || !email)
       return reply.status(400).send("ID ou email Google manquant")
@@ -329,7 +329,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // 5. Génération du secret et du QR code 2FA
-  fastify.post("/auth/2fa/setup", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/2fa/setup", async (request: FastifyRequest, reply: FastifyReply) => {
     // Get token from cookie
     const token = request.cookies.authToken
     if (!token)
@@ -353,7 +353,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // 6. Activation de la 2FA (sauvegarde du secret)
-  fastify.post("/auth/2fa/enable", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/2fa/enable", async (request: FastifyRequest, reply: FastifyReply) => {
     const { userId, secret, token } = request.body as { userId: number; secret: string; token: string }
     if (!userId || !secret || !token)
       return reply.status(400).send("Paramètres manquants")
@@ -365,7 +365,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Nouvelle route: Activer la 2FA depuis le profil (avec authentification)
-  fastify.post("/auth/2fa/profile/enable", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/2fa/profile/enable", async (request: FastifyRequest, reply: FastifyReply) => {
     // Get token from cookie
     const authToken = request.cookies.authToken
     if (!authToken)
@@ -393,7 +393,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Nouvelle route: Désactiver la 2FA depuis le profil
-  fastify.post("/auth/2fa/profile/disable", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/2fa/profile/disable", async (request: FastifyRequest, reply: FastifyReply) => {
     // Get token from cookie
     const authToken = request.cookies.authToken
     if (!authToken)
@@ -426,7 +426,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // 7. Vérification du code 2FA à la connexion
-  fastify.post("/auth/2fa/verify", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/2fa/verify", async (request: FastifyRequest, reply: FastifyReply) => {
     const { userId, token } = request.body as { userId: number; token: string }
     if (!userId || !token)
       return reply.status(400).send("Paramètres manquants")
@@ -439,7 +439,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Nouvelle route: Vérification du code 2FA lors du login et génération du token complet
-  fastify.post("/auth/2fa/login/verify", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/2fa/login/verify", async (request: FastifyRequest, reply: FastifyReply) => {
     console.log("[2FA Login Verify] Request received")
     console.log("[2FA Login Verify] Body:", request.body)
     console.log("[2FA Login Verify] Cookies:", request.cookies)
@@ -525,7 +525,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Rafraîchissement du token JWT
-  fastify.post("/auth/token/refresh", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/token/refresh", async (request: FastifyRequest, reply: FastifyReply) => {
     const { refreshToken } = request.body as { refreshToken: string }
     if (!refreshToken)
       return reply.status(400).send("Refresh token manquant")
@@ -554,7 +554,7 @@ export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Dat
   })
 
   // Déconnexion (invalidation du refresh token + suppression du cookie)
-  fastify.post("/auth/logout", async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/user/logout", async (request: FastifyRequest, reply: FastifyReply) => {
     console.log("[Logout] Received logout request")
     console.log("[Logout] Cookies:", request.cookies)
 

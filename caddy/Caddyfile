@@ -1,3 +1,6 @@
+# Note: The cert is mounted in this docker and in all services,
+# and used to verify the self-signed cert between caddy and the services
+
 # To reload while the docker is running, run:
 # docker exec -w /etc/caddy ft_transcendance-caddy-1 caddy reload
 
@@ -13,35 +16,8 @@
 	}
 }
 
-# TODO remettre https grace a la magie noire
 https://localhost:8080 {
-
-	# user-management, frontend are the docker-compose service names (they are on the same network)
-	reverse_proxy /auth/* https://user-management:3000 {
-		transport http {
-			tls
-			# the cert is mounted in this docker and all services, and used to verify the self-signed cert
-			tls_trust_pool file /certs/cert.pem
-		}
-	}
-
-	# Redirect matches API to user-management service
-	reverse_proxy /matches/* https://user-management:3000 {
-		transport http {
-			tls
-			tls_trust_pool file /certs/cert.pem
-		}
-	}
-
-	# Redirect my-matches and my-stats to user-management service
-	reverse_proxy /my-matches https://user-management:3000 {
-		transport http {
-			tls
-			tls_trust_pool file /certs/cert.pem
-		}
-	}
-
-	reverse_proxy /my-stats https://user-management:3000 {
+	reverse_proxy /api/user/* https://user-management:3000 {
 		transport http {
 			tls
 			tls_trust_pool file /certs/cert.pem
