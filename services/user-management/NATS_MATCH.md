@@ -5,9 +5,11 @@ Ce système permet d'ajouter des résultats de match via NATS, permettant aux au
 ## 📡 Topics disponibles
 
 ### `match.create` (Request/Response)
+
 Crée un nouveau match dans la base de données.
 
 **Payload:**
+
 ```json
 {
   "player1Id": 2,
@@ -20,6 +22,7 @@ Crée un nouveau match dans la base de données.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -36,6 +39,7 @@ Crée un nouveau match dans la base de données.
 ```
 
 **Response (Error):**
+
 ```json
 {
   "success": false,
@@ -44,9 +48,11 @@ Crée un nouveau match dans la base de données.
 ```
 
 ### `match.created` (Publish only)
+
 Événement publié automatiquement après la création d'un match. Autres services peuvent s'abonner pour être notifiés.
 
 **Payload:**
+
 ```json
 {
   "id": 123,
@@ -62,16 +68,19 @@ Crée un nouveau match dans la base de données.
 ## 🧪 Tester le système
 
 ### 1. Démarrer les services
+
 ```bash
 docker compose up -d
 ```
 
 ### 2. Tester la création de match via NATS
+
 ```bash
 docker exec ft_transcendance-auth-1 npx tsx src/nats/testMatchCreate.ts
 ```
 
 ### 3. Vérifier les logs
+
 ```bash
 docker logs ft_transcendance-auth-1 --tail 50
 ```
@@ -81,9 +90,9 @@ docker logs ft_transcendance-auth-1 --tail 50
 ### Exemple en TypeScript/Node.js
 
 ```typescript
-import { connect, StringCodec } from "nats";
+import { connect, StringCodec } from "nats"
 
-const codec = StringCodec();
+const codec = StringCodec()
 
 async function createMatch(
   player1Id: number,
@@ -91,10 +100,10 @@ async function createMatch(
   precisionPlayer1: number,
   precisionPlayer2: number,
   scoreP1: number,
-  scoreP2: number
+  scoreP2: number,
 ) {
-  const nc = await connect({ servers: "nats://nats:4222" });
-  
+  const nc = await connect({ servers: "nats://nats:4222" })
+
   const matchData = {
     player1Id,
     player2Id,
@@ -102,28 +111,27 @@ async function createMatch(
     precisionPlayer2,
     scoreP1,
     scoreP2,
-  };
-  
+  }
+
   const response = await nc.request(
     "match.create",
     codec.encode(JSON.stringify(matchData)),
-    { timeout: 5000 }
-  );
-  
-  const result = JSON.parse(codec.decode(response.data));
-  
-  await nc.close();
-  
-  return result;
+    { timeout: 5000 },
+  )
+
+  const result = JSON.parse(codec.decode(response.data))
+
+  await nc.close()
+
+  return result
 }
 
 // Utilisation
-const result = await createMatch(2, 3, 88.5, 75.2, 10, 7);
-if (result.success) {
-  console.log("Match created:", result.match.id);
-} else {
-  console.error("Error:", result.error);
-}
+const result = await createMatch(2, 3, 88.5, 75.2, 10, 7)
+if (result.success)
+  console.log("Match created:", result.match.id)
+else
+  console.error("Error:", result.error)
 ```
 
 ## 🎯 Avantages de NATS

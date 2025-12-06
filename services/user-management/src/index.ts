@@ -1,11 +1,11 @@
-import 'dotenv/config';
-import Fastify from "fastify"
+import "dotenv/config"
 import cookie from "@fastify/cookie"
-import { initDb } from "./db/init";
-import { authRoutes } from "./auth/auth.routes"
-import { matchRoutes } from "./match/match.routes"
+import Fastify from "fastify"
 import { readFileSync } from "fs"
-import { initNats, setupMatchSubscribers, closeNats } from "./nats"
+import { authRoutes } from "./auth/auth.routes"
+import { initDb } from "./db/init"
+import { matchRoutes } from "./match/match.routes"
+import { closeNats, initNats, setupMatchSubscribers } from "./nats"
 
 try {
   // Create HTTPS server (/certs mounted from ./certs in docker-compose.yml)
@@ -19,41 +19,41 @@ try {
   // Register cookie plugin
   await fastify.register(cookie, {
     secret: process.env.JWT_SECRET, // for signing cookies
-    parseOptions: {}
+    parseOptions: {},
   })
 
-  const db = initDb();
+  const db = initDb()
 
   // Initialize NATS connection
   try {
-    await initNats();
+    await initNats()
     // Setup NATS subscribers for match operations
-    setupMatchSubscribers(db);
-    console.log('✅ NATS initialized and subscribers set up');
+    setupMatchSubscribers(db)
+    console.log("✅ NATS initialized and subscribers set up")
   } catch (natsError) {
-    console.error('⚠️  NATS initialization failed, continuing without NATS:', natsError);
+    console.error("⚠️  NATS initialization failed, continuing without NATS:", natsError)
     // Continue without NATS - the HTTP routes will still work
   }
 
   // Initialize and migrate database
-  await authRoutes(fastify, db);
-  await matchRoutes(fastify, db);
+  await authRoutes(fastify, db)
+  await matchRoutes(fastify, db)
 
   // Graceful shutdown
-  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
+  const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
   signals.forEach((signal) => {
     process.on(signal, async () => {
-      console.log(`${signal} received, shutting down gracefully...`);
-      await closeNats();
-      await fastify.close();
-      process.exit(0);
-    });
-  });
+      console.log(`${signal} received, shutting down gracefully...`)
+      await closeNats()
+      await fastify.close()
+      process.exit(0)
+    })
+  })
 
   // Start server
   await fastify.listen({ port: 3000, host: "0.0.0.0" })
-  console.log('User Management service listening on https://0.0.0.0:3000');
+  console.log("User Management service listening on https://0.0.0.0:3000")
 } catch (err) {
-  console.error('Error starting user management service:', err);
-  process.exit(1);
+  console.error("Error starting user management service:", err)
+  process.exit(1)
 }

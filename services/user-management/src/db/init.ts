@@ -1,10 +1,10 @@
-import Database from 'better-sqlite3';
+import Database from "better-sqlite3"
 
 export function initDb() {
-    const db = new Database('auth.db');
+  const db = new Database("auth.db")
 
-    // Migration 1: Create users table
-    db.prepare(`
+  // Migration 1: Create users table
+  db.prepare(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
@@ -23,10 +23,10 @@ export function initDb() {
             created_at DATETIME NOT NULL DEFAULT CURRENT_timestamp,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
-    `).run();
+    `).run()
 
-    // Migration 2: Create tokens table
-    db.prepare(`
+  // Migration 2: Create tokens table
+  db.prepare(`
         CREATE TABLE IF NOT EXISTS tokens (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -34,10 +34,10 @@ export function initDb() {
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
-    `).run();
+    `).run()
 
-    // Migration 3: Create match_history table
-    db.prepare(`
+  // Migration 3: Create match_history table
+  db.prepare(`
         CREATE TABLE IF NOT EXISTS match_history (
             match_id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_player1 INTEGER NOT NULL,
@@ -52,8 +52,8 @@ export function initDb() {
             FOREIGN KEY (id_player2) REFERENCES users (id),
             FOREIGN KEY (winner_id) REFERENCES users (id)
         )
-    `).run();
+    `).run()
 
-    console.log('Database migrated successfully');
-    return (db);
+  console.log("Database migrated successfully")
+  return db
 }

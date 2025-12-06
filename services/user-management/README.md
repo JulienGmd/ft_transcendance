@@ -11,7 +11,7 @@
 5. Si nécessaire, configurez l'écran de consentement OAuth
 6. Type d'application: **Web application**
 7. Nom: `Transcendence Auth`
-8. **Authorized redirect URIs**: 
+8. **Authorized redirect URIs**:
    ```
    https://localhost:8080/auth/google/callback
    ```
@@ -26,6 +26,7 @@ cp .env.example .env
 ```
 
 Éditez `.env` et remplacez:
+
 - `GOOGLE_CLIENT_ID`: votre Client ID de Google
 - `GOOGLE_CLIENT_SECRET`: votre Client Secret de Google
 - `JWT_SECRET`: générez une longue chaîne aléatoire
@@ -54,4 +55,3 @@ docker run --env-file .env -p 3000:3000 auth-service
 ## Exposer le port
 
 Le service écoute sur le port 3000 en HTTPS.
-

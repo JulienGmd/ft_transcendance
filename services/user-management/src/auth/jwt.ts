@@ -1,26 +1,26 @@
-import jwt from 'jsonwebtoken';
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyReply, FastifyRequest } from "fastify"
+import jwt from "jsonwebtoken"
 
 export function verifyJWT(request: FastifyRequest, reply: FastifyReply, done: (err?: Error) => void) {
-  const authHeader = request.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    reply.status(401).send('Token manquant');
-    return;
+  const authHeader = request.headers["authorization"]
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    reply.status(401).send("Token manquant")
+    return
   }
-  const token = authHeader.slice(7);
+  const token = authHeader.slice(7)
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!);
-    (request as any).user = payload;
-    done();
+    const payload = jwt.verify(token, process.env.JWT_SECRET!)
+    ;(request as any).user = payload
+    done()
   } catch (err) {
-    reply.status(401).send('Token invalide');
+    reply.status(401).send("Token invalide")
   }
 }
 
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET!);
+    return jwt.verify(token, process.env.JWT_SECRET!)
   } catch (err) {
-    throw new Error('Token invalide');
+    throw new Error("Token invalide")
   }
 }

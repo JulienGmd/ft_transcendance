@@ -17,4 +17,4 @@ export const Topics = {
     UPDATED: "user.updated",
     DELETED: "user.deleted",
   },
-};
+}
