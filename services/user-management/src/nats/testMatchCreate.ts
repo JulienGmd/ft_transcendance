@@ -1,4 +1,5 @@
 import { connect, StringCodec } from "nats"
+import config from "../config.js"
 
 const codec = StringCodec()
 
@@ -6,7 +7,7 @@ async function testMatchCreate() {
   try {
     console.log("Connecting to NATS...")
     // Use "nats" hostname in Docker environment
-    const natsUrl = process.env.NATS_URL || "nats://nats:4222"
+    const natsUrl = config.NATS_URL || "nats://nats:4222"
     const nc = await connect({ servers: natsUrl })
     console.log(`✅ Connected to NATS at ${natsUrl}`)
 

@@ -1,4 +1,5 @@
 import { connect, type NatsConnection, StringCodec } from "nats"
+import config from "../config.js"
 
 let nc: NatsConnection | null = null
 const codec = StringCodec()
@@ -7,7 +8,7 @@ export async function initNats(): Promise<void> {
   try {
     // Connect to NATS server (adjust URL based on docker-compose setup)
     // In Docker, use "nats" as the hostname (service name in docker-compose)
-    const natsUrl = process.env.NATS_URL || "nats://nats:4222"
+    const natsUrl = config.NATS_URL || "nats://nats:4222"
     console.log(`Connecting to NATS at ${natsUrl}...`)
 
     nc = await connect({
@@ -16,9 +17,7 @@ export async function initNats(): Promise<void> {
       reconnectTimeWait: 2000, // Wait 2s between reconnection attempts
     })
 
-    console.log("✅ Connected to NATS server")
-
-    // Handle connection events
+    console.log("✅ Connected to NATS server") // Handle connection events
     ;(async () => {
       for await (const status of nc!.status())
         console.log(`NATS status: ${status.type}`)

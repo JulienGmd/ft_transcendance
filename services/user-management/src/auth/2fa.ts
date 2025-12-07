@@ -51,9 +51,8 @@ export function verifySimple2FACode(input: string, code: string, expiresAt: numb
 export function generateAndStoreSMS2FACode(userId: number): { code: string; expiresAt: number } {
   const code = Math.floor(100000 + Math.random() * 900000).toString()
   const expiresAt = Date.now() + 5 * 60 * 1000
-  const db = new Database("auth.db")
+  const db = getDb()
   db.prepare("UPDATE users SET sms_2fa_code = ?, sms_2fa_expires_at = ? WHERE id = ?").run(code, expiresAt, userId)
-  db.close()
   return { code, expiresAt }
 }
 
@@ -61,30 +60,27 @@ export function generateAndStoreSMS2FACode(userId: number): { code: string; expi
 export function generateAndStoreEmail2FACode(userId: number): { code: string; expiresAt: number } {
   const code = Math.floor(100000 + Math.random() * 900000).toString()
   const expiresAt = Date.now() + 5 * 60 * 1000
-  const db = new Database("auth.db")
+  const db = getDb()
   db.prepare("UPDATE users SET email_2fa_code = ?, email_2fa_expires_at = ? WHERE id = ?").run(code, expiresAt, userId)
-  db.close()
   return { code, expiresAt }
 }
 
 // Vérification du code 2FA SMS depuis la DB
 export function verifySMS2FACode(userId: number, input: string): boolean {
-  const db = new Database("auth.db")
+  const db = getDb()
   const user = db.prepare("SELECT sms_2fa_code, sms_2fa_expires_at FROM users WHERE id = ?").get(userId) as {
     sms_2fa_code: string
     sms_2fa_expires_at: number
   } | undefined
-  db.close()
   return !!user && input === user.sms_2fa_code && Date.now() < user.sms_2fa_expires_at
 }
 
 // Vérification du code 2FA email depuis la DB
 export function verifyEmail2FACode(userId: number, input: string): boolean {
-  const db = new Database("auth.db")
+  const db = getDb()
   const user = db.prepare("SELECT email_2fa_code, email_2fa_expires_at FROM users WHERE id = ?").get(userId) as {
     email_2fa_code: string
     email_2fa_expires_at: number
   } | undefined
-  db.close()
   return !!user && input === user.email_2fa_code && Date.now() < user.email_2fa_expires_at
 }

@@ -1,7 +1,8 @@
 import Database from "better-sqlite3"
+import { getDb } from "../db/db.js"
 
 // Script pour ajouter des données de match factices
-const db = new Database("auth.db")
+const db = getDb()
 
 // ID de l'utilisateur Coco
 const cocoId = 2
@@ -74,5 +75,4 @@ try {
 } catch (error) {
   console.error("Error adding mock data:", error)
 } finally {
-  db.close()
 }

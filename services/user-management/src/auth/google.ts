@@ -1,9 +1,10 @@
 import axios from "axios"
 import qs from "querystring"
+import config from "../config.js"
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
+const GOOGLE_CLIENT_ID = config.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = config.GOOGLE_CLIENT_SECRET
+const GOOGLE_REDIRECT_URI = config.GOOGLE_REDIRECT_URI
 
 // Utilitaire pour générer l'URL de redirection Google OAuth2
 export function getGoogleAuthUrl() {
