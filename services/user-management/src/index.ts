@@ -7,14 +7,15 @@ import fastifyCookie from "@fastify/cookie"
 import fastifySwagger from "@fastify/swagger"
 import fastifySwaggerUI from "@fastify/swagger-ui"
 import Fastify from "fastify"
-import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
 import { readFileSync } from "fs"
 import { authRoutes } from "./auth/auth.routes.js"
 import config from "./config.js"
-import { initDb } from "./db/init.js"
+import { closeDb, initDb } from "./db/db.js"
 import { matchRoutes } from "./match/match.routes.js"
 import { closeNats, initNats, setupMatchSubscribers } from "./nats/index.js"
+
+initDb()
 
 const fastify = Fastify({
   https: {
@@ -61,16 +62,14 @@ fastify.addHook("onRequest", async (req, rep) => {
   console.log(`${req.method} ${req.url}`)
 })
 
-const db = initDb()
-
-await authRoutes(fastify.withTypeProvider<ZodTypeProvider>(), db)
-await matchRoutes(fastify.withTypeProvider<ZodTypeProvider>(), db)
+await authRoutes(fastify)
+await matchRoutes(fastify)
 
 // Initialize NATS connection
 try {
   await initNats()
   // Setup NATS subscribers for match operations
-  setupMatchSubscribers(db)
+  setupMatchSubscribers()
   console.log("✅ NATS initialized and subscribers set up")
 } catch (natsError) {
   console.error("⚠️  NATS initialization failed, continuing without NATS:", natsError)
@@ -82,8 +81,9 @@ const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
 signals.forEach((signal) => {
   process.on(signal, async () => {
     console.log(`${signal} received, shutting down gracefully...`)
-    await closeNats()
     await fastify.close()
+    await closeNats()
+    closeDb()
     process.exit(0)
   })
 })

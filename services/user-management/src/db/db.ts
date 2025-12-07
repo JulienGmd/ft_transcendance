@@ -1,7 +1,22 @@
 import Database from "better-sqlite3"
 
-export function initDb() {
-  const db = new Database("auth.db")
+// Singleton pattern
+let db: Database.Database | null = null
+
+export function getDb(): Database.Database {
+  return db ? db : new Database("auth.db")
+}
+
+export function closeDb(): void {
+  if (db) {
+    db.close()
+    db = null
+  }
+}
+// End Singleton pattern
+
+export function initDb(): void {
+  const db = getDb()
 
   // users table
   db.prepare(`
@@ -38,5 +53,4 @@ export function initDb() {
     `).run()
 
   console.log("✅ Database initialized")
-  return db
 }
