@@ -11,9 +11,7 @@ export function getNatsClient(): NatsConnection {
 }
 
 export async function closeNatsClient(): Promise<void> {
-  if (!nc)
-    return
-  await nc.drain()
+  await nc?.drain()
   nc = null
 }
 // End Singleton Pattern
