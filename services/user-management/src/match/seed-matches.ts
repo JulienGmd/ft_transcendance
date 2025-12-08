@@ -1,6 +1,6 @@
 // Add fake matches for testing purposes
 
-import { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
+import { MatchCreatePayload } from "@ft_transcendence/shared"
 import { createUser } from "../auth/auth.service.js"
 import { getDb } from "../db/db.js"
 import { createMatch } from "./match.service.js"

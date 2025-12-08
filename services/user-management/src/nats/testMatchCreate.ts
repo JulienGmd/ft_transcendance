@@ -1,5 +1,5 @@
-import { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
-import { Topics } from "../../../../shared/natsTopics.js"
+import { MatchCreatePayload } from "@ft_transcendence/shared"
+import { Topics } from "@ft_transcendence/shared"
 import { closeNatsClient, getCodec, getNatsClient, initNatsClient } from "./connection.js"
 
 async function testMatchCreate() {

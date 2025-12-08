@@ -1,4 +1,4 @@
-import { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
+import { MatchCreatePayload } from "@ft_transcendence/shared"
 import { PublicMatch, PublicStats } from "../auth/schemas.js"
 import { getDb, Match, User } from "../db/db.js"
 

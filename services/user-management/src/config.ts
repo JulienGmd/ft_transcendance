@@ -6,7 +6,7 @@ const config = {
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI!,
 
   // Optional env
-  NODE_ENV: process.env.NODE_ENV || "development",
+  NODE_ENV: process.env.NODE_ENV || "production",
   PORT: process.env.PORT ? parseInt(process.env.PORT) : 3000,
   NATS_URL: process.env.NATS_URL || "nats://nats:4222",
 }

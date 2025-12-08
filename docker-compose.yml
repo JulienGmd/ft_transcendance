@@ -19,7 +19,7 @@ services:
     depends_on:
       - nats
       - user-management
-      - frontend
+      # - frontend
       # Add services here
     networks:
       - internal
@@ -32,25 +32,22 @@ services:
     restart: unless-stopped
 
   user-management:
-    build: ./services/user-management/
-    volumes:
-      - ./certs:/certs:ro
-      - ./services/user-management/.env:/app/.env:ro
-    env_file:
-      - ./services/user-management/.env
-    depends_on: # TODO remove if not using nats
+    build:
+      context: .
+      dockerfile: ./services/user-management/Dockerfile
+    depends_on:
       - nats
     networks:
       - internal
     restart: unless-stopped
 
-  frontend:
-    build: ./services/frontend/
-    volumes:
-      - ./certs:/certs:ro
-    networks:
-      - internal
-    restart: unless-stopped
+  # frontend:
+  #   build: ./services/frontend/
+  #   volumes:
+  #     - ./certs:/certs:ro
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
 
 volumes:
   # Defining these volumes make them persistent across container restarts, so we

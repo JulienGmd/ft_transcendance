@@ -1,10 +1,16 @@
 {
-  "name": "ft_transcendance",
-  "version": "1.0.0",
+  "name": "ft_transcendence",
   "private": true,
-  "type": "module",
+  "workspaces": [
+    "services/user-management",
+    "shared"
+  ],
+  "scripts": {
+    "generate-types": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-typescript https://localhost:8080/api/user/docs/json -o shared/types/user.ts"
+  },
   "devDependencies": {
     "dprint": "^0.50.2",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1"
   }

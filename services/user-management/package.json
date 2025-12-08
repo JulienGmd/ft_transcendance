@@ -1,7 +1,7 @@
 {
-  "name": "auth-service",
-  "version": "1.0.0",
+  "name": "user-management",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -27,6 +27,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@ft_transcendence/shared": "*",
     "@fastify/cookie": "^10.0.1",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.6.1",

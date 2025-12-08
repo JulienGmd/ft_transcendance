@@ -1,6 +1,6 @@
+import type { MatchCreatePayload } from "@ft_transcendence/shared"
+import { Topics } from "@ft_transcendence/shared"
 import type { Codec, NatsConnection } from "nats"
-import type { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
-import { Topics } from "../../../../shared/natsTopics.js"
 import { createMatch } from "../match/match.service.js"
 import { getCodec, getNatsClient } from "./connection.js"
 
