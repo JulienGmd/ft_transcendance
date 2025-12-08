@@ -1,5 +1,6 @@
 // Add fake matches for testing purposes
 
+import { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
 import { createUser } from "../auth/auth.service.js"
 import { getDb } from "../db/db.js"
 import { createMatch } from "./match.service.js"
@@ -28,7 +29,7 @@ function ensureOpponents() {
 }
 
 function addMockMatches() {
-  const matches = [
+  const matches: MatchCreatePayload[] = [
     // Wins
     { p1_id: p1Id, p2_id: p2Id, p1_score: 10, p2_score: 8, p1_precision: 85.5, p2_precision: 72.3 },
     { p1_id: p1Id, p2_id: p3Id, p1_score: 10, p2_score: 5, p1_precision: 92.1, p2_precision: 68.9 },
@@ -43,7 +44,7 @@ function addMockMatches() {
   ]
 
   for (const m of matches)
-    createMatch(m.p1_id, m.p2_id, m.p1_precision, m.p2_precision, m.p1_score, m.p2_score)
+    createMatch(m)
 
   console.log(`Added ${matches.length} matches for users ids: ${p1Id}, ${p2Id}, ${p3Id}, ${p4Id}`)
 }

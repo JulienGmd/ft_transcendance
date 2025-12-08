@@ -8,6 +8,7 @@ const config = {
   // Optional env
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+  NATS_URL: process.env.NATS_URL || "nats://nats:4222",
 }
 
 for (const [key, value] of Object.entries(config)) {

@@ -1,52 +1,25 @@
-import { connect, StringCodec } from "nats"
-import config from "../config.js"
-
-const codec = StringCodec()
+import { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
+import { Topics } from "../../../../shared/natsTopics.js"
+import { closeNatsClient, getCodec, getNatsClient, initNatsClient } from "./connection.js"
 
 async function testMatchCreate() {
-  try {
-    console.log("Connecting to NATS...")
-    // Use "nats" hostname in Docker environment
-    const natsUrl = config.NATS_URL || "nats://nats:4222"
-    const nc = await connect({ servers: natsUrl })
-    console.log(`✅ Connected to NATS at ${natsUrl}`)
+  await initNatsClient()
+  const nc = getNatsClient()
+  const codec = getCodec()
 
-    // Test data for creating a match
-    const matchData = {
-      player1Id: 3, // Player1
-      player2Id: 4, // Player2
-      precisionPlayer1: 88.5,
-      precisionPlayer2: 75.2,
-      scoreP1: 10,
-      scoreP2: 7,
-    }
-
-    console.log("\n📤 Sending match.create request with data:", matchData)
-
-    const response = await nc.request(
-      "match.create",
-      codec.encode(JSON.stringify(matchData)),
-      { timeout: 5000 },
-    )
-
-    const decodedResponse = JSON.parse(codec.decode(response.data))
-    console.log("\n📥 Response from match.create:", JSON.stringify(decodedResponse, null, 2))
-
-    if (decodedResponse.success) {
-      console.log("\n✅ Match created successfully!")
-      console.log(`   Match ID: ${decodedResponse.match.id}`)
-      console.log(`   Winner: Player ${decodedResponse.match.winner_id}`)
-    } else {
-      console.error("\n❌ Failed to create match:", decodedResponse.error)
-    }
-
-    await nc.close()
-    console.log("\n🔌 Connection closed")
-  } catch (error) {
-    console.error("\n❌ Error:", error)
-    process.exit(1)
+  const matchPayload: MatchCreatePayload = {
+    p1_id: 1,
+    p2_id: 2,
+    p1_score: 15,
+    p2_score: 10,
+    p1_precision: 85.5,
+    p2_precision: 78.3,
   }
+
+  console.log(`\n📤 Sending ${Topics.MATCH.CREATE} request with data:`, matchPayload)
+  nc.publish(Topics.MATCH.CREATE, codec.encode(JSON.stringify(matchPayload)))
+
+  await closeNatsClient()
 }
 
-console.log("🧪 Testing NATS Match Creation\n")
 testMatchCreate()

@@ -13,7 +13,8 @@ import { authRoutes } from "./auth/auth.routes.js"
 import config from "./config.js"
 import { closeDb, initDb } from "./db/db.js"
 import { matchRoutes } from "./match/match.routes.js"
-import { closeNats, initNats, setupMatchSubscribers } from "./nats/index.js"
+import { closeNatsClient, initNatsClient } from "./nats/connection.js"
+import { setupSubscribers } from "./nats/subscriber.js"
 
 initDb()
 
@@ -67,19 +68,13 @@ fastify.addHook("onRequest", async (req, rep) => {
   console.log(`${req.method} ${req.url}`)
 })
 
+// Register routes
 await authRoutes(fastify)
-// await matchRoutes(fastify)
+await matchRoutes(fastify)
 
-// // Initialize NATS connection
-// try {
-//   await initNats()
-//   // Setup NATS subscribers for match operations
-//   setupMatchSubscribers()
-//   console.log("✅ NATS initialized and subscribers set up")
-// } catch (natsError) {
-//   console.error("⚠️  NATS initialization failed, continuing without NATS:", natsError)
-//   // Continue without NATS - the HTTP routes will still work
-// }
+// Setup NATS
+await initNatsClient()
+setupSubscribers()
 
 // Graceful shutdown
 const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
@@ -87,7 +82,7 @@ signals.forEach((signal) => {
   process.on(signal, async () => {
     console.log(`${signal} received, shutting down gracefully...`)
     await fastify.close()
-    await closeNats()
+    await closeNatsClient()
     closeDb()
     process.exit(0)
   })

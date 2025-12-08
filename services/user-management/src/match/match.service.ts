@@ -1,15 +1,11 @@
+import { MatchCreatePayload } from "../../../../shared/natsPayloads.js"
 import { PublicMatch, PublicStats } from "../auth/schemas.js"
 import { getDb, Match, User } from "../db/db.js"
 
-export function createMatch(
-  p1_id: number,
-  p2_id: number,
-  p1_precision: number,
-  p2_precision: number,
-  p1_score: number,
-  p2_score: number,
-): Match {
+export function createMatch(matchPayload: MatchCreatePayload): Match {
   const db = getDb()
+
+  const { p1_id, p2_id, p1_score, p2_score, p1_precision, p2_precision } = matchPayload
 
   const winnerId = p1_score > p2_score ? p1_id : p2_score > p1_score ? p2_id : null
   const stmt = db.prepare(`
