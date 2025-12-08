@@ -4,19 +4,21 @@ import Database from "better-sqlite3"
 let db: Database.Database | null = null
 
 export function getDb(): Database.Database {
-  return db ? db : new Database("auth.db")
+  if (!db)
+    throw new Error("Database not initialized. Call initDb() first.")
+  return db
 }
 
 export function closeDb(): void {
-  if (db) {
-    db.close()
-    db = null
-  }
+  if (!db)
+    return
+  db.close()
+  db = null
 }
 // End Singleton pattern
 
 export function initDb(): Database.Database {
-  const db = getDb()
+  const db = new Database("auth.db")
 
   // users table
   db.prepare(`
@@ -39,10 +41,10 @@ export function initDb(): Database.Database {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             p1_id INTEGER NOT NULL,
             p2_id INTEGER NOT NULL,
-            p1_precision REAL NOT NULL DEFAULT 0,
-            p2_precision REAL NOT NULL DEFAULT 0,
             p1_score INTEGER NOT NULL DEFAULT 0,
             p2_score INTEGER NOT NULL DEFAULT 0,
+            p1_precision REAL NOT NULL DEFAULT 0,
+            p2_precision REAL NOT NULL DEFAULT 0,
             winner_id INTEGER,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (p1_id) REFERENCES users (id),
@@ -71,10 +73,10 @@ export type Match = {
   id: number
   p1_id: number
   p2_id: number
-  p1_precision: number
-  p2_precision: number
   p1_score: number
   p2_score: number
+  p1_precision: number
+  p2_precision: number
   winner_id: number | null
   created_at: string
 }

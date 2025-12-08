@@ -13,10 +13,10 @@ export function createMatch(
 
   const winnerId = p1_score > p2_score ? p1_id : p2_score > p1_score ? p2_id : null
   const stmt = db.prepare(`
-    INSERT INTO match_history (p1_id, p2_id, p1_precision, p2_precision, p1_score, p2_score, winner_id)
+    INSERT INTO match_history (p1_id, p2_id, p1_score, p2_score, p1_precision, p2_precision, winner_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
-  const info = stmt.run(p1_id, p2_id, p1_precision, p2_precision, p1_score, p2_score, winnerId)
+  const info = stmt.run(p1_id, p2_id, p1_score, p2_score, p1_precision, p2_precision, winnerId)
 
   return db.prepare("SELECT * FROM match_history WHERE id = ?").get(info.lastInsertRowid) as Match
 }
@@ -77,10 +77,10 @@ export function matchToPublicMatch(match: Match): PublicMatch {
   return {
     p1_id: match.p1_id,
     p2_id: match.p2_id,
-    p1_precision: match.p1_precision,
-    p2_precision: match.p2_precision,
     p1_score: match.p1_score,
     p2_score: match.p2_score,
+    p1_precision: match.p1_precision,
+    p2_precision: match.p2_precision,
     winner_id: match.winner_id,
     p1_username: p1?.username || "Unknown",
     p2_username: p2?.username || "Unknown",
