@@ -1,6 +1,6 @@
 import { MatchCreatePayload } from "@ft_transcendence/shared"
-import { PublicMatch, PublicStats } from "../auth/schemas.js"
-import { getDb, Match, User } from "../db/db.js"
+import { PublicMatch, PublicStats } from "../auth/schemas"
+import { getDb, Match, User } from "../db/db"
 
 export function createMatch(matchPayload: MatchCreatePayload): Match {
   const db = getDb()

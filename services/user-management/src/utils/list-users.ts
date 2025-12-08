@@ -1,4 +1,4 @@
-import { initDb } from "../db/db.js"
+import { initDb } from "../db/db"
 
 const db = initDb()
 

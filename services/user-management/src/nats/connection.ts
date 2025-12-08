@@ -1,5 +1,5 @@
 import { Codec, connect, type NatsConnection, StringCodec } from "nats"
-import config from "../config.js"
+import config from "../config"
 
 // Singleton Pattern
 let nc: NatsConnection | null = null

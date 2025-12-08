@@ -1,6 +1,6 @@
 import { MatchCreatePayload } from "@ft_transcendence/shared"
 import { Topics } from "@ft_transcendence/shared"
-import { closeNatsClient, getCodec, getNatsClient, initNatsClient } from "./connection.js"
+import { closeNatsClient, getCodec, getNatsClient, initNatsClient } from "./connection"
 
 async function testMatchCreate() {
   await initNatsClient()

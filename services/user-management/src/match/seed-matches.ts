@@ -1,9 +1,9 @@
 // Add fake matches for testing purposes
 
 import { MatchCreatePayload } from "@ft_transcendence/shared"
-import { createUser } from "../auth/auth.service.js"
-import { getDb } from "../db/db.js"
-import { createMatch } from "./match.service.js"
+import { createUser } from "../auth/auth.service"
+import { getDb } from "../db/db"
+import { createMatch } from "./match.service"
 
 const db = getDb()
 

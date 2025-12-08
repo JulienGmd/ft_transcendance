@@ -2,11 +2,11 @@ import bcrypt from "bcrypt"
 import type { FastifyInstance } from "fastify"
 import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
-import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
-import { createGoogleUser, createUser, getUser, updateUser, userToPublicUser } from "./auth.service.js"
-import { getGoogleAuthUrl, getGoogleProfile } from "./google.js"
-import { clearJWT, getJWT, setJWT } from "./jwt.js"
-import { PUBLIC_USER_SCHEMA } from "./schemas.js"
+import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa"
+import { createGoogleUser, createUser, getUser, updateUser, userToPublicUser } from "./auth.service"
+import { getGoogleAuthUrl, getGoogleProfile } from "./google"
+import { clearJWT, getJWT, setJWT } from "./jwt"
+import { PUBLIC_USER_SCHEMA } from "./schemas"
 
 export async function authRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google", {

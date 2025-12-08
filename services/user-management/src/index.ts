@@ -1,94 +1,27 @@
-// Libs:
-// - fastify-type-provider-zod to define routes with Zod schemas
-// - @fastify/swagger and @fastify/swagger-ui to generate and serve OpenAPI documentation
-
 import "dotenv/config"
-import fastifyCookie from "@fastify/cookie"
-import fastifySwagger from "@fastify/swagger"
-import fastifySwaggerUI from "@fastify/swagger-ui"
-import Fastify from "fastify"
-import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
-import { readFileSync } from "fs"
-import { authRoutes } from "./auth/auth.routes.js"
-import config from "./config.js"
-import { closeDb, initDb } from "./db/db.js"
-import { matchRoutes } from "./match/match.routes.js"
-import { closeNatsClient, initNatsClient } from "./nats/connection.js"
-import { setupSubscribers } from "./nats/subscriber.js"
+import { closeDb, initDb } from "./db/db"
+import { closeNatsClient, initNatsClient } from "./nats/connection"
+import { setupSubscribers } from "./nats/subscriber"
+import { startServer, stopServer } from "./server"
 
-initDb()
+async function main(): Promise<void> {
+  initDb()
 
-const fastify = Fastify({
-  https: {
-    key: readFileSync("/certs/key.pem"),
-    cert: readFileSync("/certs/cert.pem"),
-  },
-})
-fastify.setValidatorCompiler(validatorCompiler)
-fastify.setSerializerCompiler(serializerCompiler)
+  await initNatsClient()
+  setupSubscribers()
 
-// Plugin to parse and set cookies
-await fastify.register(fastifyCookie, { secret: config.JWT_SECRET })
+  await startServer()
 
-// Plugin to generate OpenAPI documentation
-await fastify.register(fastifySwagger, {
-  openapi: {
-    info: {
-      title: "SampleApi",
-      description: "Sample backend service",
-      version: "1.0.0",
-    },
-    servers: [],
-  },
-  transform: jsonSchemaTransform,
-  // To ignore routes in the documentation:
-  // transform: createJsonSchemaTransform({ skipList: ['/documentation/static/*'] })
-})
-
-// Plugin to serve OpenAPI documentation (/api/user/docs, /api/user/docs/json, /api/user/docs/yaml)
-await fastify.register(fastifySwaggerUI, {
-  routePrefix: "/api/user/docs",
-})
-
-// Generic error handler (when a route throws an error)
-fastify.setErrorHandler((err, req, res) => {
-  if ((err as any).validation)
-    res.status(400).send((err as any).toString())
-  else {
-    console.log("Error not handled:", err)
-    res.status(500).send({ error: "Internal Server Error" })
-  }
-})
-
-// In development, log all requests
-fastify.addHook("onRequest", async (req, rep) => {
-  if (config.NODE_ENV === "production")
-    return
-
-  console.log(`${req.method} ${req.url}`)
-})
-
-// Register routes
-await authRoutes(fastify)
-await matchRoutes(fastify)
-
-// Setup NATS
-await initNatsClient()
-setupSubscribers()
-
-// Graceful shutdown
-const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
-signals.forEach((signal) => {
-  process.on(signal, async () => {
-    console.log(`${signal} received, shutting down gracefully...`)
-    await fastify.close()
-    await closeNatsClient()
-    closeDb()
-    process.exit(0)
+  const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
+  signals.forEach((signal) => {
+    process.on(signal, async () => {
+      console.log(`${signal} received, shutting down gracefully...`)
+      await stopServer()
+      await closeNatsClient()
+      closeDb()
+      process.exit(0)
+    })
   })
-})
+}
 
-// Start server
-// Use host 0.0.0.0 so it can be accessible from outside the docker container
-await fastify.listen({ port: config.PORT, host: "0.0.0.0" })
-console.log(`✅ Starting server in ${config.NODE_ENV} mode`)
+main()
