@@ -1,6 +1,6 @@
 # Notes:
 # - Only caddy expose ports because it's the only entry point. It will then redirect requests to corresponding services (they are on the same Docker network)
-# - All services need to communicate over HTTPS with caddy, so they must have the certs mounted and configured in Fastify so they can trust caddy's TLS certificate.
+# - All services need to communicate over HTTPS with caddy, so they must have the certs copied and configured in Fastify so they can trust caddy's TLS certificate.
 
 services:
   # https://hub.docker.com/_/caddy#docker-compose-example
