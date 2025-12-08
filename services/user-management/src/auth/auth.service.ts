@@ -1,85 +1,36 @@
-import Database from "better-sqlite3"
+import { getDb, type User } from "../db/db.js"
+import { PublicUser } from "./schemas.js"
 
-export interface User {
-  id: number
-  username?: string
-  avatar?: string
-  google_id: string
-  email: string
-  password_hash: string
-  twofa_secret?: string
-  twofa_enabled: boolean
-  created_at: string
-  updated_at: string
+export function getUser(email: string): User | null {
+  const db = getDb()
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email)
+  return user as User || null
 }
 
-export function findOrCreateGoogleUser(profile: { id: string; email: string }): User {
-  const db = new Database("auth.db")
-  let user = db.prepare("SELECT * FROM users WHERE google_id = ?").get(profile.id) as User
-  if (!user) {
-    // Check if a classic account exists with the same email
-    let classicUser = db.prepare("SELECT * FROM users WHERE email = ?").get(profile.email) as User
-    if (classicUser && !classicUser.google_id) {
-      // Merge: set google_id on the classic account
-      db.prepare("UPDATE users SET google_id = ? WHERE id = ?").run(profile.id, classicUser.id)
-      user = db.prepare("SELECT * FROM users WHERE id = ?").get(classicUser.id) as User
-    } else {
-      // No user exists, create new Google user
-      const stmt = db.prepare(
-        `INSERT INTO users (google_id, email, password_hash, twofa_enabled) VALUES (?, ?, NULL, FALSE)`,
-      )
-      const info = stmt.run(profile.id, profile.email)
-      user = db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid) as User
-    }
-  }
-  db.close()
-  return user as User
+export function createUser(email: string, passwordHash: string, username: string): User {
+  const db = getDb()
+  const stmt = db.prepare(`INSERT INTO users (email, password_hash, username) VALUES (?, ?, ?)`)
+  const info = stmt.run(email, passwordHash, username)
+  return db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid) as User
 }
 
-export function findOrCreateClassicUser(email: string, passwordHash: string): User {
-  const db = new Database("auth.db")
-  console.log("Finding or creating classic user with email:", email)
-  let user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User
-  if (!user) {
-    // No user exists, create new classic user
-    console.log("No existing user found, creating new classic user.")
-    const stmt = db.prepare(
-      `INSERT INTO users (google_id, email, password_hash, twofa_enabled) VALUES (NULL, ?, ?, FALSE)`,
-    )
-    console.log("Running insert statement for new classic user.")
-    const info = stmt.run(email, passwordHash)
-    console.log("Insert statement executed, retrieving new user.")
-    user = db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid) as User
-    console.log("New classic user created with ID:", user.id)
-    console.log("Created new classic user with ID:", user.id)
-  } else {
-    // User exists: check if it's a Google-only account (no password)
-    if (!user.password_hash && user.google_id) {
-      // Merge: set password_hash, keep google_id
-      db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(passwordHash, user.id)
-      user.password_hash = passwordHash
-    }
-  }
-  db.close()
-  return user as User
+export function createGoogleUser(email: string, googleId: string): User {
+  const db = getDb()
+  const stmt = db.prepare(`INSERT INTO users (email, google_id) VALUES (?, ?)`)
+  const info = stmt.run(email, googleId)
+  return db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid) as User
 }
 
-export function setUsername(userId: number, username: string, avatar?: string): User | null {
-  const db = new Database("auth.db")
+export function updateUser(email: string, user: User): void {
+  const db = getDb()
+  const stmt = db.prepare(`UPDATE users SET username = ?, avatar = ?, twofa_secret = ? WHERE email = ?`)
+  stmt.run(user.username, user.avatar, user.twofa_secret, email)
+}
 
-  // Check if username is already taken
-  const existingUser = db.prepare("SELECT * FROM users WHERE username = ?").get(username) as User
-  if (existingUser && existingUser.id !== userId) {
-    db.close()
-    return null // Username already taken
+export function userToPublicUser(user: User): PublicUser {
+  return {
+    email: user.email,
+    username: user.username || null,
+    avatar: user.avatar || null,
   }
-
-  // Update username and avatar
-  if (avatar)
-    db.prepare("UPDATE users SET username = ?, avatar = ? WHERE id = ?").run(username, avatar, userId)
-  else
-    db.prepare("UPDATE users SET username = ? WHERE id = ?").run(username, userId)
-  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as User
-  db.close()
-  return user
 }

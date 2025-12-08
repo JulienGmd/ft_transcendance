@@ -51,7 +51,12 @@ await fastify.register(fastifySwaggerUI, {
 
 // Generic error handler (when a route throws an error)
 fastify.setErrorHandler((err, req, res) => {
-  res.status(500).type("application/json").send({ error: "Internal Server Error" })
+  if ((err as any).validation)
+    res.status(400).send((err as any).toString())
+  else {
+    console.log("Error not handled:", err)
+    res.status(500).send({ error: "Internal Server Error" })
+  }
 })
 
 // In development, log all requests
@@ -63,18 +68,18 @@ fastify.addHook("onRequest", async (req, rep) => {
 })
 
 await authRoutes(fastify)
-await matchRoutes(fastify)
+// await matchRoutes(fastify)
 
-// Initialize NATS connection
-try {
-  await initNats()
-  // Setup NATS subscribers for match operations
-  setupMatchSubscribers()
-  console.log("✅ NATS initialized and subscribers set up")
-} catch (natsError) {
-  console.error("⚠️  NATS initialization failed, continuing without NATS:", natsError)
-  // Continue without NATS - the HTTP routes will still work
-}
+// // Initialize NATS connection
+// try {
+//   await initNats()
+//   // Setup NATS subscribers for match operations
+//   setupMatchSubscribers()
+//   console.log("✅ NATS initialized and subscribers set up")
+// } catch (natsError) {
+//   console.error("⚠️  NATS initialization failed, continuing without NATS:", natsError)
+//   // Continue without NATS - the HTTP routes will still work
+// }
 
 // Graceful shutdown
 const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]

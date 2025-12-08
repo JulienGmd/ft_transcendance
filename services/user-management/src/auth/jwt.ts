@@ -1,26 +1,36 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
+import config from "../config.js"
+import { User } from "../db/db.js"
 
-export function verifyJWT(request: FastifyRequest, reply: FastifyReply, done: (err?: Error) => void) {
-  const authHeader = request.headers["authorization"]
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    reply.status(401).send("Token manquant")
-    return
-  }
-  const token = authHeader.slice(7)
+export function setJWT(res: FastifyReply, user: User): void {
+  const jwtToken = jwt.sign({ email: user.email }, config.JWT_SECRET, { expiresIn: "365d" })
+
+  res.setCookie("authToken", jwtToken, {
+    httpOnly: true, // no javascript access (XSS protection)
+    secure: true, // HTTPS only
+    sameSite: "lax", // no send from other sites (CSRF protection)
+    path: "/", // available for all routes
+    maxAge: 365 * 24 * 60 * 60, // 1 year
+  })
+}
+
+export function getJWT(req: FastifyRequest): { email: string } | null {
+  const jwtToken = req.cookies.authToken
+  if (!jwtToken)
+    return null
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!)
-    ;(request as any).user = payload
-    done()
+    return jwt.verify(jwtToken, config.JWT_SECRET) as { email: string }
   } catch (err) {
-    reply.status(401).send("Token invalide")
+    return null
   }
 }
 
-export function verifyToken(token: string): any {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET!)
-  } catch (err) {
-    throw new Error("Token invalide")
-  }
+export function clearJWT(res: FastifyReply): void {
+  res.clearCookie("authToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+  })
 }

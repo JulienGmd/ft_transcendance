@@ -27,7 +27,6 @@ export function initDb(): void {
             google_id TEXT UNIQUE,
             username TEXT UNIQUE,
             avatar TEXT,
-            twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
             twofa_secret TEXT,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -53,4 +52,28 @@ export function initDb(): void {
     `).run()
 
   console.log("✅ Database initialized")
+}
+
+export type User = {
+  id: number
+  email: string
+  password_hash: string | null
+  google_id: string | null
+  username: string | null
+  avatar: string | null
+  twofa_secret: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Match = {
+  id: number
+  p1_id: number
+  p2_id: number
+  p1_precision: number
+  p2_precision: number
+  p1_score: number
+  p2_score: number
+  winner_id: number | null
+  created_at: string
 }

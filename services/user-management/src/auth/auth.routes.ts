@@ -1,597 +1,251 @@
 import bcrypt from "bcrypt"
-import BetterSqlite3 from "better-sqlite3"
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
-import jwt from "jsonwebtoken"
-import type {
-  ApiUser2FAEnablePostRequest,
-  ApiUser2FAEnablePostResponse,
-  ApiUser2FASetupPostResponse,
-  ApiUserLoginPostRequest,
-  ApiUserLoginPostResponse,
-  ApiUserLogoutPostResponse,
-  ApiUserMeGetResponse,
-  ApiUserRegisterPostRequest,
-  ApiUserRegisterPostResponse,
-  ApiUserSetusernamePostRequest,
-  ApiUserSetusernamePostResponse,
-  User,
-} from "../../../../types/auth.js"
+import { FastifyInstance } from "fastify"
+import { ZodTypeProvider } from "fastify-type-provider-zod"
+import z from "zod"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
-import { findOrCreateClassicUser, findOrCreateGoogleUser, setUsername } from "./auth.service.js"
+import { createGoogleUser, createUser, getUser, updateUser, userToPublicUser } from "./auth.service.js"
 import { getGoogleAuthUrl, getGoogleProfile } from "./google.js"
-import { verifyToken } from "./jwt.js"
-import { isValidEmail, isValidPassword } from "./validation.js"
+import { clearJWT, getJWT, setJWT } from "./jwt.js"
+import { PUBLIC_USER_SCHEMA } from "./schemas.js"
 
-export async function authRoutes(fastify: FastifyInstance, db: BetterSqlite3.Database) {
-  // 1. Redirection vers Google
-  fastify.get("/auth/google", async (request: FastifyRequest, reply: FastifyReply) => {
-    reply.redirect(getGoogleAuthUrl())
-  })
+export async function authRoutes(fastify: FastifyInstance) {
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google", {
+    schema: { response: { 200: z.string() } },
+  }, async (req, res) => res.send(getGoogleAuthUrl()))
 
-  // 2. Callback Google
-  fastify.get("/auth/google/callback", async (request: FastifyRequest, reply: FastifyReply) => {
-    const code = (request.query as any).code as string
-    console.log("[OAuth] Received callback with code:", code ? "present" : "missing")
+  // TODO tester mauvais code ou cancel flow
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google/callback", {
+    schema: {
+      querystring: z.object({ code: z.string() }),
+      response: {
+        200: z.object({ user: PUBLIC_USER_SCHEMA }),
+        202: z.object({ needsTwoFA: z.literal(true), email: z.email() }),
+        401: z.string(),
+        403: z.string(),
+        409: z.string(),
+      },
+    },
+  }, async (req, res) => {
+    const googleProfile = await getGoogleProfile(req.query.code)
+    if (!googleProfile)
+      return res.status(401).send("Invalid Google code")
 
-    if (!code) {
-      console.error("[OAuth] No code in callback")
-      return reply.status(400).send("Code manquant")
-    }
-
-    try {
-      console.log("[OAuth] Fetching Google profile...")
-      const profile = await getGoogleProfile(code)
-      console.log("[OAuth] Profile received:", profile.email)
-
-      console.log("[OAuth] Finding or creating user...")
-      const user = findOrCreateGoogleUser({ id: profile.id, email: profile.email })
-      console.log("[OAuth] User:", user.id, user.email, "username:", user.username)
-
-      // Vérifier si la 2FA TOTP est activée
-      const twoFAEnabled = user.twofa_enabled || false
-
-      if (twoFAEnabled && user.twofa_secret) {
-        // 2FA TOTP est activée, rediriger vers la page de validation 2FA
-        // Stocker temporairement l'userId dans un cookie temporaire
-        reply.setCookie("tempUserId", String(user.id), {
-          httpOnly: true,
-          secure: true,
-          sameSite: "lax",
-          path: "/",
-          maxAge: 300, // 5 minutes
-        })
-
-        // Rediriger vers une page de validation 2FA
-        console.log("[OAuth] Redirecting to 2FA verification page")
-        reply.redirect(`https://localhost:8080/login?twofa=totp&email=${encodeURIComponent(user.email)}`)
-        return
-      }
-
-      // Génération d'un JWT
-      const token = jwt.sign(
-        { userId: user.id, email: user.email, username: user.username },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1h" },
-      )
-
-      console.log("[OAuth] Token generated, setting cookie...")
-
-      // Set cookie with token
-      reply.setCookie("authToken", token, {
-        httpOnly: true,
-        secure: true, // HTTPS only
-        sameSite: "lax",
-        path: "/",
-        maxAge: 3600, // 1 hour in seconds
-      })
-
-      // Si l'utilisateur n'a pas de username, rediriger vers la page de setup
-      if (!user.username) {
-        console.log("[OAuth] Redirecting to setup-profile (no username)")
-        reply.redirect(`https://localhost:8080/setup-profile`)
-      } else {
-        // Sinon, rediriger vers home
-        console.log("[OAuth] Redirecting to home (username:", user.username + ")")
-        reply.redirect(`https://localhost:8080/home`)
-      }
-    } catch (err) {
-      console.error("[OAuth] Error during Google OAuth callback:", err)
-      console.error("[OAuth] Error details:", err instanceof Error ? err.message : String(err))
-      console.error("[OAuth] Error stack:", err instanceof Error ? err.stack : "no stack")
-      reply.redirect("https://localhost:8080/login?error=oauth_failed")
-    }
-  })
-
-  fastify.post("/api/user/register", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email, password } = request.body as ApiUserRegisterPostRequest
-    if (!email || !password)
-      return reply.status(400).send("Email ou mot de passe manquant")
-    if (!isValidEmail(email))
-      return reply.status(400).send("Email invalide")
-    if (!isValidPassword(password))
-      return reply.status(400).send("Mot de passe trop faible")
-    // Création d'un compte classique
-    const passwordHash = await bcrypt.hash(password, 10)
-    console.log("Registering user:", email)
-    const user = findOrCreateClassicUser(email, passwordHash)
-    console.log("User registered:", user)
-
-    // Génération d'un JWT
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    )
-
-    // Set cookie with token
-    reply.setCookie("authToken", token, {
-      httpOnly: true,
-      secure: true, // HTTPS only
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600, // 1 hour in seconds
-    })
-
-    const response: ApiUserRegisterPostResponse = { user }
-    reply.send(response)
-  })
-
-  // 3. Connexion classique (email + mot de passe)
-  fastify.post("/api/user/login", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email, password } = request.body as ApiUserLoginPostRequest
-    if (!email || !password)
-      return reply.status(400).send("Email ou mot de passe manquant")
-    if (!isValidEmail(email))
-      return reply.status(400).send("Email invalide")
-    if (!isValidPassword(password))
-      return reply.status(400).send("Mot de passe trop faible")
-    // Ici, on suppose que le mot de passe reçu est en clair et doit être hashé pour la création
-    // et comparé au hash pour la connexion. Si déjà hashé côté client, adapter !
-    let user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as any
-    if (!user) {
-      // Création d'un compte classique
-      const passwordHash = await bcrypt.hash(password, 10)
-      user = findOrCreateClassicUser(email, passwordHash)
-    } else {
-      // Vérification du mot de passe
-      if (!user.password_hash || !(await bcrypt.compare(password, user.password_hash)))
-        return reply.status(401).send("Identifiants invalides")
-    }
-
-    // Vérifier si la 2FA est activée
-    const twoFAEnabled = user.twofa_enabled || false
-
-    if (twoFAEnabled && user.twofa_secret) {
-      // 2FA TOTP est activée, ne pas donner de token complet
-      // Retourner un état temporaire
-      const response: ApiUserLoginPostResponse = {
-        needsTwoFA: true,
-      }
-
-      return reply.send(response)
-    }
-
-    // Pas de 2FA, génération du JWT
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    )
-
-    // Set cookie with token
-    reply.setCookie("authToken", token, {
-      httpOnly: true,
-      secure: true, // HTTPS only
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600, // 1 hour in seconds
-    })
-
-    const response: ApiUserLoginPostResponse = { user, needsTwoFA: false }
-    reply.send(response)
-  })
-
-  // Set username (for users who don't have one yet, typically after Google OAuth)
-  fastify.post("/api/user/set-username", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { username, avatar, totp_secret, totp_code, disable_2fa } = request.body as ApiUserSetusernamePostRequest
-
-    // Get token from cookie
-    const token = request.cookies.authToken
-    if (!token)
-      return reply.status(401).send("Token manquant")
-
-    let decoded
-    try {
-      decoded = verifyToken(token)
-    } catch (err) {
-      return reply.status(401).send("Token invalide")
-    }
-
-    if (!username || username.length < 3 || username.length > 20)
-      return reply.status(400).send("Username must be between 3 and 20 characters")
-
-    // Check if username contains only alphanumeric characters and underscores
-    if (!/^[a-zA-Z0-9_]+$/.test(username))
-      return reply.status(400).send("Username can only contain letters, numbers, and underscores")
-
-    // Validate TOTP if provided (activation de la 2FA)
-    if (totp_secret && totp_code) {
-      if (!verify2FACode(totp_secret, totp_code))
-        return reply.status(400).send("Invalid verification code. Please try again.")
-    }
-
-    const user = setUsername(decoded.userId, username, avatar)
+    let user = getUser(googleProfile.email)
+    // If this user was created with email+pwd, there is no way to check that the previous registrant owns the email,
+    // so we prevent login using Google OAuth for that email for security reasons.
+    if (user && !user.google_id)
+      return res.status(403).send("Account exists and is not linked to Google")
+    if (user && user.google_id !== googleProfile.id)
+      return res.status(409).send("Google account mismatch")
     if (!user)
-      return reply.status(409).send("Username already taken")
+      user = createGoogleUser(googleProfile.email, googleProfile.id)
 
-    // Gérer les modifications de 2FA
-    if (disable_2fa) {
-      // Désactiver la 2FA
-      const stmt = db.prepare(`
-        UPDATE users
-        SET twofa_enabled = ?,
-            twofa_secret = ?
-        WHERE id = ?
-      `)
-      stmt.run(0, null, decoded.userId)
-    } else if (totp_secret && totp_code) {
-      // Activer la 2FA avec le nouveau secret
-      const stmt = db.prepare(`
-        UPDATE users
-        SET twofa_enabled = ?,
-            twofa_secret = ?
-        WHERE id = ?
-      `)
-      stmt.run(1, totp_secret, decoded.userId)
-    }
-    // Si ni disable_2fa ni totp_secret : garder l'état actuel de la 2FA
+    if (user.twofa_secret)
+      return res.status(202).send({ needsTwoFA: true, email: user.email })
 
-    // Generate new token with username
-    const newToken = jwt.sign(
-      { userId: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    )
-
-    // Update cookie with new token
-    reply.setCookie("authToken", newToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
-
-    const response: ApiUserSetusernamePostResponse = { success: true }
-    reply.send(response)
+    setJWT(res, user)
+    res.send({ user: userToPublicUser(user) })
   })
 
-  // Get user info from token
-  fastify.get("/api/user/me", async (request: FastifyRequest, reply: FastifyReply) => {
-    console.log("[/api/user/me] Request received")
-    console.log("[/api/user/me] Cookies:", request.cookies)
-
-    // Get token from cookie
-    const token = request.cookies.authToken
-    if (!token) {
-      console.log("[/api/user/me] No token in cookie")
-      return reply.status(401).send("Token manquant")
-    }
-
-    console.log("[/api/user/me] Token found, verifying...")
-    let decoded
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/register", {
+    schema: {
+      body: z.object({
+        email: z.email(),
+        password: z.string().min(8).max(128).regex(
+          /^(?=.*[a-zA-Z])(?=.*\d).+$/,
+          "Password must contain at least one letter and one number",
+        ),
+        username: z.string().min(3).max(20).regex(
+          /^[a-zA-Z0-9_]+$/,
+          "Username can only contain letters, numbers, and underscores",
+        ),
+      }),
+      response: { 200: z.object({ user: PUBLIC_USER_SCHEMA }), 409: z.string() },
+    },
+  }, async (req, res) => {
     try {
-      decoded = verifyToken(token)
-      console.log("[/api/user/me] Token verified, userId:", decoded.userId)
-    } catch (err) {
-      console.log("[/api/user/me] Token verification failed:", err)
-      return reply.status(401).send("Token invalide")
+      // If the user was created using Google OAuth, there is no way to verify that the registrant owns the email,
+      // so we prevent registration using email+password for that email for security reasons.
+      const passwordHash = await bcrypt.hash(req.body.password, 10)
+      const user = createUser(req.body.email, passwordHash, req.body.username)
+
+      setJWT(res, user)
+      res.send({ user: userToPublicUser(user) })
+    } catch (error) {
+      if (error instanceof Error && error.message === "UNIQUE constraint failed: users.email")
+        return res.status(409).send("Email already taken")
+      if (error instanceof Error && error.message === "UNIQUE constraint failed: users.username")
+        return res.status(409).send("Username already taken")
+      throw error
     }
-
-    // Get user from database to get latest info including avatar
-    const user = db.prepare("SELECT id, username, avatar, email, google_id, twofa_enabled FROM users WHERE id = ?").get(
-      decoded.userId,
-    ) as User
-
-    if (!user) {
-      console.log("[/api/user/me] User not found in DB")
-      return reply.status(404).send("Utilisateur non trouvé")
-    }
-
-    console.log("[/api/user/me] User found:", user.username)
-    const response: ApiUserMeGetResponse = { user }
-    reply.send(response)
   })
 
-  // 4. Connexion Google (fusion possible)
-  fastify.post("/api/user/google", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { id, email } = request.body as { id: string; email: string }
-    if (!id || !email)
-      return reply.status(400).send("ID ou email Google manquant")
-    if (!isValidEmail(email))
-      return reply.status(400).send("Email invalide")
-    const user = findOrCreateGoogleUser({ id, email })
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    )
-
-    // Set cookie with token
-    reply.setCookie("authToken", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
-
-    reply.send({ user })
-  })
-
-  // 5. Génération du secret et du QR code 2FA
-  fastify.post("/api/user/2fa/setup", async (request: FastifyRequest, reply: FastifyReply) => {
-    // Get token from cookie
-    const token = request.cookies.authToken
-    if (!token)
-      return reply.status(401).send("Non authentifié")
-
-    let decoded
-    try {
-      decoded = verifyToken(token)
-    } catch (err) {
-      return reply.status(401).send("Token invalide")
-    }
-
-    // Get user email from database
-    const user = db.prepare("SELECT email FROM users WHERE id = ?").get(decoded.userId) as { email: string } | undefined
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/login", {
+    schema: {
+      body: z.object({ email: z.email(), password: z.string() }),
+      response: {
+        200: z.object({ user: PUBLIC_USER_SCHEMA }),
+        202: z.object({ needsTwoFA: z.literal(true), email: z.email() }),
+        401: z.string(),
+      },
+    },
+  }, async (req, res) => {
+    let user = getUser(req.body.email)
     if (!user)
-      return reply.status(404).send("Utilisateur non trouvé")
+      return res.status(401).send("Invalid credentials")
 
+    if (!user.password_hash || !(await bcrypt.compare(req.body.password, user.password_hash)))
+      return res.status(401).send("Invalid credentials")
+
+    if (user.twofa_secret)
+      return res.status(202).send({ needsTwoFA: true, email: user.email })
+
+    setJWT(res, user)
+    res.send({ user: userToPublicUser(user) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/logout", {
+    schema: { response: { 200: z.void() } },
+  }, async (req, res) => {
+    clearJWT(res)
+    res.send()
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/me", {
+    schema: {
+      response: { 200: z.object({ user: PUBLIC_USER_SCHEMA }), 401: z.string() },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send("Invalid token")
+
+    const user = getUser(jwt.email)!
+
+    res.send({ user: userToPublicUser(user) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-username", {
+    schema: {
+      body: z.object({
+        username: z.string().min(3).max(20).regex(
+          /^[a-zA-Z0-9_]+$/,
+          "Username can only contain letters, numbers, and underscores",
+        ),
+      }),
+      response: { 200: z.object({ user: PUBLIC_USER_SCHEMA }), 401: z.string(), 409: z.string() },
+    },
+  }, async (req, res) => {
+    try {
+      const jwt = getJWT(req)
+      if (!jwt)
+        return res.status(401).send("Invalid token")
+
+      const user = getUser(jwt.email)!
+      user.username = req.body.username
+      updateUser(user.email, user)
+
+      res.send({ user: userToPublicUser(user) })
+    } catch (error) {
+      if (error instanceof Error && error.message === "UNIQUE constraint failed: users.username")
+        return res.status(409).send("Username already taken")
+      throw error
+    }
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-avatar", {
+    schema: {
+      body: z.object({ avatar: z.string() }),
+      response: { 200: z.object({ user: PUBLIC_USER_SCHEMA }), 401: z.string() },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send("Invalid token")
+
+    const user = getUser(jwt.email)!
+    user.avatar = req.body.avatar
+    updateUser(user.email, user)
+
+    res.send({ user: userToPublicUser(user) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/2fa/setup", {
+    schema: {
+      response: { 200: z.object({ secret: z.string(), qrCode: z.string() }), 401: z.string() },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send("Invalid token")
+
+    const user = getUser(jwt.email)!
     const secret = generate2FASecret(user.email)
     const qrCode = await generate2FAQrCode(secret.otpauth_url!)
 
-    const response: ApiUser2FASetupPostResponse = {
-      secret: secret.base32,
-      qrCode,
-    }
-    reply.send(response)
+    res.send({ secret: secret.base32, qrCode })
   })
 
-  // 6. Activation de la 2FA (sauvegarde du secret)
-  fastify.post("/api/user/2fa/enable", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { userId, secret, totp } = request.body as ApiUser2FAEnablePostRequest
-    if (!userId || !secret || !totp)
-      return reply.status(400).send("Paramètres manquants")
-    if (!verify2FACode(secret, totp))
-      return reply.status(401).send("Code 2FA invalide")
-    // Sauvegarde du secret et activation dans la base
-    db.prepare("UPDATE users SET twofa_secret = ?, twofa_enabled = TRUE WHERE id = ?").run(secret, userId)
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/enable", {
+    schema: {
+      body: z.object({ secret: z.string(), totp: z.string() }),
+      response: { 200: z.void(), 401: z.string() },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send("Invalid token")
 
-    const response: ApiUser2FAEnablePostResponse = { success: true }
-    reply.send(response)
+    if (!verify2FACode(req.body.secret, req.body.totp))
+      return res.status(401).send("Invalid verification code")
+
+    const user = getUser(jwt.email)!
+    user.twofa_secret = req.body.secret
+    updateUser(user.email, user)
+
+    res.send()
   })
 
-  // Nouvelle route: Activer la 2FA depuis le profil (avec authentification)
-  fastify.post("/api/user/2fa/profile/enable", async (request: FastifyRequest, reply: FastifyReply) => {
-    // Get token from cookie
-    const authToken = request.cookies.authToken
-    if (!authToken)
-      return reply.status(401).send("Non authentifié")
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/disable", {
+    schema: {
+      body: z.object({ totp: z.string() }),
+      response: { 200: z.void(), 401: z.string(), 404: z.string() },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send("Invalid token")
 
-    let decoded
-    try {
-      decoded = verifyToken(authToken)
-    } catch (err) {
-      return reply.status(401).send("Token invalide")
-    }
+    const user = getUser(jwt.email)!
+    if (!user.twofa_secret)
+      return res.status(404).send("2FA not enabled")
 
-    const { secret, code } = request.body as { secret: string; code: string }
-    if (!secret || !code)
-      return reply.status(400).send("Secret et code requis")
+    if (!verify2FACode(user.twofa_secret, req.body.totp))
+      return res.status(401).send("Invalid verification code")
 
-    // Vérifier le code TOTP
-    if (!verify2FACode(secret, code))
-      return reply.status(401).send("Code 2FA invalide")
+    user.twofa_secret = null
+    updateUser(user.email, user)
 
-    // Activer la 2FA
-    db.prepare("UPDATE users SET twofa_secret = ?, twofa_enabled = TRUE WHERE id = ?").run(secret, decoded.userId)
-
-    reply.send({ success: true })
+    res.send()
   })
 
-  // Nouvelle route: Désactiver la 2FA depuis le profil
-  fastify.post("/api/user/2fa/profile/disable", async (request: FastifyRequest, reply: FastifyReply) => {
-    // Get token from cookie
-    const authToken = request.cookies.authToken
-    if (!authToken)
-      return reply.status(401).send("Non authentifié")
-
-    let decoded
-    try {
-      decoded = verifyToken(authToken)
-    } catch (err) {
-      return reply.status(401).send("Token invalide")
-    }
-
-    const { code } = request.body as { code: string }
-    if (!code)
-      return reply.status(400).send("Code de vérification requis")
-
-    // Récupérer l'utilisateur
-    const user = db.prepare("SELECT twofa_secret, twofa_enabled FROM users WHERE id = ?").get(decoded.userId) as any
-    if (!user || !user.twofa_enabled || !user.twofa_secret)
-      return reply.status(400).send("2FA non activée")
-
-    // Vérifier le code TOTP
-    if (!verify2FACode(user.twofa_secret, code))
-      return reply.status(401).send("Code 2FA invalide")
-
-    // Désactiver la 2FA
-    db.prepare("UPDATE users SET twofa_secret = NULL, twofa_enabled = FALSE WHERE id = ?").run(decoded.userId)
-
-    reply.send({ success: true })
-  })
-
-  // 7. Vérification du code 2FA à la connexion
-  fastify.post("/api/user/2fa/verify", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { userId, token } = request.body as { userId: number; token: string }
-    if (!userId || !token)
-      return reply.status(400).send("Paramètres manquants")
-    const user = db.prepare("SELECT twofa_secret, twofa_enabled FROM users WHERE id = ?").get(userId)
-    if (!user || !user.twofa_enabled || !user.twofa_secret)
-      return reply.status(400).send("2FA non activée")
-    if (!verify2FACode(user.twofa_secret, token))
-      return reply.status(401).send("Code 2FA invalide")
-    reply.send({ success: true })
-  })
-
-  // Nouvelle route: Vérification du code 2FA lors du login et génération du token complet
-  fastify.post("/api/user/2fa/login/verify", async (request: FastifyRequest, reply: FastifyReply) => {
-    console.log("[2FA Login Verify] Request received")
-    console.log("[2FA Login Verify] Body:", request.body)
-    console.log("[2FA Login Verify] Cookies:", request.cookies)
-
-    const { userId, code } = request.body as {
-      userId?: number
-      code: string
-    }
-
-    // Récupérer userId depuis le cookie temporaire ou depuis le body
-    let finalUserId = userId
-    if (!finalUserId) {
-      const tempUserId = request.cookies.tempUserId
-      console.log("[2FA Login Verify] No userId in body, checking cookie:", tempUserId)
-      if (tempUserId)
-        finalUserId = parseInt(tempUserId, 10)
-    }
-
-    console.log("[2FA Login Verify] Final userId:", finalUserId)
-
-    if (!finalUserId || !code) {
-      console.log("[2FA Login Verify] Missing parameters")
-      return reply.status(400).send("Paramètres manquants")
-    }
-
-    // Récupérer l'utilisateur
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(finalUserId) as any
-    if (!user) {
-      console.log("[2FA Login Verify] User not found")
-      return reply.status(404).send("Utilisateur non trouvé")
-    }
-
-    console.log("[2FA Login Verify] User found:", user.email)
-
-    // Vérifier le code TOTP
-    if (!user.twofa_enabled || !user.twofa_secret)
-      return reply.status(400).send("2FA TOTP non activée")
-
-    const isValid = verify2FACode(user.twofa_secret, code)
-
-    if (!isValid) {
-      console.log("[2FA Login Verify] Invalid code")
-      return reply.status(401).send("Code 2FA invalide ou expiré")
-    }
-
-    console.log("[2FA Login Verify] Code valid, generating token")
-
-    // Code valide, générer le token complet
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    )
-
-    // Set cookie with token
-    reply.setCookie("authToken", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
-
-    // Clear temp cookie if it exists
-    reply.clearCookie("tempUserId", {
-      path: "/",
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-    })
-
-    // Retourner les infos utilisateur
-    reply.send({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        avatar: user.avatar,
-      },
-      needsSetup: !user.username,
-    })
-  })
-
-  // Rafraîchissement du token JWT
-  fastify.post("/api/user/token/refresh", async (request: FastifyRequest, reply: FastifyReply) => {
-    const { refreshToken } = request.body as { refreshToken: string }
-    if (!refreshToken)
-      return reply.status(400).send("Refresh token manquant")
-    const tokenEntry = db.prepare("SELECT user_id FROM tokens WHERE refresh_token = ?").get(refreshToken)
-    if (!tokenEntry)
-      return reply.status(401).send("Refresh token invalide")
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(tokenEntry.user_id)
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/verify", {
+    schema: {
+      body: z.object({ email: z.email(), totp: z.string() }),
+      response: { 200: z.object({ user: PUBLIC_USER_SCHEMA }), 401: z.string(), 404: z.string() },
+    },
+  }, async (req, res) => {
+    const user = getUser(req.body.email)
     if (!user)
-      return reply.status(401).send("Utilisateur inconnu")
-    const newToken = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    )
+      return res.status(404).send("User not found")
 
-    // Update cookie with new token
-    reply.setCookie("authToken", newToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
+    if (!user.twofa_secret)
+      return res.status(404).send("2FA not enabled")
 
-    reply.send({ success: true })
-  })
+    if (!verify2FACode(user.twofa_secret, req.body.totp))
+      return res.status(401).send("Invalid verification code")
 
-  // Déconnexion (invalidation du refresh token + suppression du cookie)
-  fastify.post("/api/user/logout", async (request: FastifyRequest, reply: FastifyReply) => {
-    console.log("[Logout] Received logout request")
-    console.log("[Logout] Cookies:", request.cookies)
-
-    try {
-      // Check if there's a refresh token in the body (optional)
-      if (request.body && typeof request.body === "object") {
-        const { refreshToken } = request.body as { refreshToken?: string }
-        if (refreshToken) {
-          console.log("[Logout] Deleting refresh token from DB")
-          db.prepare("DELETE FROM tokens WHERE refresh_token = ?").run(refreshToken)
-        }
-      }
-
-      // Clear auth cookie
-      console.log("[Logout] Clearing authToken cookie")
-      reply.clearCookie("authToken", {
-        path: "/",
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-      })
-
-      console.log("[Logout] Logout complete")
-
-      const response: ApiUserLogoutPostResponse = { success: true }
-      reply.send(response)
-    } catch (error) {
-      console.error("[Logout] Error during logout:", error)
-      reply.status(500).send({ error: "Logout failed" })
-    }
+    setJWT(res, user)
+    res.send({ user: userToPublicUser(user) })
   })
 }
