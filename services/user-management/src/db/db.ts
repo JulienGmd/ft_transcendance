@@ -10,9 +10,7 @@ export function getDb(): Database.Database {
 }
 
 export function closeDb(): void {
-  if (!db)
-    return
-  db.close()
+  db?.close()
   db = null
 }
 // End Singleton pattern

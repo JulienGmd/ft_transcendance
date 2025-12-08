@@ -1,4 +1,3 @@
-import "dotenv/config"
 import fastifyCookie from "@fastify/cookie"
 import fastifySwagger from "@fastify/swagger"
 import fastifySwaggerUI from "@fastify/swagger-ui"
