@@ -1,4 +1,3 @@
-import { ApiUser2FAEnablePostEndpoint, ApiUser2FASetupPostEndpoint } from "../../../../../../types/auth.js"
 import { navigate } from "../../persistent/router.js"
 import { post, validateFormInput } from "../../utils.js"
 
@@ -27,7 +26,7 @@ export function onDestroy(): void {
 }
 
 async function setupPage(): Promise<void> {
-  const data = await post<ApiUser2FASetupPostEndpoint>("/api/user/2fa/setup", {})
+  const data = await post("/api/user/2fa/setup", {})
   if (!data) {
     console.error("Failed to load 2FA setup data")
     return
@@ -59,7 +58,7 @@ async function onSubmit(e: Event): Promise<void> {
   if (!form?.checkValidity())
     return
 
-  const data = await post<ApiUser2FAEnablePostEndpoint>("/api/user/2fa/enable", {
+  const data = await post("/api/user/2fa/enable", {
     secret: secretKey,
     totp: totpInput!.value,
   })

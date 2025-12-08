@@ -1,11 +1,10 @@
-import { ApiEndpoint } from "../../../../../types/types.js"
 import { get } from "../utils.js"
 
 let lastTimestamps: Record<string, number> = {}
 
 async function reloadIfFilesChanged(): Promise<void> {
   try {
-    const timestamps = await get<ApiEndpoint<{}, Record<string, number>>>("/dev/file-timestamps")
+    const timestamps = await get("/dev/file-timestamps")
     if (!timestamps)
       return
 

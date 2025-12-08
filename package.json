@@ -2,7 +2,7 @@
   "name": "ft_transcendence",
   "private": true,
   "workspaces": [
-    "services/user-management",
+    "services/*",
     "shared"
   ],
   "scripts": {

@@ -1,19 +1,8 @@
-import {
-  ApiUser2FADisablePostEndpoint,
-  ApiUserMatchesPlayerGetEndpoint,
-  ApiUserMatchesPlayerStatsGetEndpoint,
-  ApiUserMeGetEndpoint,
-  ApiUserSetavatarPostEndpoint,
-  ApiUserSetusernamePostEndpoint,
-  MatchData,
-  PlayerStats,
-  User,
-} from "../../../../../types/auth.js"
 import * as header from "../persistent/header.js"
 import { navigate } from "../persistent/router.js"
 import { get, isValidUsername, post } from "../utils.js"
 
-let userData: User = {
+let userData: any = { // TODO any
   id: 0,
   email: "",
   twofa_enabled: false,
@@ -90,18 +79,18 @@ export function onDestroy(): void {
   twofaButtonEl?.removeEventListener("click", on2FAButtonClick)
 }
 
-async function loadUserInfo(): Promise<User | null> {
-  const data = await get<ApiUserMeGetEndpoint>("/api/user/me")
+async function loadUserInfo(): Promise<any | null> { // TODO any
+  const data = await get("/api/user/me")
   return data ? data.user : null
 }
 
-async function loadMatchHistory(): Promise<MatchData[]> {
-  const data = await get<ApiUserMatchesPlayerGetEndpoint>(`/api/user/matches/player/${userData.id}?limit=10`)
+async function loadMatchHistory(): Promise<any[]> { // TODO any
+  const data = await get(`/api/user/matches/player/${userData.id}?limit=10`)
   return data ? data.matches : []
 }
 
-async function loadStats(): Promise<PlayerStats> {
-  const data = await get<ApiUserMatchesPlayerStatsGetEndpoint>(`/api/user/matches/player/${userData.id}/stats`)
+async function loadStats(): Promise<any> { // TODO any
+  const data = await get(`/api/user/matches/player/${userData.id}/stats`)
   return data ? data.stats : {
     totalMatches: 0,
     totalWins: 0,
@@ -136,7 +125,7 @@ function updateAvatar(): void {
   }
 }
 
-function displayStats(stats: PlayerStats): void {
+function displayStats(stats: any): void { // TODO any
   const totalMatchesEl = document.getElementById("total-matches")
   const totalWinsEl = document.getElementById("total-wins")
   const winRateEl = document.getElementById("win-rate")
@@ -149,7 +138,7 @@ function displayStats(stats: PlayerStats): void {
   globalPrecisionEl!.textContent = `${stats.globalPrecision.toFixed(1)}%`
 }
 
-function displayMatchHistory(matches: MatchData[]): void {
+function displayMatchHistory(matches: any[]): void { // TODO any
   const matchHistoryEl = document.getElementById("match-history")
 
   if (matches.length === 0)
@@ -208,7 +197,7 @@ function onAvatarFileChange(): void {
   reader.onload = async (e) => {
     const result = e.target?.result as string
 
-    const data = await post<ApiUserSetavatarPostEndpoint>("/api/user/set-avatar", {
+    const data = await post("/api/user/set-avatar", {
       avatar: result,
     })
     if (!data) {
@@ -235,7 +224,7 @@ async function onUsernameInput(e: KeyboardEvent): Promise<void> {
     return
   }
 
-  const data = await post<ApiUserSetusernamePostEndpoint>("/api/user/set-username", {
+  const data = await post("/api/user/set-username", {
     username,
   })
   if (!data) {
@@ -256,7 +245,7 @@ async function on2FAButtonClick(): Promise<void> {
     if (!confirm("Do you want to disable 2FA?"))
       return
 
-    const data = await post<ApiUser2FADisablePostEndpoint>("/api/user/2fa/disable", {})
+    const data = await post("/api/user/2fa/disable", {})
     if (!data) {
       alert("Failed to disable 2FA. Please try again.")
       return

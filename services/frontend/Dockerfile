@@ -1,30 +1,17 @@
-FROM node:20-alpine AS base
-ARG UID=1000
-ARG GID=1000
-RUN apk add --no-cache shadow && rm -rf /home/node && usermod -u $UID node && groupmod -g $GID node
+# Note:
+# - certs allow to create https server
+# - root package.json defines workspaces
+
+FROM node:22-alpine
+
 WORKDIR /app
+
+COPY certs /certs
 COPY package*.json ./
+COPY shared ./shared
+COPY services/frontend ./services/frontend
 
-FROM base AS development
-# Install all dependencies
-RUN npm ci
-COPY . .
-EXPOSE 3000
-ENV PORT=3000
-ENV NODE_ENV=development
-CMD ["npm", "run", "dev"]
+RUN npm ci --workspaces
+RUN npm run build --workspaces
 
-FROM base AS builder
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM base AS production
-# Install production dependencies
-RUN npm ci --production --silent && npm cache clean --force
-# Execute builder stage and copy built files
-COPY --from=builder /app/dist ./dist
-EXPOSE 3000
-ENV PORT=3000
-ENV NODE_ENV=production
-CMD ["npm", "run", "start"]
+CMD ["npm", "start", "--workspaces"]

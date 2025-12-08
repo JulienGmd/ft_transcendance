@@ -4,19 +4,14 @@ services:
   user-management:
     volumes:
       - ./shared:/app/shared
-      - ./services/user-management/tsconfig.json:/app/services/user-management/tsconfig.json
       - ./services/user-management/src:/app/services/user-management/src
     environment:
       - NODE_ENV=development
     command: npm run dev --workspaces
 
-  # frontend:
-  #   build:
-  #     target: development
-  #     args:
-  #       UID: ${UID:-1000}
-  #       GID: ${GID:-1000}
-  #   volumes:
-  #     - ./services/frontend:/app
-  #     - /app/node_modules
-  #     - frontend-node-modules:/app/node_modules     # don't sync node_modules
+  frontend:
+    volumes:
+      - ./services/frontend/src:/app/services/frontend/src
+    environment:
+      - NODE_ENV=development
+    command: npm run dev --workspaces

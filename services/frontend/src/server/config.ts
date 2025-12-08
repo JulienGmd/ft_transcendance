@@ -1,9 +1,20 @@
 import { dirname, join } from "path"
 import { fileURLToPath } from "url"
 
-// Env
-export const NODE_ENV = process.env.NODE_ENV || "development"
-export const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000
+const config = {
+  // Mandatory env
 
-// Constants
-export const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), "../..")
+  // Optional env
+  NODE_ENV: process.env.NODE_ENV || "production",
+  PORT: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+
+  // Constants
+  ROOT_DIR: join(dirname(fileURLToPath(import.meta.url)), "../.."),
+}
+
+for (const [key, value] of Object.entries(config)) {
+  if (!value)
+    throw new Error(`${key} is not defined in env`)
+}
+
+export default config
