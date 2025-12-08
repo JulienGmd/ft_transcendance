@@ -69,7 +69,7 @@ export async function startServer(): Promise<void> {
   // Start the server
   await fastify.listen({ port: config.PORT, host: "0.0.0.0" })
   console.log(`✅ Starting server in ${config.NODE_ENV} mode`)
-  console.log("Documentation available at https://localhost:8080/api/user/docs")
+  console.log("🔍 Documentation: https://localhost:8080/api/user/docs")
 }
 
 export async function stopServer(): Promise<void> {

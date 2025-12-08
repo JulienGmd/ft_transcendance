@@ -5,13 +5,9 @@ import { createMatch } from "../match/match.service"
 import { getCodec, getNatsClient } from "./connection"
 
 export function setupSubscribers(): void {
-  console.log("🎮 Setting up NATS match subscribers...")
-
   const nc = getNatsClient()
   const codec = getCodec()
   messagesLoop(nc, codec)
-
-  console.log("✅ Match subscribers initialized")
 }
 
 async function messagesLoop(nc: NatsConnection, codec: Codec<string>): Promise<void> {
