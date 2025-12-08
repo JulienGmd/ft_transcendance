@@ -15,7 +15,7 @@ export function closeDb(): void {
 }
 // End Singleton pattern
 
-export function initDb(): void {
+export function initDb(): Database.Database {
   const db = getDb()
 
   // users table
@@ -52,6 +52,7 @@ export function initDb(): void {
     `).run()
 
   console.log("✅ Database initialized")
+  return db
 }
 
 export type User = {

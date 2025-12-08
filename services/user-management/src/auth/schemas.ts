@@ -6,3 +6,24 @@ export const PUBLIC_USER_SCHEMA = z.object({
   avatar: z.string().nullable(),
 })
 export type PublicUser = z.infer<typeof PUBLIC_USER_SCHEMA>
+
+export const PUBLIC_MATCH_SCHEMA = z.object({
+  p1_id: z.number(),
+  p2_id: z.number(),
+  p1_precision: z.number(),
+  p2_precision: z.number(),
+  p1_score: z.number(),
+  p2_score: z.number(),
+  winner_id: z.number().nullable(),
+  p1_username: z.string(),
+  p2_username: z.string(),
+  created_at: z.string(),
+})
+export type PublicMatch = z.infer<typeof PUBLIC_MATCH_SCHEMA>
+
+export const PUBLIC_STATS_SCHEMA = z.object({
+  numMatches: z.number(),
+  numWins: z.number(),
+  precision: z.number(),
+})
+export type PublicStats = z.infer<typeof PUBLIC_STATS_SCHEMA>

@@ -1,78 +1,52 @@
-import Database from "better-sqlite3"
-import { getDb } from "../db/db.js"
+// Add fake matches for testing purposes
 
-// Script pour ajouter des données de match factices
+import { createUser } from "../auth/auth.service.js"
+import { getDb } from "../db/db.js"
+import { createMatch } from "./match.service.js"
+
 const db = getDb()
 
-// ID de l'utilisateur Coco
-const cocoId = 2
+const p1Id = 2 // Change this
+const p2Id = p1Id + 1
+const p3Id = p1Id + 2
+const p4Id = p1Id + 3
 
-// Créer quelques utilisateurs adversaires fictifs si nécessaire
 function ensureOpponents() {
   const opponents = [
-    { id: 3, username: "Player1", email: "player1@example.com" },
-    { id: 4, username: "Player2", email: "player2@example.com" },
-    { id: 5, username: "Player3", email: "player3@example.com" },
+    { id: p2Id, username: "p2", email: "p1@example.com" },
+    { id: p3Id, username: "p3", email: "p2@example.com" },
+    { id: p4Id, username: "p4", email: "p3@example.com" },
   ]
 
   for (const opp of opponents) {
     const existing = db.prepare("SELECT id FROM users WHERE id = ?").get(opp.id)
     if (!existing) {
-      db.prepare("INSERT INTO users (id, username, email) VALUES (?, ?, ?)").run(
-        opp.id,
-        opp.username,
-        opp.email,
-      )
+      createUser(opp.username, opp.email, "password123")
       console.log(`Created opponent: ${opp.username}`)
     }
   }
 }
 
-// Ajouter des matchs factices
 function addMockMatches() {
   const matches = [
-    // Victoires de Coco
-    { player1: cocoId, player2: 3, precision1: 85.5, precision2: 72.3, score1: 10, score2: 8 },
-    { player1: cocoId, player2: 4, precision1: 92.1, precision2: 68.9, score1: 10, score2: 5 },
-    { player1: cocoId, player2: 5, precision1: 78.4, precision2: 81.2, score1: 10, score2: 9 },
+    // Wins
+    { p1_id: p1Id, p2_id: p2Id, p1_precision: 85.5, p2_precision: 72.3, p1_score: 10, p2_score: 8 },
+    { p1_id: p1Id, p2_id: p3Id, p1_precision: 92.1, p2_precision: 68.9, p1_score: 10, p2_score: 5 },
 
-    // Défaites de Coco
-    { player1: 3, player2: cocoId, precision1: 88.7, precision2: 75.3, score1: 10, score2: 7 },
-    { player1: 4, player2: cocoId, precision1: 91.2, precision2: 79.8, score1: 10, score2: 6 },
+    { p1_id: p4Id, p2_id: p1Id, p1_precision: 81.2, p2_precision: 78.4, p1_score: 9, p2_score: 10 },
 
-    // Matches plus anciens
-    { player1: cocoId, player2: 3, precision1: 82.3, precision2: 76.5, score1: 10, score2: 8 },
-    { player1: 5, player2: cocoId, precision1: 86.4, precision2: 84.1, score1: 10, score2: 9 },
-    { player1: cocoId, player2: 4, precision1: 89.6, precision2: 71.2, score1: 10, score2: 4 },
+    // Loses
+    { p1_id: p1Id, p2_id: p2Id, p1_precision: 88.0, p2_precision: 90.5, p1_score: 8, p2_score: 10 },
+    { p1_id: p1Id, p2_id: p3Id, p1_precision: 91.3, p2_precision: 89.7, p1_score: 5, p2_score: 10 },
+
+    { p1_id: p4Id, p2_id: p1Id, p1_precision: 85.0, p2_precision: 80.0, p1_score: 10, p2_score: 9 },
   ]
 
-  const stmt = db.prepare(`
-    INSERT INTO match_history (id_player1, id_player2, precision_player1, precision_player2, score_p1, score_p2, winner_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `)
+  for (const m of matches)
+    createMatch(m.p1_id, m.p2_id, m.p1_precision, m.p2_precision, m.p1_score, m.p2_score)
 
-  for (const match of matches) {
-    const winnerId = match.score1 > match.score2 ? match.player1 : match.player2
-    stmt.run(
-      match.player1,
-      match.player2,
-      match.precision1,
-      match.precision2,
-      match.score1,
-      match.score2,
-      winnerId,
-    )
-  }
-
-  console.log(`Added ${matches.length} mock matches for user Coco (ID: ${cocoId})`)
+  console.log(`Added ${matches.length} matches for users ids: ${p1Id}, ${p2Id}, ${p3Id}, ${p4Id}`)
 }
 
-// Exécuter le script
-try {
-  ensureOpponents()
-  addMockMatches()
-  console.log("Mock data added successfully!")
-} catch (error) {
-  console.error("Error adding mock data:", error)
-} finally {
-}
+ensureOpponents()
+addMockMatches()

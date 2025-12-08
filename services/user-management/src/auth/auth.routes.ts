@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt"
-import { FastifyInstance } from "fastify"
-import { ZodTypeProvider } from "fastify-type-provider-zod"
+import type { FastifyInstance } from "fastify"
+import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
 import { createGoogleUser, createUser, getUser, updateUser, userToPublicUser } from "./auth.service.js"
@@ -10,7 +10,9 @@ import { PUBLIC_USER_SCHEMA } from "./schemas.js"
 
 export async function authRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google", {
-    schema: { response: { 200: z.string() } },
+    schema: {
+      response: { 200: z.string() },
+    },
   }, async (req, res) => res.send(getGoogleAuthUrl()))
 
   // TODO tester mauvais code ou cancel flow
@@ -105,7 +107,9 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/logout", {
-    schema: { response: { 200: z.void() } },
+    schema: {
+      response: { 200: z.void() },
+    },
   }, async (req, res) => {
     clearJWT(res)
     res.send()

@@ -1,144 +1,89 @@
-import Database from "better-sqlite3"
+import { PublicMatch, PublicStats } from "../auth/schemas.js"
+import { getDb, Match, User } from "../db/db.js"
 
-export interface Match {
-  match_id: number
-  id_player1: number
-  id_player2: number
-  precision_player1: number
-  precision_player2: number
-  score_p1: number
-  score_p2: number
-  winner_id: number | null
-  created_at: string
-}
-
-export interface MatchWithUsernames extends Match {
-  player1_username: string | null
-  player2_username: string | null
-}
-
-export interface PlayerStats {
-  totalMatches: number
-  totalWins: number
-  globalPrecision: number
-}
-
-// Créer un nouveau match
 export function createMatch(
-  db: Database.Database,
-  player1Id: number,
-  player2Id: number,
-  precisionPlayer1: number,
-  precisionPlayer2: number,
-  scoreP1: number,
-  scoreP2: number,
+  p1_id: number,
+  p2_id: number,
+  p1_precision: number,
+  p2_precision: number,
+  p1_score: number,
+  p2_score: number,
 ): Match {
-  // Déterminer le gagnant
-  const winnerId = scoreP1 > scoreP2 ? player1Id : scoreP2 > scoreP1 ? player2Id : null
+  const db = getDb()
 
+  const winnerId = p1_score > p2_score ? p1_id : p2_score > p1_score ? p2_id : null
   const stmt = db.prepare(`
-    INSERT INTO match_history (id_player1, id_player2, precision_player1, precision_player2, score_p1, score_p2, winner_id)
+    INSERT INTO match_history (p1_id, p2_id, p1_precision, p2_precision, p1_score, p2_score, winner_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
+  const info = stmt.run(p1_id, p2_id, p1_precision, p2_precision, p1_score, p2_score, winnerId)
 
-  const result = stmt.run(player1Id, player2Id, precisionPlayer1, precisionPlayer2, scoreP1, scoreP2, winnerId)
-
-  // Récupérer le match créé
-  const match = db.prepare("SELECT * FROM match_history WHERE match_id = ?").get(result.lastInsertRowid) as Match
-  return match
+  return db.prepare("SELECT * FROM match_history WHERE id = ?").get(info.lastInsertRowid) as Match
 }
 
-// Récupérer l'historique des matchs d'un joueur
-export function getPlayerMatchHistory(
-  db: Database.Database,
-  playerId: number,
-  limit: number = 10,
-): MatchWithUsernames[] {
+export function getPlayerMatches(email: string, limit: number = 10): Match[] {
+  const db = getDb()
+
+  limit = Math.floor(Math.max(1, Math.min(limit, 100)))
+
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User
+  if (!user)
+    return []
+
   const stmt = db.prepare(`
-    SELECT
-      mh.*,
-      u1.username as player1_username,
-      u2.username as player2_username
-    FROM match_history mh
-    LEFT JOIN users u1 ON mh.id_player1 = u1.id
-    LEFT JOIN users u2 ON mh.id_player2 = u2.id
-    WHERE mh.id_player1 = ? OR mh.id_player2 = ?
-    ORDER BY mh.created_at DESC
+    SELECT * FROM match_history WHERE p1_id = ? OR p2_id = ?
+    ORDER BY created_at DESC
     LIMIT ?
   `)
-
-  return stmt.all(playerId, playerId, limit) as MatchWithUsernames[]
+  return stmt.all(user.id, user.id, limit) as Match[]
 }
 
-// Récupérer les statistiques d'un joueur
-export function getPlayerStats(db: Database.Database, playerId: number): PlayerStats {
-  // Total de matchs
-  const totalMatchesStmt = db.prepare(`
-    SELECT COUNT(*) as count
-    FROM match_history
-    WHERE id_player1 = ? OR id_player2 = ?
-  `)
-  const totalMatchesResult = totalMatchesStmt.get(playerId, playerId) as { count: number }
-  const totalMatches = totalMatchesResult.count
+export function getPlayerStats(email: string): PublicStats {
+  const db = getDb()
 
-  // Total de victoires
-  const totalWinsStmt = db.prepare(`
-    SELECT COUNT(*) as count
-    FROM match_history
-    WHERE winner_id = ?
-  `)
-  const totalWinsResult = totalWinsStmt.get(playerId) as { count: number }
-  const totalWins = totalWinsResult.count
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User
+  if (!user)
+    return { numMatches: 0, numWins: 0, precision: 0 }
 
-  // Précision globale
+  const numMatchesStmt = db.prepare(`SELECT COUNT(*) as count FROM match_history WHERE p1_id = ? OR p2_id = ?`)
+  const numMatches = (numMatchesStmt.get(user.id, user.id) as { count: number }).count as number
+
+  const numWinsStmt = db.prepare(`SELECT COUNT(*) as count FROM match_history WHERE winner_id = ?`)
+  const numWins = (numWinsStmt.get(user.id) as { count: number }).count as number
+
   const precisionStmt = db.prepare(`
-    SELECT
-      AVG(CASE
-        WHEN id_player1 = ? THEN precision_player1
-        WHEN id_player2 = ? THEN precision_player2
-      END) as avg_precision
+    SELECT AVG(
+      CASE
+        WHEN p1_id = ? THEN p1_precision
+        WHEN p2_id = ? THEN p2_precision
+        ELSE 0
+      END
+    ) as avg_precision
     FROM match_history
-    WHERE id_player1 = ? OR id_player2 = ?
+    WHERE p1_id = ? OR p2_id = ?
   `)
-  const precisionResult = precisionStmt.get(playerId, playerId, playerId, playerId) as { avg_precision: number | null }
-  const globalPrecision = precisionResult.avg_precision || 0
+  const precisionRow = precisionStmt.get(user.id, user.id, user.id, user.id) as { avg_precision: number | null }
+  const precision = precisionRow.avg_precision || 0
+
+  return { numMatches, numWins, precision }
+}
+
+export function matchToPublicMatch(match: Match): PublicMatch {
+  const db = getDb()
+
+  const p1 = db.prepare("SELECT username FROM users WHERE id = ?").get(match.p1_id) as { username: string } | undefined
+  const p2 = db.prepare("SELECT username FROM users WHERE id = ?").get(match.p2_id) as { username: string } | undefined
 
   return {
-    totalMatches,
-    totalWins,
-    globalPrecision: Number(globalPrecision.toFixed(2)),
+    p1_id: match.p1_id,
+    p2_id: match.p2_id,
+    p1_precision: match.p1_precision,
+    p2_precision: match.p2_precision,
+    p1_score: match.p1_score,
+    p2_score: match.p2_score,
+    winner_id: match.winner_id,
+    p1_username: p1?.username || "Unknown",
+    p2_username: p2?.username || "Unknown",
+    created_at: match.created_at,
   }
-}
-
-// Récupérer un match par son ID
-export function getMatchById(db: Database.Database, matchId: number): MatchWithUsernames | null {
-  const stmt = db.prepare(`
-    SELECT
-      mh.*,
-      u1.username as player1_username,
-      u2.username as player2_username
-    FROM match_history mh
-    LEFT JOIN users u1 ON mh.id_player1 = u1.id
-    LEFT JOIN users u2 ON mh.id_player2 = u2.id
-    WHERE mh.match_id = ?
-  `)
-
-  return stmt.get(matchId) as MatchWithUsernames | null
-}
-
-// Récupérer tous les matchs (pour le leaderboard, etc.)
-export function getAllMatches(db: Database.Database, limit: number = 50): MatchWithUsernames[] {
-  const stmt = db.prepare(`
-    SELECT
-      mh.*,
-      u1.username as player1_username,
-      u2.username as player2_username
-    FROM match_history mh
-    LEFT JOIN users u1 ON mh.id_player1 = u1.id
-    LEFT JOIN users u2 ON mh.id_player2 = u2.id
-    ORDER BY mh.created_at DESC
-    LIMIT ?
-  `)
-
-  return stmt.all(limit) as MatchWithUsernames[]
 }
