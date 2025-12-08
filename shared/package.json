@@ -6,6 +6,7 @@
   "types": "src/index.ts",
   "scripts": {
     "dev": "tsc -w",
-    "build": "tsc"
+    "build": "tsc",
+    "start": ""
   }
 }
