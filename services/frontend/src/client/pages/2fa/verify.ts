@@ -1,44 +1,34 @@
+import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { post, validateFormInput } from "../../utils.js"
+import { post } from "../../utils.js"
 
-// TODO rediriger si deja co ?
+let form: HTMLFormElement
+let totpFormInput: FormInputElement
 
 let email: string = ""
 
-let form: HTMLFormElement | null = null
-let formError: HTMLElement | null = null
-let totpInput: HTMLInputElement | null = null
-let totpInputError: HTMLElement | null = null
-
 export function onMount(): void {
-  form = document.querySelector("form") as HTMLFormElement
-  formError = document.getElementById("form-error")
-  totpInput = document.getElementById("totp-input") as HTMLInputElement
-  totpInputError = document.getElementById("totp-input-error") as HTMLElement
+  form = document.querySelector("form")!
+  totpFormInput = document.querySelector("#totp-form-input")!
 
-  const params = new URLSearchParams(window.location.search)
+  if (!form || !totpFormInput) {
+    console.log(form, totpFormInput)
+
+    throw new Error("Elements not found")
+  }
+
+  const params = new URLSearchParams(window.location.search) // TODO server cookie 5min ? maybe user can bypass login if he have email + app
   email = params.get("email") || ""
   if (!email) {
     navigate("/login")
     return
   }
 
-  form?.addEventListener("submit", onSubmit)
-  totpInput?.addEventListener("input", validateTotp)
+  form.addEventListener("submit", onSubmit)
 }
 
 export function onDestroy(): void {
-  form?.removeEventListener("submit", onSubmit)
-  totpInput?.removeEventListener("input", validateTotp)
-}
-
-function validateTotp(): void {
-  validateFormInput(
-    totpInput!,
-    totpInputError!,
-    (value) => value.length === 0 || /^\d{6}$/.test(value),
-    "The code must be a 6-digit number",
-  )
+  form.removeEventListener("submit", onSubmit)
 }
 
 async function onSubmit(e: Event): Promise<void> {
@@ -46,20 +36,19 @@ async function onSubmit(e: Event): Promise<void> {
   e.stopPropagation()
 
   // Doesn't seems to be necessary because the browser seems to call form.checkValidity() before firing the submit event
-  if (!form?.checkValidity())
+  if (!form.checkValidity())
     return
 
   const data = await post("/api/user/2fa/verify", {
     email,
-    totp: totpInput!.value,
+    totp: totpFormInput.value,
   })
-  if (!data[200]) {
-    formError!.textContent = "The code is invalid. Please try again."
-    formError?.classList.remove("hidden")
-    return
-  }
-
-  formError?.classList.add("hidden")
-
-  navigate("/home")
+  if (data[200])
+    navigate("/home")
+  else if (data[400])
+    totpFormInput.showError("Code is invalid")
+  else if (data[401] || data[404])
+    navigate("/login")
+  else
+    throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

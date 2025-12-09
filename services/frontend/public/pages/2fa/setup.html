@@ -14,13 +14,13 @@
       <!-- QR Code -->
       <div class="space-y-4">
         <p>Scan this QR code with your authenticator app:</p>
-        <img id="qr-code" alt="QR Code" class="mx-auto size-48 rounded-2xl" />
+        <img id="qrcode-img" alt="QR Code" class="mx-auto size-48 rounded-2xl" />
       </div>
 
       <!-- Or Secret Key -->
       <div class="space-y-4">
         <p>Or enter this secret manually:</p>
-        <code id="secret-key" class="bg-surface/40 text-success block rounded p-2 text-center font-mono text-sm">
+        <code id="secret" class="bg-surface/40 text-success block rounded p-2 text-center font-mono text-sm">
           Loading...
         </code>
       </div>
@@ -28,10 +28,9 @@
       <!-- Verification Code Input -->
       <div class="space-y-4">
         <p>Then enter the code from your authenticator app:</p>
-        <form-input type="text" _id="totp-input" required label="6-digit code"></form-input>
+        <form-input id="totp-form-input" label="6-digit code" required></form-input>
       </div>
 
-      <div id="form-error" class="text-error hidden text-center text-sm"></div>
       <button type="submit" class="button">Continue</button>
     </form>
   </div>

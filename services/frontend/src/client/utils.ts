@@ -69,38 +69,6 @@ export async function post<Path extends PostPaths>(
     body: JSON.stringify(body),
   })
   // Using `as` because res.status is a number and not only the defined return status in the type.
-  return { [res.status]: await res.json() } as ExtractResponse<paths[Path]["post"]>
-}
-
-export function validateFormInput(
-  inputEl: HTMLInputElement,
-  errorEl: HTMLElement,
-  condition: (value: string) => boolean,
-  errorMessage: string,
-): void {
-  if (condition(inputEl.value)) {
-    inputEl.setCustomValidity("")
-    errorEl.textContent = ""
-    errorEl.classList.add("hidden")
-  } else {
-    inputEl.setCustomValidity(errorMessage)
-    errorEl.textContent = errorMessage
-    errorEl.classList.remove("hidden")
-  }
-}
-
-// TODO these 3 should match zod schemas ou les enlever et afficher l'erreur retourne par le serv
-export function isValidEmail(email: string): boolean {
-  // Simple email validation (char+@char+.char+)
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-export function isValidUsername(username: string): boolean {
-  // 3-20 chars, letters, numbers, underscores
-  return /^[a-zA-Z0-9_]{3,20}$/.test(username)
-}
-
-export function isValidPassword(password: string): boolean {
-  // 8+ chars, 1 letter and 1 number
-  return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)
+  const data = res.headers.get("content-length") === "0" ? {} : await res.json()
+  return { [res.status]: data } as ExtractResponse<paths[Path]["post"]>
 }

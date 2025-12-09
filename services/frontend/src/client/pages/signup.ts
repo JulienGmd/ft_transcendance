@@ -1,80 +1,34 @@
+import { FormInputElement } from "../components/formInput.js"
 import { navigate } from "../persistent/router.js"
-import { isValidEmail, isValidPassword, post, validateFormInput } from "../utils.js"
+import { post } from "../utils.js"
 
-// TODO rediriger si deja co
+// TODO il faut un validator client side pour confirmPassword
 
-let form: HTMLFormElement | null = null
-let formError: HTMLElement | null = null
-let username: HTMLInputElement | null = null
-let usernameError: HTMLElement | null = null
-let email: HTMLInputElement | null = null
-let emailError: HTMLElement | null = null
-let password: HTMLInputElement | null = null
-let passwordError: HTMLElement | null = null
-let confirmPassword: HTMLInputElement | null = null
-let confirmPasswordError: HTMLElement | null = null
-let googleBtn: HTMLButtonElement | null = null
+let form: HTMLFormElement
+let usernameFormInput: FormInputElement
+let emailFormInput: FormInputElement
+let passwordFormInput: FormInputElement
+let confirmPasswordFormInput: FormInputElement
+let googleBtn: HTMLButtonElement
 
 export function onMount(): void {
-  form = document.querySelector("form")
-  formError = document.getElementById("form-error")
-  username = document.getElementById("username") as HTMLInputElement | null
-  usernameError = document.getElementById("username-error")
-  email = document.getElementById("email") as HTMLInputElement | null
-  emailError = document.getElementById("email-error")
-  password = document.getElementById("password") as HTMLInputElement | null
-  passwordError = document.getElementById("password-error")
-  confirmPassword = document.getElementById("confirm-password") as HTMLInputElement | null
-  confirmPasswordError = document.getElementById("confirm-password-error")
-  googleBtn = document.getElementById("google-signup-btn") as HTMLButtonElement | null
+  form = document.querySelector("form")!
+  usernameFormInput = document.querySelector("#username-form-input")!
+  emailFormInput = document.querySelector("#email-form-input")!
+  passwordFormInput = document.querySelector("#password-form-input")!
+  confirmPasswordFormInput = document.querySelector("#confirm-password-form-input")!
+  googleBtn = document.querySelector("#google-btn")!
 
-  form?.addEventListener("submit", onSubmit)
-  username?.addEventListener("input", validateUsername)
-  email?.addEventListener("input", validateEmail)
-  password?.addEventListener("input", validatePassword)
-  confirmPassword?.addEventListener("input", validateConfirmPassword)
-  googleBtn?.addEventListener("click", loginWithGoogle)
+  if (!form || !usernameFormInput || !emailFormInput || !passwordFormInput || !confirmPasswordFormInput || !googleBtn)
+    throw new Error("Elements not found")
+
+  form.addEventListener("submit", onSubmit)
+  googleBtn.addEventListener("click", loginWithGoogle)
 }
 
 export function onDestroy(): void {
-  form?.removeEventListener("submit", onSubmit)
-  username?.removeEventListener("input", validateUsername)
-  email?.removeEventListener("input", validateEmail)
-  password?.removeEventListener("input", validatePassword)
-  confirmPassword?.removeEventListener("input", validateConfirmPassword)
-  googleBtn?.removeEventListener("click", loginWithGoogle)
-}
-
-function validateUsername(): void {
-  validateFormInput(
-    username!,
-    usernameError!,
-    (value) => value.length === 0 || value.length >= 3,
-    "Username must be at least 3 characters long",
-  )
-}
-
-function validateEmail(): void {
-  validateFormInput(email!, emailError!, (value) => value.length === 0 || isValidEmail(value), "Invalid email format")
-}
-
-function validatePassword(): void {
-  validateFormInput(
-    password!,
-    passwordError!,
-    (value) => value.length === 0 || isValidPassword(value),
-    "Password must be at least 8 characters long with at least 1 number and 1 letter",
-  )
-  validateConfirmPassword()
-}
-
-function validateConfirmPassword(): void {
-  validateFormInput(
-    confirmPassword!,
-    confirmPasswordError!,
-    (value) => value.length === 0 || password!.value === value,
-    "Passwords do not match",
-  )
+  form.removeEventListener("submit", onSubmit)
+  googleBtn.removeEventListener("click", loginWithGoogle)
 }
 
 async function onSubmit(e: Event): Promise<void> {
@@ -82,23 +36,39 @@ async function onSubmit(e: Event): Promise<void> {
   e.stopPropagation()
 
   // Doesn't seems to be necessary because the browser seems to call form.checkValidity() before firing the submit event
-  if (!form?.checkValidity())
+  if (!form.checkValidity())
     return
 
   const data = await post("/api/user/register", {
-    username: username!.value,
-    email: email!.value,
-    password: password!.value,
+    username: usernameFormInput.value,
+    email: emailFormInput.value,
+    password: passwordFormInput.value,
   })
-  if (!data[200]) {
-    formError!.textContent = "Signup failed. Please try again."
-    formError?.classList.remove("hidden")
-    return
+  if (data[200])
+    navigate("/")
+  else if (data[400]) {
+    usernameFormInput.clearError()
+    emailFormInput.clearError()
+    passwordFormInput.clearError()
+    for (const detail of data[400].details) {
+      if (detail.field === "username")
+        usernameFormInput.showError(detail.message)
+      if (detail.field === "email")
+        emailFormInput.showError(detail.message)
+      if (detail.field === "password")
+        passwordFormInput.showError(detail.message)
+    }
+  } else if (data[409]) {
+    usernameFormInput.clearError()
+    emailFormInput.clearError()
+    passwordFormInput.clearError()
+    if (data[409].message.includes("username"))
+      usernameFormInput.showError(data[409].message)
+    if (data[409].message.includes("email"))
+      emailFormInput.showError(data[409].message)
+  } else {
+    throw new Error("Unexpected response from server: " + JSON.stringify(data))
   }
-
-  formError?.classList.add("hidden")
-
-  navigate("/home")
 }
 
 function loginWithGoogle(e: Event): void {

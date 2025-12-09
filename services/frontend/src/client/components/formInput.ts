@@ -1,3 +1,9 @@
+export interface FormInputElement extends HTMLElement {
+  showError(msg: string): void
+  clearError(): void
+  value: string
+}
+
 /**
  * Attributes:
  *   Required:
@@ -16,13 +22,13 @@
  * Properties:
  * - value: string - Get or set the value of the input
  */
-class FormInput extends HTMLElement {
+class FormInput extends HTMLElement implements FormInputElement {
   private inputEl!: HTMLInputElement
   private errorEl!: HTMLElement
 
   connectedCallback() {
-    const id = this.getAttribute("id") || ""
-    const label = this.getAttribute("label") || ""
+    const id = this.getAttribute("id")
+    const label = this.getAttribute("label")
 
     const type = this.getAttribute("type") || "text"
     const required = this.getAttribute("required")

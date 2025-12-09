@@ -6,7 +6,7 @@
     <!-- Header -->
     <div class="border-surface flex items-center gap-4 border-b pb-6">
       <!-- Avatar -->
-      <input type="file" id="avatar-file" accept="image/*" class="hidden" />
+      <input id="avatar-input" type="file" accept="image/*" class="hidden" />
       <button
         class="group bg-primary relative grid size-16 place-items-center overflow-hidden rounded-full"
         onclick="document.getElementById('avatar-file').click()"
@@ -19,24 +19,24 @@
           </div>
         </div>
         <span id="avatar-letter" class="text-3xl font-bold">?</span>
-        <img id="avatar-image" class="hidden size-full object-cover" alt="Avatar" />
+        <img id="avatar-img" class="hidden size-full object-cover" alt="Avatar" />
       </button>
       <div>
         <!-- Username -->
         <label for="username" class="sr-only">Username</label>
         <input
+          id="username-input"
+          name="username-input"
           type="text"
-          name="username"
-          id="username"
-          class="focus:border-primary hover:border-surface w-full rounded-md border-2 border-transparent px-2 py-1 text-2xl font-bold outline-none"
           value="Loading..."
+          class="focus:border-primary hover:border-surface w-full rounded-md border-2 border-transparent px-2 py-1 text-2xl font-bold outline-none"
         />
         <!-- Email -->
         <p id="email" class="text-text-muted pl-2 text-sm">Loading...</p>
         <!-- 2FA -->
         <div class="text-text-muted pt-2 pl-2 text-sm">
           Two-Factor Authentication is
-          <button id="2fa-button" class="text-primary font-bold">Loading...</button>
+          <button id="twofa-btn" class="text-primary font-bold">Loading...</button>
         </div>
       </div>
     </div>
@@ -47,12 +47,12 @@
       <div class="grid grid-cols-1 gap-8 pt-10 text-center md:grid-cols-4">
         <!-- Total Matches -->
         <div>
-          <div class="font-orbitron text-2xl font-bold" id="total-matches">0</div>
+          <div class="font-orbitron text-2xl font-bold" id="num-matches">0</div>
           <div class="text-text-muted mt-2 text-sm">Total Matches</div>
         </div>
         <!-- Wins -->
         <div>
-          <div class="font-orbitron text-2xl font-bold" id="total-wins">0</div>
+          <div class="font-orbitron text-2xl font-bold" id="num-wins">0</div>
           <div class="text-text-muted mt-2 text-sm">Wins</div>
         </div>
         <!-- Win Rate -->
@@ -62,7 +62,7 @@
         </div>
         <!-- Global Precision -->
         <div>
-          <div class="font-orbitron text-2xl font-bold" id="global-precision">0.0%</div>
+          <div class="font-orbitron text-2xl font-bold" id="precision">0.0%</div>
           <div class="text-text-muted mt-2 text-sm">Global Precision</div>
         </div>
       </div>

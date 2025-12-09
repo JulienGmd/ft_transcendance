@@ -14,14 +14,21 @@
 
     <!-- Login Form -->
     <form class="flex flex-col gap-6">
-      <form-input type="text" _id="email" required label="Email" icon="user" autocomplete="email"></form-input>
       <form-input
-        type="password"
-        _id="password"
+        id="email-form-input"
+        label="Email"
+        type="text"
         required
+        autocomplete="email"
+        icon="user"
+      ></form-input>
+      <form-input
+        id="password-form-input"
         label="Password"
-        icon="lock"
+        type="password"
+        required
         autocomplete="current-password"
+        icon="lock"
       ></form-input>
       <div id="form-error" class="text-error hidden text-center text-sm"></div>
       <button type="submit" class="button">Sign In</button>
@@ -35,7 +42,7 @@
     </div>
 
     <!-- OAuth Options -->
-    <button class="button-secondary w-full">
+    <button id="google-btn" class="button-secondary w-full">
       <google-icon class="block size-5"></google-icon>
       <span>Google</span>
     </button>
