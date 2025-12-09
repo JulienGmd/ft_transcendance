@@ -5,19 +5,17 @@ if (!app)
   throw new Error("App element not found")
 
 /**
- * Preload the page HTML and scripts (safe to call multiple times, this will not redo requests)
+ * Preload the page HTML and scripts (safe to call multiple times)
  * @param route The page route ('/', '/login', etc.)
  */
 async function preload(route: string): Promise<void> {
-  // Preload page (cached by browser because Cache-Control header is set in Caddyfile)
-  const page = await fetchHtml(route)
+  const page = await fetchHtml(route) // Can be cached if header Cache-Control is set server-side
   if (!page)
     return
 
-  // Preload scripts (import cached file by default, but it makes top level code execute immediately)
-  const { scriptsUrls } = await extractScripts(page)
-  for (const scriptUrl of scriptsUrls)
-    await import(scriptUrl)
+  const { scriptsSrc } = await extractScripts(page)
+  for (const scriptSrc of scriptsSrc)
+    await import(scriptSrc) // Cached by browser
 }
 
 /**
@@ -25,12 +23,10 @@ async function preload(route: string): Promise<void> {
  * @param pushHistory Whether to push the new route to browser history (default: true)
  */
 export async function navigate(route: string, pushHistory = true): Promise<void> {
-  // Call onDestroy on previous modules
   loadedModules.forEach((m) => m.onDestroy?.())
   loadedModules = []
 
-  // Get page HTML (will use cache if preloaded)
-  let page = await fetchHtml(route)
+  let page = await fetchHtml(route) // Can be cached if header Cache-Control is set server-side
   if (!page) {
     // This should never happens because 404.html should be in `page`.
     app.innerHTML = "<h1>Error 404: Not Found</h1>"
@@ -39,56 +35,45 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
     return
   }
 
-  // Load modules (will use cache if preloaded)
-  const { newPage, scriptsUrls } = await extractScripts(page)
-  for (const scriptUrl of scriptsUrls)
-    loadedModules.push(await import(scriptUrl))
+  const { newPage, scriptsSrc } = await extractScripts(page)
+  for (const scriptSrc of scriptsSrc)
+    loadedModules.push(await import(scriptSrc)) // Cached by browser
 
-  // Inject HTML into #app
   app.innerHTML = newPage
 
-  // Dispatch event for persistent scripts to react to page load
   window.dispatchEvent(new CustomEvent("pageLoaded"))
-
-  // Call onMount on modules
   loadedModules.forEach((m) => m.onMount?.())
 
-  // Update URL and history
   if (pushHistory)
     window.history.pushState({}, "", route)
 }
 
 /**
  * @param route The page route ('/', '/login', etc.)
- * @returns the page HTML, either from cache or by fetching it
+ * @returns the page HTML string
  */
 async function fetchHtml(route: string): Promise<string | null> {
   route = route === "/" ? "/home" : route
   const res = await fetch(`/public/pages${route}.html`)
-  if (res.status === 404) {
-    // Server returns 404.html with 404 status for missing pages
+  // Server returns 404.html with 404 status for missing pages
+  if (res.status === 404 || res.ok)
     return await res.text()
-  }
-  if (!res.ok)
-    return null
-  return await res.text()
+  return null
 }
 
 /**
  * @param page The page HTML
- * @returns The page HTML with script tags removed and the scripts URLs
+ * @returns The page HTML without script tags and the scripts src
  */
-async function extractScripts(page: string): Promise<{ newPage: string; scriptsUrls: string[] }> {
-  // Get scripts URLs
+async function extractScripts(page: string): Promise<{ newPage: string; scriptsSrc: string[] }> {
   const parser = new DOMParser()
   const doc = parser.parseFromString(page, "text/html")
   const scripts = Array.from(doc.querySelectorAll("script"))
-  const scriptsUrls = scripts.map((s) => s.src).filter((src) => src)
+  const scriptsSrc = scripts.map((s) => s.src).filter((src) => src)
 
-  // Remove scripts from doc
   scripts.forEach((s) => s.remove())
 
-  return { newPage: doc.body.innerHTML, scriptsUrls }
+  return { newPage: doc.body.innerHTML, scriptsSrc }
 }
 
 /** @returns true if the <a> should be handled by the SPA navigation */
@@ -102,7 +87,8 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent): boolean {
 // ----------------------------------------------------------------------------
 
 // On first navigation, /public/_index.html and this script will be served,
-// if url is /user, this navigate will then display /public/pages/user inside #app
+// if url is /user, this navigate will then display /public/pages/user inside #app,
+// load scripts, etc.
 navigate(window.location.pathname, false)
 
 /** Handle browser navigation (back/forward buttons) */

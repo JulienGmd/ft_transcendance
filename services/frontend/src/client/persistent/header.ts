@@ -7,32 +7,34 @@ const avatarImg = document.querySelector("#header-avatar-img") as HTMLImageEleme
 const avatarLetter = document.querySelector("#header-avatar-letter") as HTMLSpanElement | null
 const logoutBtn = document.querySelector("#header-logout-btn") as HTMLButtonElement | null
 
-logoutBtn?.addEventListener("click", logout)
-window.addEventListener("pageLoaded", update)
+if (!loginLink || !profileContainer || !avatarImg || !avatarLetter || !logoutBtn)
+  throw new Error("Header elements not found")
 
-// Show profile button or login link
+window.addEventListener("pageLoaded", update)
+logoutBtn?.addEventListener("click", logout)
+
 export async function update(): Promise<void> {
   const data = await get("/api/user/me")
 
   if (!data[200]) {
+    // Show profile, hide login
     profileContainer?.classList.add("hidden")
     loginLink?.classList.remove("hidden")
     return
   }
 
+  // Show profile, hide login
   const user = data[200].user
-
   if (user.avatar) {
     avatarImg!.src = user.avatar
     avatarImg?.classList.remove("hidden")
-  } else if (user.username) {
-    avatarLetter!.textContent = user.username.charAt(0).toUpperCase()
-    avatarLetter?.classList.remove("hidden")
+    avatarLetter?.classList.add("hidden")
   } else {
-    avatarLetter!.textContent = user.email.charAt(0).toUpperCase()
+    const letter = user.username ? user.username.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()
+    avatarLetter!.textContent = letter
     avatarLetter?.classList.remove("hidden")
+    avatarImg?.classList.add("hidden")
   }
-
   loginLink?.classList.add("hidden")
   profileContainer?.classList.remove("hidden")
 }
