@@ -12,6 +12,7 @@ services:
   frontend:
     volumes:
       - ./services/frontend/src:/app/services/frontend/src
+      - ./services/frontend/public:/app/services/frontend/public
     environment:
       - NODE_ENV=development
     command: npm run dev --workspaces
