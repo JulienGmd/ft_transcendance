@@ -7,9 +7,13 @@ import { getMimeType } from "./utils"
 const DIST_PUBLIC_DIR = config.ROOT_DIR + "/dist/public"
 const PUBLIC_DIR = config.ROOT_DIR + "/public"
 
+// Singleton pattern
 let fastify: FastifyInstance | null = null
 
 export async function startServer(): Promise<void> {
+  if (fastify)
+    throw new Error("Server is already running")
+
   fastify = Fastify({
     https: {
       key: readFileSync("/certs/key.pem"),
@@ -94,4 +98,5 @@ export async function startServer(): Promise<void> {
 
 export async function stopServer(): Promise<void> {
   await fastify?.close()
+  fastify = null
 }

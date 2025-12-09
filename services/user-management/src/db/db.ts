@@ -9,14 +9,11 @@ export function getDb(): Database.Database {
   return db
 }
 
-export function closeDb(): void {
-  db?.close()
-  db = null
-}
-// End Singleton pattern
-
 export function initDb(): Database.Database {
-  const db = new Database("auth.db")
+  if (db)
+    throw new Error("Database already initialized.")
+
+  db = new Database("auth.db")
 
   // users table
   db.prepare(`
@@ -53,6 +50,11 @@ export function initDb(): Database.Database {
 
   console.log("✅ Database initialized")
   return db
+}
+
+export function closeDb(): void {
+  db?.close()
+  db = null
 }
 
 export type User = {

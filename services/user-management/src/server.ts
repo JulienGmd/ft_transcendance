@@ -5,12 +5,17 @@ import Fastify, { type FastifyInstance } from "fastify"
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
 import { readFileSync } from "fs"
 import { authRoutes } from "./auth/auth.routes"
+import { PublicValidationError } from "./auth/schemas"
 import config from "./config"
 import { matchRoutes } from "./match/match.routes"
 
+// Singleton pattern
 let fastify: FastifyInstance | null = null
 
 export async function startServer(): Promise<void> {
+  if (fastify)
+    throw new Error("Server is already running")
+
   fastify = Fastify({
     https: {
       key: readFileSync("/certs/key.pem"),
@@ -77,4 +82,5 @@ export async function startServer(): Promise<void> {
 
 export async function stopServer(): Promise<void> {
   await fastify?.close()
+  fastify = null
 }

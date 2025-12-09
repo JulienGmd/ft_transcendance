@@ -27,6 +27,9 @@ export function getCodec() {
 // End Singleton Pattern
 
 export async function initNatsClient(): Promise<NatsConnection> {
+  if (nc)
+    throw new Error("NATS client already initialized.")
+
   try {
     nc = await connect({
       servers: config.NATS_URL,
