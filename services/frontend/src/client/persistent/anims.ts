@@ -1,7 +1,26 @@
 import { sleep } from "../utils.js"
 
-animateTypeWriterEls()
 window.addEventListener("pageLoaded", onPageLoaded)
+
+function onPageLoaded(): void {
+  // If reload or navigate (not with SPA) ...
+  const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming
+  if (
+    navigationEntry.type === "reload"
+    || navigationEntry.type === "navigate"
+    || navigationEntry.type === "prerender"
+  ) {
+    // ... increase all animation delays by 3s to let time for the header typewriter animation to finish
+    // *= is substring match operator
+    // const animEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-']"))
+    // animEls.forEach((el) => {
+    //   const delay = window.getComputedStyle(el).animationDelay
+    //   el.style.animationDelay = `${parseFloat(delay) + 3}s`
+    // })
+  }
+
+  animateTypeWriterEls()
+}
 
 async function animateTypeWriterEls(): Promise<void> {
   const els = Array.from(document.querySelectorAll(".anim-typewriter"))
@@ -32,24 +51,4 @@ async function animateTypeWriterEls(): Promise<void> {
       }
     }, 150)
   })
-}
-
-function onPageLoaded(): void {
-  // If reload or navigate (not with SPA) ...
-  const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming
-  if (
-    navigationEntry.type === "reload"
-    || navigationEntry.type === "navigate"
-    || navigationEntry.type === "prerender"
-  ) {
-    // ... increase all animation delays by 3s to let time for the header typewriter animation to finish
-    // *= is substring match operator
-    const animEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-']"))
-    animEls.forEach((el) => {
-      const delay = window.getComputedStyle(el).animationDelay
-      el.style.animationDelay = `${parseFloat(delay) + 3}s`
-    })
-  }
-
-  window.removeEventListener("pageLoaded", onPageLoaded)
 }
