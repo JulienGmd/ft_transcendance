@@ -1,36 +1,52 @@
+/**
+ * Attributes:
+ *   Required:
+ *   - id: string - The id and name of the input element
+ *   - label: string - The label text for the input element
+ *   Optional:
+ *   - type: string (default: "text") - The type of the input element
+ *   - required: Whether the input is required
+ *   - autocomplete: string - The autocomplete attribute for the input element
+ *   - icon: string - The name of an icon component to display inside the input
+ *
+ * Methods:
+ * - showError(msg: string): void - Show an error message below the input
+ * - clearError(): void - Clear the error message
+ *
+ * Properties:
+ * - value: string - Get or set the value of the input
+ */
 class FormInput extends HTMLElement {
+  private inputEl!: HTMLInputElement
+  private errorEl!: HTMLElement
+
   connectedCallback() {
-    const type = this.getAttribute("type") || "text"
-    const _id = this.getAttribute("_id") || ""
-    const required = this.getAttribute("required")
-    const autocomplete = this.getAttribute("autocomplete") || ""
-
+    const id = this.getAttribute("id") || ""
     const label = this.getAttribute("label") || ""
-    const icon = this.getAttribute("icon") || ""
 
-    if (!_id) {
-      console.error("FormInput component requires a valid _id attribute")
-      return
-    }
+    const type = this.getAttribute("type") || "text"
+    const required = this.getAttribute("required")
+    const autocomplete = this.getAttribute("autocomplete")
+    const icon = this.getAttribute("icon")
 
-    if (!label) {
-      console.error("FormInput component requires a valid label attribute")
-      return
-    }
+    if (!id)
+      throw new Error("FormInput component requires a valid id attribute")
+    if (!label)
+      throw new Error("FormInput component requires a valid label attribute")
 
     this.innerHTML = `
       <div class="relative">
         <input
+          id="${id}-input"
+          name="${id}-input"
           type="${type}"
-          name="${_id}"
-          id="${_id}"
-          ${autocomplete ? `autocomplete="${autocomplete}"` : ""}
           ${required ? "required" : ""}
+          ${autocomplete ? `autocomplete="${autocomplete}"` : ""}
           class="border-surface focus:border-primary peer h-14 w-full rounded-xl border-2 px-4 pt-6 pb-2 placeholder-transparent transition outline-none"
           placeholder="${label}"
         />
         <label
-          for="${_id}"
+          for="${id}-input"
           class="text-text-muted peer-focus:text-primary pointer-events-none absolute top-2 left-4 text-xs transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs"
         >
           ${label}
@@ -41,8 +57,29 @@ class FormInput extends HTMLElement {
         : ""
     }
       </div>
-      <div id="${_id}-error" class="text-error m-2 hidden text-sm"></div>
+      <div class="text-error mt-2 hidden text-sm"></div>
     `
+
+    this.inputEl = this.querySelector("input")!
+    this.errorEl = this.querySelector(":scope > div:last-child")! // div that is the last child of the component
+  }
+
+  showError(msg: string): void {
+    this.errorEl.textContent = msg
+    this.errorEl.classList.remove("hidden")
+  }
+
+  clearError(): void {
+    this.errorEl.textContent = ""
+    this.errorEl.classList.add("hidden")
+  }
+
+  get value(): string {
+    return this.inputEl.value
+  }
+
+  set value(value: string) {
+    this.inputEl.value = value
   }
 }
 
