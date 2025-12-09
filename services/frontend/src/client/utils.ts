@@ -1,36 +1,47 @@
+import type { paths } from "@ft_transcendence/shared"
+
+// Check if T correspond to the structure, if so return "application/json" content type
+// Should be used like that: ExtractRequestBody<paths["/some/route"]["method"]>
+type ExtractRequestBody<T> = T extends {
+  requestBody: { content: { "application/json": infer U } }
+} ? U
+  : {}
+
+// Check if T has responses, if so return an object mapping each response code to its "application/json" content type
+// Should be used like that: ExtractResponse<paths["/some/route"]["method"]>
+type ExtractResponse<T> = T extends {
+  responses: infer R
+} ? {
+    [K in keyof R]?: R[K] extends { content: { "application/json": infer U } } ? U : void
+  }
+  : {}
+
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export async function get(url: string): Promise<any | null> { // TODO any
+export async function get<Path extends keyof paths>(url: Path): Promise<ExtractResponse<paths[Path]["get"]>> {
   const res = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     credentials: "include", // Include cookies
   })
-  if (!res.ok) {
-    console.error(`GET ${url} failed with status ${res.status}: ${await res.text()}`)
-    return null
-  }
-  return await res.json()
+  // Using `as` because res.status is a number and not only the defined return status in the type.
+  return { [res.status]: await res.json() } as ExtractResponse<paths[Path]["get"]>
 }
 
-export async function post(url: string, body: any): Promise<any | null> { // TODO any
+export async function post<Path extends keyof paths>(
+  url: Path,
+  body: ExtractRequestBody<paths[Path]["post"]>,
+): Promise<ExtractResponse<paths[Path]["post"]>> {
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     credentials: "include", // Include cookies
     body: JSON.stringify(body),
   })
-  if (!res.ok) {
-    console.error(`POST ${url} failed with status ${res.status}: ${await res.text()}`)
-    return null
-  }
-  return await res.json()
+  // Using `as` because res.status is a number and not only the defined return status in the type.
+  return { [res.status]: await res.json() } as ExtractResponse<paths[Path]["post"]>
 }
 
 export function validateFormInput(
@@ -50,6 +61,7 @@ export function validateFormInput(
   }
 }
 
+// TODO these 3 should match zod schemas ou les enlever et afficher l'erreur retourne par le serv
 export function isValidEmail(email: string): boolean {
   // Simple email validation (char+@char+.char+)
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)

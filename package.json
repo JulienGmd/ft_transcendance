@@ -6,7 +6,7 @@
     "shared"
   ],
   "scripts": {
-    "generate-types": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-typescript https://localhost:8080/api/user/docs/json -o shared/types/user.ts"
+    "generate-types": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-typescript https://localhost:8080/api/user/docs/json -o shared/src/types/user.ts"
   },
   "devDependencies": {
     "dprint": "^0.50.2",
