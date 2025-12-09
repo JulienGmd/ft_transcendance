@@ -568,7 +568,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: {
+        get?: never;
+        put?: never;
+        post: {
             parameters: {
                 query?: never;
                 header?: never;
@@ -602,8 +604,6 @@ export interface paths {
                 };
             };
         };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;

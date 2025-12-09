@@ -194,7 +194,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     res.send({ user: userToPublicUser(user) })
   })
 
-  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/2fa/setup", {
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/setup", {
     schema: {
       response: {
         200: z.object({ secret: z.string(), qrCode: z.string() }),
