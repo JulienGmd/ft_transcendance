@@ -40,7 +40,7 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
   }
 
   // Load modules (will use cache if preloaded)
-  const { newPage, scriptsUrls: scriptsUrls } = await extractScripts(page)
+  const { newPage, scriptsUrls } = await extractScripts(page)
   for (const scriptUrl of scriptsUrls)
     loadedModules.push(await import(scriptUrl))
 

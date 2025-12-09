@@ -35,7 +35,7 @@ async function animateTypeWriterEls(): Promise<void> {
 }
 
 function onPageLoaded(): void {
-  // If reload of navigate (not with SPA) ...
+  // If reload or navigate (not with SPA) ...
   const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming
   if (
     navigationEntry.type === "reload"
