@@ -27,3 +27,9 @@ export const PUBLIC_STATS_SCHEMA = z.object({
   precision: z.number(),
 })
 export type PublicStats = z.infer<typeof PUBLIC_STATS_SCHEMA>
+
+export const PUBLIC_VALIDATION_ERROR_SCHEMA = z.array(z.object({
+  field: z.string(),
+  message: z.string(),
+}))
+export type PublicValidationError = z.infer<typeof PUBLIC_VALIDATION_ERROR_SCHEMA>

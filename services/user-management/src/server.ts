@@ -45,11 +45,15 @@ export async function startServer(): Promise<void> {
 
   // Generic error handler (when a route throws an error)
   fastify.setErrorHandler((err, req, res) => {
-    if ((err as any).validation)
-      res.status(400).send((err as any).toString())
-    else {
-      console.log("Error not handled:", err)
-      res.status(500).send({ error: "Internal Server Error" })
+    if ((err as any).validation) {
+      const validationErrors: PublicValidationError = (err as any).validation.map((e: any) => ({
+        field: e.instancePath.substring(1),
+        message: e.message,
+      }))
+      res.status(400).send({ message: "Request validation failed", details: validationErrors })
+    } else {
+      console.log("Error not handled:", (err as Error).message)
+      res.status(500).send({ message: "An unexpected error occurred" })
     }
   })
 
