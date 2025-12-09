@@ -90,21 +90,6 @@ export interface paths {
                     };
                 };
                 /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                            details: {
-                                field: string;
-                                message: string;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -884,21 +869,6 @@ export interface paths {
                     };
                 };
                 /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                            details: {
-                                field: string;
-                                message: string;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -947,21 +917,6 @@ export interface paths {
                                 numWins: number;
                                 precision: number;
                             };
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                            details: {
-                                field: string;
-                                message: string;
-                            }[];
                         };
                     };
                 };

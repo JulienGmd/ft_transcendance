@@ -24,7 +24,6 @@ export async function authRoutes(fastify: FastifyInstance) {
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         202: z.object({ needsTwoFA: z.literal(true), email: z.email() }),
-        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
         403: z.object({ message: z.string() }),
         409: z.object({ message: z.string() }),

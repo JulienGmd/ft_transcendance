@@ -11,7 +11,6 @@ export async function matchRoutes(fastify: FastifyInstance) {
       querystring: z.object({ limit: z.number().optional() }),
       response: {
         200: z.object({ matches: z.array(PUBLIC_MATCH_SCHEMA) }),
-        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
       },
     },
@@ -28,7 +27,6 @@ export async function matchRoutes(fastify: FastifyInstance) {
     schema: {
       response: {
         200: z.object({ stats: PUBLIC_STATS_SCHEMA }),
-        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
       },
     },
