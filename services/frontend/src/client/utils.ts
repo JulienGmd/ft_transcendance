@@ -1,9 +1,28 @@
 import type { paths } from "@ft_transcendence/shared"
 
+// Extract all paths names that have a GET method
+// It first create an object type with { "route": "route", "route2": never } then filters the never with [keyof paths]
+type GetPaths = {
+  [K in keyof paths]: paths[K] extends { get: unknown } ? K : never
+}[keyof paths]
+
+// Extract all paths names that have a POST method
+// It first create an object type with { "route": "route", "route2": never } then filters the never with [keyof paths]
+type PostPaths = {
+  [K in keyof paths]: paths[K] extends { post: unknown } ? K : never
+}[keyof paths]
+
 // Check if T correspond to the structure, if so return "application/json" content type
 // Should be used like that: ExtractRequestBody<paths["/some/route"]["method"]>
 type ExtractRequestBody<T> = T extends {
   requestBody: { content: { "application/json": infer U } }
+} ? U
+  : {}
+
+// Check if T correspond to the structure, if so return "query" content type
+// Should be used like that: ExtractRequestParams<paths["/some/route"]["method"]>
+type ExtractRequestParams<T> = T extends {
+  parameters: { query: infer U }
 } ? U
   : {}
 
@@ -20,8 +39,17 @@ export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export async function get<Path extends keyof paths>(url: Path): Promise<ExtractResponse<paths[Path]["get"]>> {
-  const res = await fetch(url, {
+export async function get<Path extends GetPaths>(
+  url: Path,
+  params?: ExtractRequestParams<paths[Path]["get"]>,
+): Promise<ExtractResponse<paths[Path]["get"]>> {
+  let fullUrl: string = url
+  if (params && Object.keys(params).length > 0) {
+    const queryString = new URLSearchParams(params as Record<string, string>).toString()
+    fullUrl += `?${queryString}`
+  }
+
+  const res = await fetch(fullUrl, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include", // Include cookies
@@ -30,7 +58,7 @@ export async function get<Path extends keyof paths>(url: Path): Promise<ExtractR
   return { [res.status]: await res.json() } as ExtractResponse<paths[Path]["get"]>
 }
 
-export async function post<Path extends keyof paths>(
+export async function post<Path extends PostPaths>(
   url: Path,
   body: ExtractRequestBody<paths[Path]["post"]>,
 ): Promise<ExtractResponse<paths[Path]["post"]>> {
