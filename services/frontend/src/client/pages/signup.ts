@@ -90,7 +90,7 @@ async function onSubmit(e: Event): Promise<void> {
     email: email!.value,
     password: password!.value,
   })
-  if (!data) {
+  if (!data[200]) {
     formError!.textContent = "Signup failed. Please try again."
     formError?.classList.remove("hidden")
     return

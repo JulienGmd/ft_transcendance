@@ -81,17 +81,17 @@ export function onDestroy(): void {
 
 async function loadUserInfo(): Promise<any | null> { // TODO any
   const data = await get("/api/user/me")
-  return data ? data.user : null
+  return data[200] ? data[200].user : null
 }
 
 async function loadMatchHistory(): Promise<any[]> { // TODO any
-  const data = await get(`/api/user/matches/player/${userData.id}?limit=10`)
-  return data ? data.matches : []
+  const data = await get(`/api/user/matches/me`, { limit: 10 })
+  return data[200] ? data[200].matches : []
 }
 
 async function loadStats(): Promise<any> { // TODO any
-  const data = await get(`/api/user/matches/player/${userData.id}/stats`)
-  return data ? data.stats : {
+  const data = await get(`/api/user/stats/me`)
+  return data[200] ? data[200].stats : {
     totalMatches: 0,
     totalWins: 0,
     globalPrecision: 0,
@@ -200,7 +200,7 @@ function onAvatarFileChange(): void {
     const data = await post("/api/user/set-avatar", {
       avatar: result,
     })
-    if (!data) {
+    if (!data[200]) {
       alert("Failed to upload avatar. Please try again.")
       return
     }
@@ -227,7 +227,7 @@ async function onUsernameInput(e: KeyboardEvent): Promise<void> {
   const data = await post("/api/user/set-username", {
     username,
   })
-  if (!data) {
+  if (!data[200]) {
     alert("Failed to set username. Please try again.")
     return
   }
@@ -245,8 +245,10 @@ async function on2FAButtonClick(): Promise<void> {
     if (!confirm("Do you want to disable 2FA?"))
       return
 
-    const data = await post("/api/user/2fa/disable", {})
-    if (!data) {
+    const data = await post("/api/user/2fa/disable", {
+      totp: "", // TODO
+    })
+    if (!data[200]) {
       alert("Failed to disable 2FA. Please try again.")
       return
     }

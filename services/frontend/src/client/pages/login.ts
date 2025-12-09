@@ -45,19 +45,14 @@ async function onSubmit(e: Event): Promise<void> {
     email: email!.value,
     password: password!.value,
   })
-  if (!data) {
+  if (!data[200]) {
     formError!.textContent = "Login failed. Please check your credentials."
     formError?.classList.remove("hidden")
     return
   }
+  // TODO 202: 2fa
 
   formError?.classList.add("hidden")
-
-  if (data.needsTwoFA) {
-    navigate("/2fa")
-    return
-  }
-
   navigate("/home")
 }
 

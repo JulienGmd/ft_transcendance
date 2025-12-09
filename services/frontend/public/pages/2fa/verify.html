@@ -1,4 +1,4 @@
-<script src="/public/pages/login/2fa.js"></script>
+<script src="/public/pages/2fa/setup.js"></script>
 <script src="/public/components/formInput.js"></script>
 
 <div class="grid flex-1 place-items-center">
@@ -9,7 +9,7 @@
     </div>
 
     <form class="flex flex-col gap-6">
-      <form-input type="text" _id="code" required label="6-digit code"></form-input>
+      <form-input type="text" _id="totp-input" required label="6-digit code"></form-input>
       <div id="form-error" class="text-error hidden text-center text-sm"></div>
       <button type="submit" class="button">Verify</button>
     </form>

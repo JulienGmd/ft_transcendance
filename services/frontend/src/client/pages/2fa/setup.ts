@@ -26,19 +26,19 @@ export function onDestroy(): void {
 }
 
 async function setupPage(): Promise<void> {
-  const data = await post("/api/user/2fa/setup", {})
-  if (!data) {
+  let data = await post("/api/user/2fa/setup", {})
+  if (!data[200]) {
     console.error("Failed to load 2FA setup data")
     return
   }
 
-  secretKey = data.secret
+  secretKey = data[200].secret
 
   const qrCodeImg = document.getElementById("qr-code") as HTMLImageElement | null
   const secretEl = document.getElementById("secret-key")
 
-  qrCodeImg!.src = data.qrCode
-  secretEl!.textContent = data.secret
+  qrCodeImg!.src = data[200].qrCode
+  secretEl!.textContent = data[200].secret
 }
 
 function validateTotp(): void {
@@ -62,8 +62,7 @@ async function onSubmit(e: Event): Promise<void> {
     secret: secretKey,
     totp: totpInput!.value,
   })
-
-  if (!data) {
+  if (!data[200]) {
     formErrorEl!.textContent = "Failed to enable 2FA. Please check the code and try again."
     formErrorEl?.classList.remove("hidden")
     return

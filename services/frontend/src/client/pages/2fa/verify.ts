@@ -3,30 +3,39 @@ import { post, validateFormInput } from "../../utils.js"
 
 // TODO rediriger si deja co ?
 
+let email: string = ""
+
 let form: HTMLFormElement | null = null
 let formError: HTMLElement | null = null
-let codeInput: HTMLInputElement | null = null
-let codeInputError: HTMLElement | null = null
+let totpInput: HTMLInputElement | null = null
+let totpInputError: HTMLElement | null = null
 
 export function onMount(): void {
   form = document.querySelector("form") as HTMLFormElement
   formError = document.getElementById("form-error")
-  codeInput = document.getElementById("code") as HTMLInputElement
-  codeInputError = document.getElementById("code-error") as HTMLElement
+  totpInput = document.getElementById("totp-input") as HTMLInputElement
+  totpInputError = document.getElementById("totp-input-error") as HTMLElement
+
+  const params = new URLSearchParams(window.location.search)
+  email = params.get("email") || ""
+  if (!email) {
+    navigate("/login")
+    return
+  }
 
   form?.addEventListener("submit", onSubmit)
-  codeInput?.addEventListener("input", validateCode)
+  totpInput?.addEventListener("input", validateTotp)
 }
 
 export function onDestroy(): void {
   form?.removeEventListener("submit", onSubmit)
-  codeInput?.removeEventListener("input", validateCode)
+  totpInput?.removeEventListener("input", validateTotp)
 }
 
-function validateCode(): void {
+function validateTotp(): void {
   validateFormInput(
-    codeInput!,
-    codeInputError!,
+    totpInput!,
+    totpInputError!,
     (value) => value.length === 0 || /^\d{6}$/.test(value),
     "The code must be a 6-digit number",
   )
@@ -40,11 +49,11 @@ async function onSubmit(e: Event): Promise<void> {
   if (!form?.checkValidity())
     return
 
-  // note: userId is sent with cookies
   const data = await post("/api/user/2fa/verify", {
-    code: codeInput!.value,
+    email,
+    totp: totpInput!.value,
   })
-  if (!data) {
+  if (!data[200]) {
     formError!.textContent = "The code is invalid. Please try again."
     formError?.classList.remove("hidden")
     return
