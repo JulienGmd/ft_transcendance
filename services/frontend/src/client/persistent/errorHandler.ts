@@ -1,5 +1,3 @@
-import { sleep } from "../utils.js"
-
 window.addEventListener("unhandledrejection", (event) => {
   showErrorMessage(event.reason?.message || "An unexpected error occurred")
 })
@@ -11,12 +9,14 @@ window.addEventListener("error", (event) => {
 })
 
 async function showErrorMessage(msg: string): Promise<void> {
-  await sleep(200)
-  document.body.innerHTML += `
-    <div class="absolute inset-0 grid place-items-center bg-background/80">
-      <div class="bg-background border-2 border-error/50 text-error px-4 py-3 rounded-lg shadow-xl">
-        <div class="whitespace-pre">${msg}</div>
-      </div>
-    </div>
-  `
+  const dialog = document.createElement("dialog")
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog)
+      dialog.close()
+  })
+  dialog.className =
+    "bg-background border-2 border-error/50 text-error px-4 py-3 outline-none rounded-lg shadow-xl backdrop:bg-background/80 m-auto"
+  dialog.innerHTML = `<div class="whitespace-pre-wrap">${msg}</div>`
+  document.body.appendChild(dialog)
+  dialog.showModal()
 }
