@@ -97,16 +97,19 @@ export function inputsValuesToObject(form: Element): Record<string, string> {
   return body
 }
 
-export function updateFormErrors(
+export function reportFormErrors(
   form: Element,
   validationErrors?: { field: string; message: string }[],
   formError?: string,
 ): void {
-  updateValidationErrors(form, validationErrors)
-  updateFormError(form, formError)
+  updateFormValidationErrors(form, validationErrors)
+  if (formError)
+    getNotificationBanner()?.showErrorMessage(formError)
+  else
+    getNotificationBanner()?.hide()
 }
 
-function updateValidationErrors(form: Element, errors?: { field: string; message: string }[]): void {
+function updateFormValidationErrors(form: Element, errors?: { field: string; message: string }[]): void {
   const FormInputEls = form.querySelectorAll<FormInputElement>("form-input")
   FormInputEls.forEach((input) => input.clearError())
 
@@ -114,17 +117,6 @@ function updateValidationErrors(form: Element, errors?: { field: string; message
     const input = form.querySelector<FormInputElement>(`form-input[name="${error.field}"]`)
     input?.showError(error.message)
   })
-}
-
-function updateFormError(form: Element, error?: string): void {
-  const errorEl = form.querySelector("[data-form-error]")
-  if (!errorEl)
-    throw new Error("Form error element not found")
-  errorEl.textContent = error || ""
-  if (error)
-    errorEl.classList.remove("hidden")
-  else
-    errorEl.classList.add("hidden")
 }
 
 export function setUser(user: User | null): void {
