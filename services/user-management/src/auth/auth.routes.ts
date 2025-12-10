@@ -18,9 +18,9 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   // TODO tester mauvais code ou cancel flow
-  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google/callback", {
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/google/callback", {
     schema: {
-      querystring: z.object({ code: z.string() }),
+      body: z.object({ code: z.string() }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         202: z.object({ needsTwoFA: z.literal(true), email: z.email() }),
@@ -30,7 +30,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (req, res) => {
-    const googleProfile = await getGoogleProfile(req.query.code)
+    const googleProfile = await getGoogleProfile(req.body.code)
     if (!googleProfile)
       return res.status(401).send({ message: "Invalid Google code" })
 

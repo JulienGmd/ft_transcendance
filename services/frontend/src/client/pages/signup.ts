@@ -1,11 +1,12 @@
 import { FormInputElement } from "../components/formInput.js"
 import { navigate } from "../persistent/router.js"
-import { checkEls, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
+import { checkEls, get, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
 
 let els: {
   form: HTMLFormElement
   passwordFormInput: FormInputElement
   confirmPasswordFormInput: FormInputElement
+  googleBtn: HTMLButtonElement
 }
 
 export function onMount(): void {
@@ -13,6 +14,7 @@ export function onMount(): void {
     form: document.querySelector("form")!,
     passwordFormInput: document.querySelector("form-input[name='password']")!,
     confirmPasswordFormInput: document.querySelector("form-input[name='confirmPassword']")!,
+    googleBtn: document.querySelector("#google-btn")!,
   }
   checkEls(els)
 
@@ -22,6 +24,15 @@ export function onMount(): void {
   }
 
   els.form.addEventListener("submit", onSubmit)
+  els.googleBtn.addEventListener("click", onGoogleBtnClick)
+}
+
+async function onGoogleBtnClick(): Promise<void> {
+  const data = await get("/api/user/google")
+  if (data[200])
+    window.location.href = data[200].url
+  else
+    throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }
 
 async function onSubmit(e: Event): Promise<void> {
