@@ -1,6 +1,6 @@
 import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { checkEls, post, updateFormErrors } from "../../utils.js"
+import { checkEls, post, setUser, updateFormErrors } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -45,9 +45,10 @@ async function onSubmit(e: Event): Promise<void> {
     secret: secretKey,
     totp: els.totpFormInput.value,
   })
-  if (data[200])
+  if (data[200]) {
+    setUser(data[200].user) // TODO
     navigate("/")
-  else if (data[400])
+  } else if (data[400])
     updateFormErrors(els.form, data[400].details, undefined)
   else if (data[401])
     navigate("/login")

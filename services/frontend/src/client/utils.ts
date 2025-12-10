@@ -1,5 +1,6 @@
 import type { paths } from "@ft_transcendence/shared"
 import type { FormInputElement } from "./components/formInput.js"
+import { User } from "./types.js"
 
 // Extract all paths names that have a GET method
 // It first create an object type with { "route": "route", "route2": never } then filters the never with [keyof paths]
@@ -123,4 +124,16 @@ function updateFormError(form: Element, error?: string): void {
     errorEl.classList.remove("hidden")
   else
     errorEl.classList.add("hidden")
+}
+
+export function setUser(user: User | null): void {
+  if (user)
+    localStorage.setItem("user", JSON.stringify(user))
+  else
+    localStorage.removeItem("user")
+}
+
+export function getUser(): User | null {
+  const user = localStorage.getItem("user")
+  return user ? JSON.parse(user) as User : null
 }

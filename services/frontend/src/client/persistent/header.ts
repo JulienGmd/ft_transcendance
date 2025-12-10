@@ -1,6 +1,6 @@
 import type { UserAvatarElement } from "../components/userAvatar.js"
 import { navigate } from "../persistent/router.js"
-import { checkEls, get, post } from "../utils.js"
+import { checkEls, getUser, post, setUser } from "../utils.js"
 
 const els = {
   login: document.querySelector("#header-login")!,
@@ -14,9 +14,7 @@ window.addEventListener("pageLoaded", update)
 els.logoutBtn.addEventListener("click", logout)
 
 export async function update(): Promise<void> {
-  const data = await get("/api/user/me")
-
-  if (data[200]) {
+  if (getUser()) {
     els.avatar.update()
     els.login.classList.add("hidden")
     els.profileContainer.classList.remove("hidden")
@@ -28,5 +26,6 @@ export async function update(): Promise<void> {
 
 async function logout(): Promise<void> {
   await post("/api/user/logout", {})
+  setUser(null)
   navigate("/")
 }

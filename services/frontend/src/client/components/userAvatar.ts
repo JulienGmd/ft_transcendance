@@ -1,4 +1,4 @@
-import { get } from "../utils.js"
+import { getUser } from "../utils.js"
 
 export interface UserAvatarElement extends HTMLElement {
   /** Update the user avatar display */
@@ -22,10 +22,9 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
   }
 
   async update(): Promise<void> {
-    const data = await get("/api/user/me")
+    const user = getUser()
 
-    if (data[200]) {
-      const user = data[200].user
+    if (user) {
       if (user.avatar) {
         this.img.src = user.avatar
         this.img.classList.remove("hidden")

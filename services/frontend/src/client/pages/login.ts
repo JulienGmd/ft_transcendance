@@ -1,5 +1,5 @@
 import { navigate } from "../persistent/router.js"
-import { checkEls, inputsValuesToObject, post, updateFormErrors } from "../utils.js"
+import { checkEls, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -19,9 +19,10 @@ async function onSubmit(e: Event): Promise<void> {
   e.stopPropagation()
 
   const data = await post("/api/user/login", inputsValuesToObject(els.form) as any)
-  if (data[200])
+  if (data[200]) {
+    setUser(data[200].user)
     navigate("/")
-  else if (data[202])
+  } else if (data[202])
     navigate("/2fa/verify") // TODO email in querystring ? or server cookie ?
   else if (data[400])
     updateFormErrors(els.form, data[400].details, undefined)

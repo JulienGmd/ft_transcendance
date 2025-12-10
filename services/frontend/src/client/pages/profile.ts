@@ -1,8 +1,8 @@
 import { UserAvatarElement } from "../components/userAvatar.js"
 import * as header from "../persistent/header.js"
 import { navigate } from "../persistent/router.js"
-import { Match, Stats, User } from "../types.js"
-import { checkEls, get, post } from "../utils.js"
+import { Match, Stats } from "../types.js"
+import { checkEls, get, getUser, post, setUser } from "../utils.js"
 
 let els: {
   avatarInput: HTMLInputElement
@@ -15,13 +15,6 @@ let els: {
   winRateEl: HTMLElement
   precisionEl: HTMLElement
   matchHistoryEl: HTMLElement
-}
-
-// TODO local storage, a chaque requete qui change l'user, l'update
-let user: User = {
-  email: "",
-  username: null,
-  avatar: null,
 }
 
 export function onMount(): void {
@@ -47,8 +40,7 @@ export function onMount(): void {
 }
 
 async function setupPage(): Promise<void> {
-  user = await loadUserInfo()
-  if (!user.email) {
+  if (!getUser()) {
     navigate("/login")
     return
   }
@@ -59,15 +51,6 @@ async function setupPage(): Promise<void> {
 
   const matches = await loadMatchHistory()
   displayMatchHistory(matches)
-}
-
-async function loadUserInfo(): Promise<User> {
-  const data = await get("/api/user/me")
-  return data[200] ? data[200].user : {
-    email: "",
-    username: null,
-    avatar: null,
-  }
 }
 
 async function loadMatchHistory(): Promise<Match[]> {
@@ -85,6 +68,9 @@ async function loadStats(): Promise<Stats> {
 }
 
 function displayUserInfo(): void {
+  const user = getUser()
+  if (!user)
+    return
   els.usernameInput.value = user.username || "Anonymous"
   els.emailEl.textContent = user.email
   // twofaBtn.textContent = userData.twofa_enabled ? "enabled" : "disabled" // TODO
@@ -160,7 +146,7 @@ function onAvatarInputChange(): void {
 
     const data = await post("/api/user/set-avatar", { avatar: result })
     if (data[200]) {
-      user = data[200].user
+      setUser(data[200].user)
       displayUserInfo()
       header.update()
     } else if (data[401])
@@ -179,7 +165,7 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
 
   const data = await post("/api/user/set-username", { username })
   if (data[200]) {
-    user = data[200].user
+    setUser(data[200].user)
     displayUserInfo()
     header.update()
     els.usernameInput.blur() // unfocus
@@ -205,6 +191,7 @@ async function onTwofaBtnClick(): Promise<void> {
   //     alert("Failed to disable 2FA. Please try again.")
   //     return
   //   }
+  //   setUser(data[200].user) // TODO
   //   twofaButtonEl.textContent = "Disabled"
   // } else {
   //   navigate("/login/setup-2fa")
