@@ -2,8 +2,7 @@
 <script src="/public/components/formInput.js"></script>
 
 <div class="grid flex-1 place-items-center">
-  <!-- TODO sm:max-w-sm sur tte les pages -->
-  <div class="animate-slide-up w-full space-y-8 sm:max-w-96">
+  <div class="animate-slide-up w-full space-y-8 sm:max-w-sm">
     <!-- Header -->
     <div class="flex flex-col items-center space-y-4 text-center">
       <h1 class="font-orbitron text-3xl font-bold">2FA SETUP</h1>
@@ -25,10 +24,10 @@
         </code>
       </div>
 
-      <!-- Verification Code Input -->
+      <!-- Code Input -->
       <div class="space-y-4">
         <p>Then enter the code from your authenticator app:</p>
-        <form-input id="totp-form-input" label="6-digit code" required></form-input>
+        <form-input name="totp" label="6-digit code" required></form-input>
       </div>
 
       <button type="submit" class="button">Continue</button>

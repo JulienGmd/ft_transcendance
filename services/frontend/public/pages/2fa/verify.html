@@ -2,14 +2,16 @@
 <script src="/public/components/formInput.js"></script>
 
 <div class="grid flex-1 place-items-center">
-  <div class="animate-slide-up w-full space-y-8 sm:max-w-96">
+  <div class="animate-slide-up w-full space-y-8 sm:max-w-sm">
+    <!-- Header -->
     <div class="flex flex-col items-center space-y-4 text-center">
       <h1 class="font-orbitron text-3xl font-bold">2FA</h1>
       <p class="text-text-muted">Enter the code from your authenticator app</p>
     </div>
 
     <form class="flex flex-col gap-6">
-      <form-input id="totp-form-input" label="6-digit code" required></form-input>
+      <!-- Code Input -->
+      <form-input name="totp" label="6-digit code" required></form-input>
       <button type="submit" class="button">Verify</button>
     </form>
   </div>

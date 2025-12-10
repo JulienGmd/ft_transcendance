@@ -1,5 +1,5 @@
 /**
- * @param id The id and name of the input element
+ * @param name The name of the input element
  * @param label The label text for the input element
  * @param type (optional - default: "text") The type of the input element
  * @param required (optional) Whether the input is required
@@ -20,24 +20,31 @@ class FormInput extends HTMLElement implements FormInputElement {
   private errorEl!: HTMLElement
 
   connectedCallback() {
-    const id = this.getAttribute("id")
+    const name = this.getAttribute("name")
     const label = this.getAttribute("label")
 
     const type = this.getAttribute("type") || "text"
-    const required = this.getAttribute("required")
-    const autocomplete = this.getAttribute("autocomplete")
+    const required = this.getAttribute("required") !== null
+    let autocomplete = this.getAttribute("autocomplete")
     const icon = this.getAttribute("icon")
 
-    if (!id)
-      throw new Error("FormInput component requires a valid id attribute")
+    if (!name)
+      throw new Error("FormInput component requires a valid name attribute")
     if (!label)
       throw new Error("FormInput component requires a valid label attribute")
+
+    if (!autocomplete) {
+      if (name.toLowerCase().includes("email"))
+        autocomplete = "email"
+      else if (name.toLowerCase().includes("password"))
+        autocomplete = "current-password"
+    }
 
     this.innerHTML = `
       <div class="relative">
         <input
-          id="${id}-input"
-          name="${id}-input"
+          id="${name}-form-input"
+          name="${name}"
           type="${type}"
           ${required ? "required" : ""}
           ${autocomplete ? `autocomplete="${autocomplete}"` : ""}
@@ -45,14 +52,14 @@ class FormInput extends HTMLElement implements FormInputElement {
           placeholder="${label}"
         />
         <label
-          for="${id}-input"
+          for="${name}-form-input"
           class="text-text-muted peer-focus:text-primary pointer-events-none absolute top-2 left-4 text-xs transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs"
         >
           ${label}
         </label>
         ${
       icon
-        ? `<div class="text-text-muted pointer-events-none peer-focus:text-primary absolute top-1/2 right-4 size-5 -translate-y-1/2 transition"><${icon}-icon /></div>`
+        ? `<div class="text-text-muted pointer-events-none peer-focus:text-primary absolute top-1/2 right-4 size-5 -translate-y-1/2 transition"><${icon}-icon></${icon}-icon></div>`
         : ""
     }
       </div>

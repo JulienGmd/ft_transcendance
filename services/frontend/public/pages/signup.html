@@ -5,7 +5,7 @@
 <script src="/public/components/googleIcon.js"></script>
 
 <div class="grid flex-1 place-items-center">
-  <div class="animate-slide-up w-full space-y-8 sm:max-w-96">
+  <div class="animate-slide-up w-full space-y-8 sm:max-w-sm">
     <!-- Header -->
     <div class="flex flex-col items-center space-y-4 text-center">
       <h1 class="font-orbitron text-3xl font-bold">SIGN UP</h1>
@@ -14,38 +14,11 @@
 
     <!-- Login Form -->
     <form class="flex flex-col gap-6">
-      <form-input
-        id="username-form-input"
-        label="Username"
-        type="text"
-        required
-        autocomplete="username"
-        icon="user"
-      ></form-input>
-      <form-input
-        id="email-form-input"
-        label="Email"
-        type="text"
-        required
-        autocomplete="email"
-        icon="user"
-      ></form-input>
-      <form-input
-        id="password-form-input"
-        label="Password"
-        type="password"
-        required
-        autocomplete="new-password"
-        icon="lock"
-      ></form-input>
-      <form-input
-        id="confirm-password-form-input"
-        label="Confirm Password"
-        type="password"
-        required
-        autocomplete="new-password"
-        icon="lock"
-      ></form-input>
+      <form-input name="username" label="Username" required icon="user"></form-input>
+      <form-input name="email" label="Email" required icon="user"></form-input>
+      <form-input name="password" label="Password" type="password" required icon="lock"></form-input>
+      <form-input name="confirmPassword" label="Confirm Password" type="password" required icon="lock"></form-input>
+      <div data-form-error class="text-error hidden text-center text-sm"></div>
       <button type="submit" class="button">Sign Up</button>
     </form>
 
@@ -56,10 +29,10 @@
     </div>
 
     <!-- OAuth Options -->
-    <button id="google-btn" class="button-secondary w-full">
+    <a href="/auth/google" class="button-secondary w-full">
       <google-icon class="block size-5"></google-icon>
       <span>Google</span>
-    </button>
+    </a>
 
     <!-- Footer -->
     <div class="text-text-muted text-center text-sm">

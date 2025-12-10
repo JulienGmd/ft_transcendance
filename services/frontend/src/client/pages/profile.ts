@@ -2,18 +2,20 @@ import { UserAvatarElement } from "../components/userAvatar.js"
 import * as header from "../persistent/header.js"
 import { navigate } from "../persistent/router.js"
 import { Match, Stats, User } from "../types.js"
-import { get, post } from "../utils.js"
+import { checkEls, get, post } from "../utils.js"
 
-let avatarInput: HTMLInputElement
-let avatar: UserAvatarElement
-let usernameInput: HTMLInputElement
-let emailEl: HTMLSpanElement
-let twofaBtn: HTMLButtonElement
-let numMatchesEl: HTMLElement
-let numWinsEl: HTMLElement
-let winRateEl: HTMLElement
-let precisionEl: HTMLElement
-let matchHistoryEl: HTMLElement
+let els: {
+  avatarInput: HTMLInputElement
+  avatar: UserAvatarElement
+  usernameInput: HTMLInputElement
+  emailEl: HTMLSpanElement
+  twofaBtn: HTMLButtonElement
+  numMatchesEl: HTMLElement
+  numWinsEl: HTMLElement
+  winRateEl: HTMLElement
+  precisionEl: HTMLElement
+  matchHistoryEl: HTMLElement
+}
 
 // TODO local storage, a chaque requete qui change l'user, l'update
 let user: User = {
@@ -23,35 +25,25 @@ let user: User = {
 }
 
 export function onMount(): void {
-  avatarInput = document.querySelector("#avatar-input")!
-  avatar = document.querySelector("#user-avatar")!
-  usernameInput = document.querySelector("#username-input")!
-  emailEl = document.querySelector("#email")!
-  twofaBtn = document.querySelector("#twofa-btn")!
-  numMatchesEl = document.querySelector("#num-matches")!
-  numWinsEl = document.querySelector("#num-wins")!
-  winRateEl = document.querySelector("#win-rate")!
-  precisionEl = document.querySelector("#precision")!
-  matchHistoryEl = document.querySelector("#match-history")!
-
-  if (
-    !avatarInput || !avatar || !usernameInput || !emailEl || !twofaBtn || !numMatchesEl
-    || !numWinsEl || !winRateEl || !precisionEl || !matchHistoryEl
-  ) {
-    throw new Error("Elements not found")
+  els = {
+    avatarInput: document.querySelector("#avatar-input")!,
+    avatar: document.querySelector("#user-avatar")!,
+    usernameInput: document.querySelector("#username-input")!,
+    emailEl: document.querySelector("#email")!,
+    twofaBtn: document.querySelector("#twofa-btn")!,
+    numMatchesEl: document.querySelector("#num-matches")!,
+    numWinsEl: document.querySelector("#num-wins")!,
+    winRateEl: document.querySelector("#win-rate")!,
+    precisionEl: document.querySelector("#precision")!,
+    matchHistoryEl: document.querySelector("#match-history")!,
   }
+  checkEls(els)
 
   setupPage()
 
-  avatarInput.addEventListener("change", onAvatarInputChange)
-  usernameInput.addEventListener("keyup", onUsernameKeyup)
-  twofaBtn.addEventListener("click", onTwofaBtnClick)
-}
-
-export function onDestroy(): void {
-  avatarInput.removeEventListener("change", onAvatarInputChange)
-  usernameInput.removeEventListener("keyup", onUsernameKeyup)
-  twofaBtn.removeEventListener("click", onTwofaBtnClick)
+  els.avatarInput.addEventListener("change", onAvatarInputChange)
+  els.usernameInput.addEventListener("keyup", onUsernameKeyup)
+  els.twofaBtn.addEventListener("click", onTwofaBtnClick)
 }
 
 async function setupPage(): Promise<void> {
@@ -93,19 +85,18 @@ async function loadStats(): Promise<Stats> {
 }
 
 function displayUserInfo(): void {
-  usernameInput.value = user.username || "Anonymous"
-  emailEl.textContent = user.email
+  els.usernameInput.value = user.username || "Anonymous"
+  els.emailEl.textContent = user.email
   // twofaBtn.textContent = userData.twofa_enabled ? "enabled" : "disabled" // TODO
-
-  avatar.update()
+  els.avatar.update()
 }
 
 function displayStats(stats: Stats): void {
-  numMatchesEl.textContent = stats.numMatches.toString()
-  numWinsEl.textContent = stats.numWins.toString()
+  els.numMatchesEl.textContent = stats.numMatches.toString()
+  els.numWinsEl.textContent = stats.numWins.toString()
   const winRate = stats.numMatches > 0 ? (stats.numWins / stats.numMatches * 100) : 0
-  winRateEl.textContent = `${winRate.toFixed(1)}%`
-  precisionEl.textContent = `${stats.precision.toFixed(1)}%`
+  els.winRateEl.textContent = `${winRate.toFixed(1)}%`
+  els.precisionEl.textContent = `${stats.precision.toFixed(1)}%`
 }
 
 function displayMatchHistory(matches: Match[]): void {
@@ -148,14 +139,14 @@ function displayMatchHistory(matches: Match[]): void {
 }
 
 function onAvatarInputChange(): void {
-  const file = avatarInput.files?.[0]
+  const file = els.avatarInput.files?.[0]
   if (!file)
     return
 
   // Limit file size to 2MB
   if (file.size > 2 * 1024 * 1024) {
     alert("Image must be less than 2MB")
-    avatarInput.value = ""
+    els.avatarInput.value = ""
     return
   }
 
@@ -184,14 +175,14 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
   if (e.key !== "Enter")
     return
 
-  const username = usernameInput.value || ""
+  const username = els.usernameInput.value || ""
 
   const data = await post("/api/user/set-username", { username })
   if (data[200]) {
     user = data[200].user
     displayUserInfo()
     header.update()
-    usernameInput.blur() // unfocus
+    els.usernameInput.blur() // unfocus
   } else if (data[400])
     alert(data[400].details[0].message)
   else if (data[401])

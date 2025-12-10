@@ -5,7 +5,7 @@
 <script src="/public/components/googleIcon.js"></script>
 
 <div class="grid flex-1 place-items-center">
-  <div class="animate-slide-up w-full space-y-8 sm:max-w-96">
+  <div class="animate-slide-up w-full space-y-8 sm:max-w-sm">
     <!-- Header -->
     <div class="flex flex-col items-center space-y-4 text-center">
       <h1 class="font-orbitron text-3xl font-bold">LOGIN</h1>
@@ -14,24 +14,11 @@
 
     <!-- Login Form -->
     <form class="flex flex-col gap-6">
-      <form-input
-        id="email-form-input"
-        label="Email"
-        type="text"
-        required
-        autocomplete="email"
-        icon="user"
-      ></form-input>
-      <form-input
-        id="password-form-input"
-        label="Password"
-        type="password"
-        required
-        autocomplete="current-password"
-        icon="lock"
-      ></form-input>
-      <div id="form-error" class="text-error hidden text-center text-sm"></div>
+      <form-input name="email" label="Email" required icon="user"></form-input>
+      <form-input name="password" label="Password" type="password" required icon="lock"></form-input>
+      <div data-form-error class="text-error hidden text-center text-sm"></div>
       <button type="submit" class="button">Sign In</button>
+      <!-- TODO -->
       <a href="#" class="link text-sm">Forgot password?</a>
     </form>
 
@@ -42,10 +29,10 @@
     </div>
 
     <!-- OAuth Options -->
-    <button id="google-btn" class="button-secondary w-full">
+    <a href="/auth/google" class="button-secondary w-full">
       <google-icon class="block size-5"></google-icon>
       <span>Google</span>
-    </button>
+    </a>
 
     <!-- Footer -->
     <div class="text-text-muted text-center text-sm">

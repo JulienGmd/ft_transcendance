@@ -1,10 +1,10 @@
 import { paths } from "@ft_transcendence/shared"
 
-type Get200Response<T> = T extends {
+type Extract200Response<Path extends keyof paths, Method extends keyof paths[Path]> = paths[Path][Method] extends {
   responses: { 200: { content: { "application/json": infer U } } }
 } ? U
   : {}
 
-export type User = Get200Response<paths["/api/user/me"]["get"]>["user"]
-export type Stats = Get200Response<paths["/api/user/stats/me"]["get"]>["stats"]
-export type Match = Get200Response<paths["/api/user/matches/me"]["get"]>["matches"][0]
+export type User = Extract200Response<"/api/user/me", "get">["user"]
+export type Stats = Extract200Response<"/api/user/stats/me", "get">["stats"]
+export type Match = Extract200Response<"/api/user/matches/me", "get">["matches"][0]

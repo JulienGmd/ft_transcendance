@@ -1,4 +1,5 @@
 import type { paths } from "@ft_transcendence/shared"
+import type { FormInputElement } from "./components/formInput.js"
 
 // Extract all paths names that have a GET method
 // It first create an object type with { "route": "route", "route2": never } then filters the never with [keyof paths]
@@ -13,22 +14,24 @@ type PostPaths = {
 }[keyof paths]
 
 // Check if T correspond to the structure, if so return "application/json" content type
-// Should be used like that: ExtractRequestBody<paths["/some/route"]["method"]>
-type ExtractRequestBody<T> = T extends {
-  requestBody: { content: { "application/json": infer U } }
-} ? U
+// Should be used like that: ExtractRequestBody<"/some/route", "method">
+export type ExtractRequestBody<Path extends keyof paths, Method extends keyof paths[Path]> = paths[Path][Method] extends
+  {
+    requestBody: { content: { "application/json": infer U } }
+  } ? U
   : {}
 
 // Check if T correspond to the structure, if so return "query" content type
-// Should be used like that: ExtractRequestParams<paths["/some/route"]["method"]>
-type ExtractRequestParams<T> = T extends {
-  parameters: { query: infer U }
-} ? U
-  : {}
+// Should be used like that: ExtractRequestParams<"/some/route", "method">
+export type ExtractRequestParams<Path extends keyof paths, Method extends keyof paths[Path]> =
+  paths[Path][Method] extends {
+    parameters: { query: infer U }
+  } ? U
+    : {}
 
 // Check if T has responses, if so return an object mapping each response code to its "application/json" content type
-// Should be used like that: ExtractResponse<paths["/some/route"]["method"]>
-type ExtractResponse<T> = T extends {
+// Should be used like that: ExtractResponse<"/some/route", "method">
+export type ExtractResponse<Path extends keyof paths, Method extends keyof paths[Path]> = paths[Path][Method] extends {
   responses: infer R
 } ? {
     [K in keyof R]?: R[K] extends { content: { "application/json": infer U } } ? U : void
@@ -41,8 +44,8 @@ export async function sleep(ms: number): Promise<void> {
 
 export async function get<Path extends GetPaths>(
   url: Path,
-  params?: ExtractRequestParams<paths[Path]["get"]>,
-): Promise<ExtractResponse<paths[Path]["get"]>> {
+  params?: ExtractRequestParams<Path, "get">,
+): Promise<ExtractResponse<Path, "get">> {
   let fullUrl: string = url
   if (params && Object.keys(params).length > 0) {
     const queryString = new URLSearchParams(params as Record<string, string>).toString()
@@ -56,13 +59,13 @@ export async function get<Path extends GetPaths>(
   })
   // Using `as` because res.status is a number and not only the defined return status in the type.
   const data = res.headers.get("content-length") === "0" ? {} : await res.json()
-  return { [res.status]: data } as ExtractResponse<paths[Path]["get"]>
+  return { [res.status]: data } as ExtractResponse<Path, "get">
 }
 
 export async function post<Path extends PostPaths>(
   url: Path,
-  body: ExtractRequestBody<paths[Path]["post"]>,
-): Promise<ExtractResponse<paths[Path]["post"]>> {
+  body: ExtractRequestBody<Path, "post">,
+): Promise<ExtractResponse<Path, "post">> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -71,5 +74,53 @@ export async function post<Path extends PostPaths>(
   })
   // Using `as` because res.status is a number and not only the defined return status in the type.
   const data = res.headers.get("content-length") === "0" ? {} : await res.json()
-  return { [res.status]: data } as ExtractResponse<paths[Path]["post"]>
+  return { [res.status]: data } as ExtractResponse<Path, "post">
+}
+
+export function checkEls(els: Record<string, Element | null>): void {
+  for (const elName in els) {
+    if (!els[elName as keyof typeof els])
+      throw new Error(`Element ${elName} not found`)
+  }
+}
+
+export function inputsValuesToObject(form: Element): Record<string, string> {
+  const inputs = form.querySelectorAll<HTMLInputElement>("input[name]")
+  const body: Record<string, string> = {}
+  inputs.forEach((input) => {
+    const name = input.getAttribute("name")
+    if (name)
+      body[name] = input.value
+  })
+  return body
+}
+
+export function updateFormErrors(
+  form: Element,
+  validationErrors?: { field: string; message: string }[],
+  formError?: string,
+): void {
+  updateValidationErrors(form, validationErrors)
+  updateFormError(form, formError)
+}
+
+function updateValidationErrors(form: Element, errors?: { field: string; message: string }[]): void {
+  const FormInputEls = form.querySelectorAll<FormInputElement>("form-input")
+  FormInputEls.forEach((input) => input.clearError())
+
+  errors?.forEach((error) => {
+    const input = form.querySelector<FormInputElement>(`form-input[name="${error.field}"]`)
+    input?.showError(error.message)
+  })
+}
+
+function updateFormError(form: Element, error?: string): void {
+  const errorEl = form.querySelector("[data-form-error]")
+  if (!errorEl)
+    throw new Error("Form error element not found")
+  errorEl.textContent = error || ""
+  if (error)
+    errorEl.classList.remove("hidden")
+  else
+    errorEl.classList.add("hidden")
 }
