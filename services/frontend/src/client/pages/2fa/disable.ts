@@ -1,9 +1,12 @@
-import { navigate } from "../persistent/router.js"
-import { checkEls, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
+import { FormInputElement } from "../../components/formInput.js"
+import { navigate } from "../../persistent/router.js"
+import { checkEls, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
 }
+
+let email = ""
 
 export function onMount(): void {
   els = {
@@ -11,7 +14,8 @@ export function onMount(): void {
   }
   checkEls(els)
 
-  if (getUser()) {
+  const user = getUser()
+  if (!user || !user.twofa_enabled) {
     navigate("/")
     return
   }
@@ -23,16 +27,16 @@ async function onSubmit(e: Event): Promise<void> {
   e.preventDefault()
   e.stopPropagation()
 
-  const data = await post("/api/user/login", inputsValuesToObject(els.form) as any)
+  const data = await post("/api/user/2fa/disable", inputsValuesToObject(els.form) as any)
   if (data[200]) {
     setUser(data[200].user)
     navigate("/")
-  } else if (data[202])
-    navigate(`/2fa/verify?email=${encodeURIComponent(data[202].email)}`) // TODO add ca dans page google callback aussi
-  else if (data[400])
+  } else if (data[400])
     updateFormErrors(els.form, data[400].details, undefined)
   else if (data[401])
-    updateFormErrors(els.form, undefined, data[401].message)
+    updateFormErrors(els.form, [{ field: "totp", message: data[401].message }], undefined)
+  else if (data[404])
+    navigate("/login")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

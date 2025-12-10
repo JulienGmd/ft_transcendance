@@ -1,18 +1,29 @@
+import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { checkEls, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../../utils.js"
+import { checkEls, getUser, post, setUser, updateFormErrors } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
+  totpFormInput: FormInputElement
 }
+
+let email = ""
 
 export function onMount(): void {
   els = {
     form: document.querySelector("form")!,
+    totpFormInput: document.querySelector("form-input[name='totp']")!,
   }
   checkEls(els)
 
   if (getUser()) {
     navigate("/")
+    return
+  }
+
+  email = new URLSearchParams(window.location.search).get("email") || ""
+  if (!email) {
+    navigate("/login")
     return
   }
 
@@ -23,7 +34,10 @@ async function onSubmit(e: Event): Promise<void> {
   e.preventDefault()
   e.stopPropagation()
 
-  const data = await post("/api/user/2fa/verify", inputsValuesToObject(els.form) as any)
+  const data = await post("/api/user/2fa/verify", {
+    totp: els.totpFormInput.value,
+    email,
+  })
   if (data[200]) {
     setUser(data[200].user)
     navigate("/")

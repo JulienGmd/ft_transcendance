@@ -1,11 +1,11 @@
-<script src="/public/pages/2fa/verify.js"></script>
+<script src="/public/pages/2fa/disable.js"></script>
 <script src="/public/components/formInput.js"></script>
 
 <div class="grid flex-1 place-items-center">
   <div class="animate-slide-up w-full space-y-8 sm:max-w-sm">
     <!-- Header -->
     <div class="flex flex-col items-center space-y-4 text-center">
-      <h1 class="font-orbitron text-3xl font-bold">2FA</h1>
+      <h1 class="font-orbitron text-3xl font-bold">DISABLE 2FA</h1>
       <p class="text-text-muted">Enter the code from your authenticator app</p>
     </div>
 
@@ -13,7 +13,7 @@
       <!-- Code Input -->
       <form-input name="totp" label="6-digit code" required></form-input>
       <div data-form-error class="text-error hidden text-center text-sm"></div>
-      <button type="submit" class="button">Verify</button>
+      <button type="submit" class="button">Disable</button>
     </form>
   </div>
 </div>

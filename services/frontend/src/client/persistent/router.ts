@@ -41,11 +41,11 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
 
   app.innerHTML = newPage
 
-  window.dispatchEvent(new CustomEvent("pageLoaded"))
-  loadedModules.forEach((m) => m.onMount?.())
-
   if (pushHistory)
     window.history.pushState({}, "", route)
+
+  window.dispatchEvent(new CustomEvent("pageLoaded"))
+  loadedModules.forEach((m) => m.onMount?.())
 }
 
 /**
@@ -53,6 +53,7 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
  * @returns the page HTML string
  */
 async function fetchHtml(route: string): Promise<string | null> {
+  route = route.split("?")[0] // Remove query params
   route = route === "/" ? "/home" : route
   const res = await fetch(`/public/pages${route}.html`)
   // Server returns 404.html with 404 status for missing pages

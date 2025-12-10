@@ -20,8 +20,9 @@ export function onMount(): void {
   }
   checkEls(els)
 
-  if (!getUser()) {
-    navigate("/login")
+  const user = getUser()
+  if (!user || user.twofa_enabled) {
+    navigate("/")
     return
   }
 

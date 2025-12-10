@@ -46,6 +46,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     if (user.twofa_secret) {
       user.twofa_verify_time = new Date().toISOString()
+      updateUser(user.email, user)
       return res.status(202).send({ needsTwoFA: true, email: user.email })
     }
 
@@ -110,6 +111,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     if (user.twofa_secret) {
       user.twofa_verify_time = new Date().toISOString()
+      updateUser(user.email, user)
       return res.status(202).send({ needsTwoFA: true, email: user.email })
     }
 

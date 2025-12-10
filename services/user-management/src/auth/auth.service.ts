@@ -23,8 +23,10 @@ export function createGoogleUser(email: string, googleId: string): User {
 
 export function updateUser(email: string, user: User): void {
   const db = getDb()
-  const stmt = db.prepare(`UPDATE users SET username = ?, avatar = ?, twofa_secret = ? WHERE email = ?`)
-  stmt.run(user.username, user.avatar, user.twofa_secret, email)
+  const stmt = db.prepare(
+    `UPDATE users SET username = ?, avatar = ?, twofa_secret = ?, twofa_verify_time = ? WHERE email = ?`,
+  )
+  stmt.run(user.username, user.avatar, user.twofa_secret, user.twofa_verify_time, email)
 }
 
 export function userToPublicUser(user: User): PublicUser {

@@ -1,11 +1,11 @@
-<script src="/public/pages/2fa/setup.js"></script>
+<script src="/public/pages/2fa/enable.js"></script>
 <script src="/public/components/formInput.js"></script>
 
 <div class="grid flex-1 place-items-center">
   <div class="animate-slide-up w-full space-y-8 sm:max-w-sm">
     <!-- Header -->
     <div class="flex flex-col items-center space-y-4 text-center">
-      <h1 class="font-orbitron text-3xl font-bold">2FA SETUP</h1>
+      <h1 class="font-orbitron text-3xl font-bold">ENABLE 2FA</h1>
       <p class="text-text-muted">Secure your account with Two-Factor Authentication</p>
     </div>
 
@@ -30,6 +30,7 @@
         <form-input name="totp" label="6-digit code" required></form-input>
       </div>
 
+      <div data-form-error class="text-error hidden text-center text-sm"></div>
       <button type="submit" class="button">Continue</button>
     </form>
   </div>

@@ -70,11 +70,13 @@ async function loadStats(): Promise<Stats> {
 
 function displayUserInfo(): void {
   const user = getUser()
-  if (!user)
+  if (!user) {
+    navigate("/login")
     return
+  }
   els.usernameInput.value = user.username || "Anonymous"
   els.emailEl.textContent = user.email
-  // twofaBtn.textContent = userData.twofa_enabled ? "enabled" : "disabled" // TODO
+  els.twofaBtn.textContent = user.twofa_enabled ? "enabled" : "disabled"
   els.avatar.update()
 }
 
@@ -181,20 +183,14 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
 }
 
 async function onTwofaBtnClick(): Promise<void> {
-  // if (user.twofa_enabled) { // TODO
-  //   if (!confirm("Do you want to disable 2FA?"))
-  //     return
+  const user = getUser()
+  if (!user) {
+    navigate("/login")
+    return
+  }
 
-  //   const data = await post("/api/user/2fa/disable", {
-  //     totp: "", // TODO
-  //   })
-  //   if (!data[200]) {
-  //     alert("Failed to disable 2FA. Please try again.")
-  //     return
-  //   }
-  //   setUser(data[200].user) // TODO
-  //   twofaButtonEl.textContent = "Disabled"
-  // } else {
-  //   navigate("/login/setup-2fa")
-  // }
+  if (user.twofa_enabled)
+    navigate("/2fa/disable")
+  else
+    navigate("/2fa/enable")
 }
