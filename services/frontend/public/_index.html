@@ -7,6 +7,7 @@
     <script defer type="module" src="/public/persistent/errorHandler.js"></script>
     <script defer type="module" src="/public/persistent/router.js"></script>
     <script defer type="module" src="/public/persistent/anims.js"></script>
+    <script type="module" src="/public/components/persistent/notificationBanner.js"></script>
     <script type="module" src="/public/components/persistent/appHeader.js"></script>
     <script type="module" src="/public/components/persistent/appFooter.js"></script>
     <title>Transcendence</title>
@@ -14,6 +15,8 @@
 
   <body class="bg-background text-text font-sans">
     <div class="mx-auto flex min-h-screen max-w-5xl flex-col p-4">
+      <notification-banner></notification-banner>
+
       <app-header></app-header>
 
       <div id="app" class="flex flex-1 flex-col">

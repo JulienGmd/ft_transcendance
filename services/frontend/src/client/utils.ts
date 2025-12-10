@@ -1,5 +1,6 @@
 import type { paths } from "@ft_transcendence/shared"
 import type { FormInputElement } from "./components/formInput.js"
+import type { NotificationBannerElement } from "./components/persistent/notificationBanner.js"
 import { User } from "./types.js"
 
 // Extract all paths names that have a GET method
@@ -137,4 +138,8 @@ export function setUser(user: User | null): void {
 export function getUser(): User | null {
   const user = localStorage.getItem("user")
   return user ? JSON.parse(user) as User : null
+}
+
+export function getNotificationBanner(): NotificationBannerElement | null {
+  return document.querySelector("notification-banner")
 }

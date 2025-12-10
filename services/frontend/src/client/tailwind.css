@@ -14,9 +14,9 @@
   --color-text-muted: #747983; /* Secondary text */
   --color-background: #15161c; /* Main background */
   --color-surface: #22272d; /* Cards, modals */
-  --color-error: #d03b3b; /* Error messages */
-  --color-warning: #de900a; /* Warning messages */
-  --color-success: #0eae79; /* Success messages */
+  --color-error: #ef4444; /* Error messages */
+  --color-warning: #f59e0b; /* Warning messages */
+  --color-success: #10b981; /* Success messages */
 
   /* Font families */
   --font-sans: Inter, sans-serif;

@@ -28,7 +28,7 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
   }
 
   // Using arrow function because regular function loose 'this' context when called from event listener
-  update = async (): Promise<void> => {
+  private update = async (): Promise<void> => {
     const user = getUser()
 
     if (user) {
