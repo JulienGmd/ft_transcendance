@@ -1,27 +1,20 @@
+/**
+ * @param id The id and name of the input element
+ * @param label The label text for the input element
+ * @param type (optional - default: "text") The type of the input element
+ * @param required (optional) Whether the input is required
+ * @param autocomplete (optional) The autocomplete attribute for the input element
+ * @param icon (optional) The name of an icon component to display inside the input
+ */
 export interface FormInputElement extends HTMLElement {
+  /** Show an error message below the input */
   showError(msg: string): void
+  /** Clear the error message */
   clearError(): void
+  /** The value of the input */
   value: string
 }
 
-/**
- * Attributes:
- *   Required:
- *   - id: string - The id and name of the input element
- *   - label: string - The label text for the input element
- *   Optional:
- *   - type: string (default: "text") - The type of the input element
- *   - required: Whether the input is required
- *   - autocomplete: string - The autocomplete attribute for the input element
- *   - icon: string - The name of an icon component to display inside the input
- *
- * Methods:
- * - showError(msg: string): void - Show an error message below the input
- * - clearError(): void - Clear the error message
- *
- * Properties:
- * - value: string - Get or set the value of the input
- */
 class FormInput extends HTMLElement implements FormInputElement {
   private inputEl!: HTMLInputElement
   private errorEl!: HTMLElement
