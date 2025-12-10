@@ -2,13 +2,13 @@ import type { FastifyInstance } from "fastify"
 import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
 import { getJWT } from "../auth/jwt"
-import { PUBLIC_MATCH_SCHEMA, PUBLIC_STATS_SCHEMA, PUBLIC_VALIDATION_ERROR_SCHEMA } from "../auth/schemas"
+import { PUBLIC_MATCH_SCHEMA, PUBLIC_STATS_SCHEMA } from "../auth/schemas"
 import { getPlayerMatches, getPlayerStats, matchToPublicMatch } from "./match.service"
 
 export async function matchRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/matches/me", {
     schema: {
-      querystring: z.object({ limit: z.number().optional() }),
+      querystring: z.object({ limit: z.string().optional() }),
       response: {
         200: z.object({ matches: z.array(PUBLIC_MATCH_SCHEMA) }),
         401: z.object({ message: z.string() }),
@@ -19,7 +19,8 @@ export async function matchRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const matches = getPlayerMatches(jwt.email, req.query.limit)
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10
+    const matches = getPlayerMatches(jwt.email, limit)
     res.send({ matches: matches.map(matchToPublicMatch) })
   })
 
