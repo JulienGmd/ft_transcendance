@@ -1,6 +1,6 @@
 import { FormInputElement } from "../components/formInput.js"
 import { navigate } from "../persistent/router.js"
-import { checkEls, get, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
+import { checkEls, get, getUser, inputsValuesToObject, post, reportFormErrors, setUser } from "../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -49,9 +49,9 @@ async function onSubmit(e: Event): Promise<void> {
     setUser(data[200].user)
     navigate("/")
   } else if (data[400])
-    updateFormErrors(els.form, data[400].details, undefined)
+    reportFormErrors(els.form, data[400].details, undefined)
   else if (data[409])
-    updateFormErrors(els.form, undefined, data[409].message)
+    reportFormErrors(els.form, undefined, data[409].message)
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

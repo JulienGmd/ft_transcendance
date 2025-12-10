@@ -1,5 +1,5 @@
 import { navigate } from "../persistent/router.js"
-import { checkEls, get, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
+import { checkEls, get, getUser, inputsValuesToObject, post, reportFormErrors, setUser } from "../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -41,9 +41,9 @@ async function onSubmit(e: Event): Promise<void> {
   } else if (data[202])
     navigate(`/2fa/verify?email=${encodeURIComponent(data[202].email)}`)
   else if (data[400])
-    updateFormErrors(els.form, data[400].details, undefined)
+    reportFormErrors(els.form, data[400].details, undefined)
   else if (data[401])
-    updateFormErrors(els.form, undefined, data[401].message)
+    reportFormErrors(els.form, undefined, data[401].message)
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

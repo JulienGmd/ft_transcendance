@@ -1,6 +1,6 @@
 import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { checkEls, getUser, post, setUser, updateFormErrors } from "../../utils.js"
+import { checkEls, getUser, post, reportFormErrors, setUser } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -55,7 +55,7 @@ async function onSubmit(e: Event): Promise<void> {
     setUser(data[200].user)
     navigate("/")
   } else if (data[400])
-    updateFormErrors(els.form, data[400].details, undefined)
+    reportFormErrors(els.form, data[400].details, undefined)
   else if (data[401])
     navigate("/login")
   else
