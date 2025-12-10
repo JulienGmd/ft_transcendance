@@ -4,6 +4,7 @@ export const PUBLIC_USER_SCHEMA = z.object({
   email: z.email(),
   username: z.string().nullable(),
   avatar: z.string().nullable(),
+  twofa_enabled: z.boolean(),
 })
 export type PublicUser = z.infer<typeof PUBLIC_USER_SCHEMA>
 

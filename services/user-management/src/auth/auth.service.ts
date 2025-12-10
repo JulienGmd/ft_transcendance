@@ -32,5 +32,6 @@ export function userToPublicUser(user: User): PublicUser {
     email: user.email,
     username: user.username || null,
     avatar: user.avatar || null,
+    twofa_enabled: !!user.twofa_secret,
   }
 }

@@ -71,6 +71,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };
@@ -171,6 +172,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };
@@ -247,6 +249,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };
@@ -362,6 +365,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };
@@ -423,6 +427,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };
@@ -508,6 +513,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };
@@ -626,7 +632,15 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": unknown;
+                        "application/json": {
+                            user: {
+                                /** Format: email */
+                                email: string;
+                                username: string | null;
+                                avatar: string | null;
+                                twofa_enabled: boolean;
+                            };
+                        };
                     };
                 };
                 /** @description Default Response */
@@ -693,7 +707,15 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": unknown;
+                        "application/json": {
+                            user: {
+                                /** Format: email */
+                                email: string;
+                                username: string | null;
+                                avatar: string | null;
+                                twofa_enabled: boolean;
+                            };
+                        };
                     };
                 };
                 /** @description Default Response */
@@ -760,9 +782,9 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        totp: string;
                         /** Format: email */
                         email: string;
-                        totp: string;
                     };
                 };
             };
@@ -779,6 +801,7 @@ export interface paths {
                                 email: string;
                                 username: string | null;
                                 avatar: string | null;
+                                twofa_enabled: boolean;
                             };
                         };
                     };

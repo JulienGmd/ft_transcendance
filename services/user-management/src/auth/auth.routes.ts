@@ -44,8 +44,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!user)
       user = createGoogleUser(googleProfile.email, googleProfile.id)
 
-    if (user.twofa_secret)
+    if (user.twofa_secret) {
+      user.twofa_verify_time = new Date().toISOString()
       return res.status(202).send({ needsTwoFA: true, email: user.email })
+    }
 
     setJWT(res, user)
     res.send({ user: userToPublicUser(user) })
@@ -106,8 +108,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!user.password_hash || !(await bcrypt.compare(req.body.password, user.password_hash)))
       return res.status(401).send({ message: "Invalid credentials" })
 
-    if (user.twofa_secret)
+    if (user.twofa_secret) {
+      user.twofa_verify_time = new Date().toISOString()
       return res.status(202).send({ needsTwoFA: true, email: user.email })
+    }
 
     setJWT(res, user)
     res.send({ user: userToPublicUser(user) })
@@ -216,7 +220,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     schema: {
       body: z.object({ secret: z.string(), totp: z.string() }),
       response: {
-        200: z.void(),
+        200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
       },
@@ -233,14 +237,14 @@ export async function authRoutes(fastify: FastifyInstance) {
     user.twofa_secret = req.body.secret
     updateUser(user.email, user)
 
-    res.send()
+    res.send({ user: userToPublicUser(user) })
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/disable", {
     schema: {
       body: z.object({ totp: z.string() }),
       response: {
-        200: z.void(),
+        200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
         404: z.object({ message: z.string() }),
@@ -261,12 +265,12 @@ export async function authRoutes(fastify: FastifyInstance) {
     user.twofa_secret = null
     updateUser(user.email, user)
 
-    res.send()
+    res.send({ user: userToPublicUser(user) })
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/verify", {
     schema: {
-      body: z.object({ email: z.email(), totp: z.string() }),
+      body: z.object({ totp: z.string(), email: z.email() }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
@@ -282,9 +286,15 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!user.twofa_secret)
       return res.status(404).send({ message: "2FA not enabled" })
 
+    // Limit the time window to make sure the user did logged in recently (credentials or oauth)
+    const maxDuration = 5 * 60 * 1000 // 5 minutes
+    if (!user.twofa_verify_time || Date.now() - new Date(user.twofa_verify_time).getTime() > maxDuration)
+      return res.status(401).send({ message: "2FA verification time expired" })
+
     if (!verify2FACode(user.twofa_secret, req.body.totp))
       return res.status(401).send({ message: "Invalid verification code" })
 
+    user.twofa_verify_time = null
     setJWT(res, user)
     res.send({ user: userToPublicUser(user) })
   })

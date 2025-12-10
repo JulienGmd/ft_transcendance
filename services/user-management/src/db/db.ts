@@ -25,6 +25,7 @@ export function initDb(): Database.Database {
             username TEXT UNIQUE,
             avatar TEXT,
             twofa_secret TEXT,
+            twofa_verify_time DATETIME,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
@@ -65,6 +66,7 @@ export type User = {
   username: string | null
   avatar: string | null
   twofa_secret: string | null
+  twofa_verify_time: string | null
   created_at: string
   updated_at: string
 }
