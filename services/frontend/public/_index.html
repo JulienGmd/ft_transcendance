@@ -7,52 +7,20 @@
     <script defer type="module" src="/public/persistent/errorHandler.js"></script>
     <script defer type="module" src="/public/persistent/router.js"></script>
     <script defer type="module" src="/public/persistent/anims.js"></script>
-    <script defer type="module" src="/public/persistent/header.js"></script>
-    <script defer type="module" src="/public/persistent/footer.js"></script>
-    <script type="module" src="/public/components/userAvatar.js"></script>
+    <script type="module" src="/public/components/persistent/appHeader.js"></script>
+    <script type="module" src="/public/components/persistent/appFooter.js"></script>
     <title>Transcendence</title>
   </head>
 
   <body class="bg-background text-text font-sans">
     <div class="mx-auto flex min-h-screen max-w-5xl flex-col p-4">
-      <!-- Header -->
-      <div class="mb-8 flex items-center justify-between">
-        <a href="/" class="anim-typewriter font-orbitron text-3xl font-black">TRANSCENDENCE</a>
-
-        <div class="animate-slide-left animate-delay-[0.2s]">
-          <!-- Login button (shown when not authenticated) -->
-          <a id="header-login" class="hover-skew font-orbitron" href="/login">LOGIN</a>
-
-          <!-- User profile (shown when authenticated) -->
-          <div id="header-profile-container" class="group relative">
-            <!-- Profile link -->
-            <a href="/profile" class="block size-12">
-              <span class="sr-only">Profile</span>
-              <user-avatar></user-avatar>
-            </a>
-
-            <!-- Dropdown menu -->
-            <div class="absolute top-full right-0 hidden pt-2 group-hover:block">
-              <div class="bg-surface size-full w-32 rounded-md shadow-lg *:first:pt-4 *:last:pb-4">
-                <button id="header-logout-btn" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <app-header></app-header>
 
       <div id="app" class="flex flex-1 flex-col">
         <!-- pages are injected here by the router -->
       </div>
 
-      <!-- Footer -->
-      <footer class="mt-16">
-        <p class="text-text-muted text-center text-sm">
-          © <span id="footer-date">2025</span> TRANSCENDENCE. All rights reserved.
-        </p>
-      </footer>
+      <app-footer></app-footer>
     </div>
   </body>
 </html>

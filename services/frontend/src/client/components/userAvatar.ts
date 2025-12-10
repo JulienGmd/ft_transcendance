@@ -27,7 +27,7 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
     window.removeEventListener("userChanged", this.update)
   }
 
-  // Using arrow function else when its called as event listener, 'this' is lost
+  // Using arrow function because regular function loose 'this' context when called from event listener
   update = async (): Promise<void> => {
     const user = getUser()
 
