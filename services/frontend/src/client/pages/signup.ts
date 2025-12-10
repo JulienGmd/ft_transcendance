@@ -1,6 +1,6 @@
 import { FormInputElement } from "../components/formInput.js"
 import { navigate } from "../persistent/router.js"
-import { checkEls, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
+import { checkEls, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -15,6 +15,11 @@ export function onMount(): void {
     confirmPasswordFormInput: document.querySelector("form-input[name='confirmPassword']")!,
   }
   checkEls(els)
+
+  if (getUser()) {
+    navigate("/")
+    return
+  }
 
   els.form.addEventListener("submit", onSubmit)
 }

@@ -1,6 +1,6 @@
 import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { checkEls, post, setUser, updateFormErrors } from "../../utils.js"
+import { checkEls, getUser, post, setUser, updateFormErrors } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -19,6 +19,11 @@ export function onMount(): void {
     totpFormInput: document.querySelector("form-input[name='totp']")!,
   }
   checkEls(els)
+
+  if (!getUser()) {
+    navigate("/login")
+    return
+  }
 
   setupPage()
 

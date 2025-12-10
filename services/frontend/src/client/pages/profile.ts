@@ -32,6 +32,11 @@ export function onMount(): void {
   }
   checkEls(els)
 
+  if (!getUser()) {
+    navigate("/login")
+    return
+  }
+
   setupPage()
 
   els.avatarInput.addEventListener("change", onAvatarInputChange)
@@ -40,10 +45,6 @@ export function onMount(): void {
 }
 
 async function setupPage(): Promise<void> {
-  if (!getUser()) {
-    navigate("/login")
-    return
-  }
   displayUserInfo()
 
   const stats = await loadStats()
