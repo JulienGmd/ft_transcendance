@@ -9,6 +9,7 @@
     <script defer type="module" src="/public/persistent/anims.js"></script>
     <script defer type="module" src="/public/persistent/header.js"></script>
     <script defer type="module" src="/public/persistent/footer.js"></script>
+    <script type="module" src="/public/components/userAvatar.js"></script>
     <title>Transcendence</title>
   </head>
 
@@ -25,10 +26,9 @@
           <!-- User profile (shown when authenticated) -->
           <div id="header-profile-container" class="group relative">
             <!-- Profile link -->
-            <a href="/profile" class="bg-primary grid size-12 place-items-center overflow-hidden rounded-full">
+            <a href="/profile" class="block size-12">
               <span class="sr-only">Profile</span>
-              <img id="header-avatar-img" alt="User Avatar" class="hidden size-full rounded-full object-cover" />
-              <span id="header-avatar-letter" class="hidden text-2xl font-bold">?</span>
+              <user-avatar id="header-user-avatar"></user-avatar>
             </a>
 
             <!-- Dropdown menu -->

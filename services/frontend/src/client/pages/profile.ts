@@ -1,11 +1,11 @@
+import { UserAvatarElement } from "../components/userAvatar.js"
 import * as header from "../persistent/header.js"
 import { navigate } from "../persistent/router.js"
 import { Match, Stats, User } from "../types.js"
 import { get, post } from "../utils.js"
 
 let avatarInput: HTMLInputElement
-let avatarLetterEl: HTMLElement
-let avatarImg: HTMLImageElement
+let avatar: UserAvatarElement
 let usernameInput: HTMLInputElement
 let emailEl: HTMLSpanElement
 let twofaBtn: HTMLButtonElement
@@ -15,6 +15,7 @@ let winRateEl: HTMLElement
 let precisionEl: HTMLElement
 let matchHistoryEl: HTMLElement
 
+// TODO local storage, a chaque requete qui change l'user, l'update
 let user: User = {
   email: "",
   username: null,
@@ -23,8 +24,7 @@ let user: User = {
 
 export function onMount(): void {
   avatarInput = document.querySelector("#avatar-input")!
-  avatarLetterEl = document.querySelector("#avatar-letter")!
-  avatarImg = document.querySelector("#avatar-img")!
+  avatar = document.querySelector("#user-avatar")!
   usernameInput = document.querySelector("#username-input")!
   emailEl = document.querySelector("#email")!
   twofaBtn = document.querySelector("#twofa-btn")!
@@ -35,23 +35,9 @@ export function onMount(): void {
   matchHistoryEl = document.querySelector("#match-history")!
 
   if (
-    !avatarInput || !avatarLetterEl || !avatarImg || !usernameInput || !emailEl || !twofaBtn || !numMatchesEl
+    !avatarInput || !avatar || !usernameInput || !emailEl || !twofaBtn || !numMatchesEl
     || !numWinsEl || !winRateEl || !precisionEl || !matchHistoryEl
   ) {
-    console.log(
-      avatarInput,
-      avatarLetterEl,
-      avatarImg,
-      usernameInput,
-      emailEl,
-      twofaBtn,
-      numMatchesEl,
-      numWinsEl,
-      winRateEl,
-      precisionEl,
-      matchHistoryEl,
-    )
-
     throw new Error("Elements not found")
   }
 
@@ -111,16 +97,7 @@ function displayUserInfo(): void {
   emailEl.textContent = user.email
   // twofaBtn.textContent = userData.twofa_enabled ? "enabled" : "disabled" // TODO
 
-  if (user.avatar) {
-    avatarImg.src = user.avatar
-    avatarImg.classList.remove("hidden")
-    avatarLetterEl.classList.add("hidden")
-  } else {
-    const letter = user.username ? user.username.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()
-    avatarLetterEl.textContent = letter
-    avatarLetterEl.classList.remove("hidden")
-    avatarImg.classList.add("hidden")
-  }
+  avatar.update()
 }
 
 function displayStats(stats: Stats): void {
@@ -192,10 +169,9 @@ function onAvatarInputChange(): void {
 
     const data = await post("/api/user/set-avatar", { avatar: result })
     if (data[200]) {
-      user.avatar = result
-      avatarImg.src = result
-      avatarImg.classList.remove("hidden")
-      avatarLetterEl.classList.add("hidden")
+      user = data[200].user
+      displayUserInfo()
+      header.update()
     } else if (data[401])
       navigate("/login")
     else
@@ -212,7 +188,7 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
 
   const data = await post("/api/user/set-username", { username })
   if (data[200]) {
-    user.username = username
+    user = data[200].user
     displayUserInfo()
     header.update()
     usernameInput.blur() // unfocus

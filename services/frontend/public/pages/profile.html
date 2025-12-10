@@ -7,19 +7,13 @@
     <div class="border-surface flex items-center gap-4 border-b pb-6">
       <!-- Avatar -->
       <input id="avatar-input" type="file" accept="image/*" class="hidden" />
-      <button
-        class="group bg-primary relative grid size-16 place-items-center overflow-hidden rounded-full"
-        onclick="document.getElementById('avatar-file').click()"
-      >
+      <button class="group relative size-16" onclick="document.getElementById('avatar-input').click()">
         <div
-          class="bg-background/50 absolute inset-0 grid place-items-center opacity-0 transition group-hover:opacity-100"
+          class="bg-background/70 absolute inset-0 grid place-items-center opacity-0 transition group-hover:opacity-100"
         >
-          <div class="size-6">
-            <pencil-icon></pencil-icon>
-          </div>
+          <pencil-icon class="size-6"></pencil-icon>
         </div>
-        <span id="avatar-letter" class="text-3xl font-bold">?</span>
-        <img id="avatar-img" class="hidden size-full object-cover" alt="Avatar" />
+        <user-avatar id="user-avatar"></user-avatar>
       </button>
       <div>
         <!-- Username -->
