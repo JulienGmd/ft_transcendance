@@ -1,8 +1,6 @@
 import { getUser } from "../utils.js"
 
 export interface UserAvatarElement extends HTMLElement {
-  /** Update the user avatar display */
-  update(): Promise<void>
 }
 
 class UserAvatar extends HTMLElement implements UserAvatarElement {
@@ -19,9 +17,18 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
 
     this.img = this.querySelector(":scope > div> img")! as HTMLImageElement
     this.letter = this.querySelector(":scope > div > span")!
+
+    this.update()
+
+    window.addEventListener("userChanged", this.update)
   }
 
-  async update(): Promise<void> {
+  disconnectedCallback() {
+    window.removeEventListener("userChanged", this.update)
+  }
+
+  // Using arrow function else when its called as event listener, 'this' is lost
+  update = async (): Promise<void> => {
     const user = getUser()
 
     if (user) {

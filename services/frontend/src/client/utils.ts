@@ -131,6 +131,7 @@ export function setUser(user: User | null): void {
     localStorage.setItem("user", JSON.stringify(user))
   else
     localStorage.removeItem("user")
+  window.dispatchEvent(new Event("userChanged"))
 }
 
 export function getUser(): User | null {

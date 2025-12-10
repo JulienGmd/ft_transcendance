@@ -1,12 +1,9 @@
-import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
 import { checkEls, getUser, inputsValuesToObject, post, setUser, updateFormErrors } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
 }
-
-let email = ""
 
 export function onMount(): void {
   els = {

@@ -1,12 +1,9 @@
-import { UserAvatarElement } from "../components/userAvatar.js"
-import * as header from "../persistent/header.js"
 import { navigate } from "../persistent/router.js"
-import { Match, Stats } from "../types.js"
+import { Stats } from "../types.js"
 import { checkEls, get, getUser, post, setUser } from "../utils.js"
 
 let els: {
   avatarInput: HTMLInputElement
-  avatar: UserAvatarElement
   usernameInput: HTMLInputElement
   emailEl: HTMLSpanElement
   twofaBtn: HTMLButtonElement
@@ -20,7 +17,6 @@ let els: {
 export function onMount(): void {
   els = {
     avatarInput: document.querySelector("#avatar-input")!,
-    avatar: document.querySelector("#user-avatar")!,
     usernameInput: document.querySelector("#username-input")!,
     emailEl: document.querySelector("#email")!,
     twofaBtn: document.querySelector("#twofa-btn")!,
@@ -37,35 +33,18 @@ export function onMount(): void {
     return
   }
 
-  setupPage()
+  displayUserInfo()
+  displayStats()
+  displayMatchHistory()
 
   els.avatarInput.addEventListener("change", onAvatarInputChange)
   els.usernameInput.addEventListener("keyup", onUsernameKeyup)
   els.twofaBtn.addEventListener("click", onTwofaBtnClick)
+  window.addEventListener("userChanged", displayUserInfo)
 }
 
-async function setupPage(): Promise<void> {
-  displayUserInfo()
-
-  const stats = await loadStats()
-  displayStats(stats)
-
-  const matches = await loadMatchHistory()
-  displayMatchHistory(matches)
-}
-
-async function loadMatchHistory(): Promise<Match[]> {
-  const data = await get(`/api/user/matches/me`, { limit: 10 })
-  return data[200] ? data[200].matches : []
-}
-
-async function loadStats(): Promise<Stats> {
-  const data = await get(`/api/user/stats/me`)
-  return data[200] ? data[200].stats : {
-    numMatches: 0,
-    numWins: 0,
-    precision: 0,
-  }
+export function onDestroy(): void {
+  window.removeEventListener("userChanged", displayUserInfo)
 }
 
 function displayUserInfo(): void {
@@ -77,10 +56,16 @@ function displayUserInfo(): void {
   els.usernameInput.value = user.username || "Anonymous"
   els.emailEl.textContent = user.email
   els.twofaBtn.textContent = user.twofa_enabled ? "enabled" : "disabled"
-  els.avatar.update()
 }
 
-function displayStats(stats: Stats): void {
+async function displayStats(): Promise<void> {
+  const data = await get(`/api/user/stats/me`)
+  const stats: Stats = data[200] ? data[200].stats : {
+    numMatches: 0,
+    numWins: 0,
+    precision: 0,
+  }
+
   els.numMatchesEl.textContent = stats.numMatches.toString()
   els.numWinsEl.textContent = stats.numWins.toString()
   const winRate = stats.numMatches > 0 ? (stats.numWins / stats.numMatches * 100) : 0
@@ -88,7 +73,10 @@ function displayStats(stats: Stats): void {
   els.precisionEl.textContent = `${stats.precision.toFixed(1)}%`
 }
 
-function displayMatchHistory(matches: Match[]): void {
+async function displayMatchHistory(): Promise<void> {
+  const data = await get(`/api/user/matches/me`, { limit: 10 })
+  const matches = data[200] ? data[200].matches : []
+
   if (matches.length === 0)
     return
 
@@ -148,11 +136,9 @@ function onAvatarInputChange(): void {
     }
 
     const data = await post("/api/user/set-avatar", { avatar: result })
-    if (data[200]) {
+    if (data[200])
       setUser(data[200].user)
-      displayUserInfo()
-      header.update()
-    } else if (data[401])
+    else if (data[401])
       navigate("/login")
     else
       alert("Failed to upload avatar. Please try again.")
@@ -169,8 +155,6 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
   const data = await post("/api/user/set-username", { username })
   if (data[200]) {
     setUser(data[200].user)
-    displayUserInfo()
-    header.update()
     els.usernameInput.blur() // unfocus
   } else if (data[400])
     alert(data[400].details[0].message)

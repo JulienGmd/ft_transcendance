@@ -52,7 +52,7 @@ async function onSubmit(e: Event): Promise<void> {
     totp: els.totpFormInput.value,
   })
   if (data[200]) {
-    setUser(data[200].user) // TODO
+    setUser(data[200].user)
     navigate("/")
   } else if (data[400])
     updateFormErrors(els.form, data[400].details, undefined)
