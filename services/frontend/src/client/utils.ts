@@ -55,7 +55,8 @@ export async function get<Path extends GetPaths>(
     credentials: "include", // Include cookies
   })
   // Using `as` because res.status is a number and not only the defined return status in the type.
-  return { [res.status]: await res.json() } as ExtractResponse<paths[Path]["get"]>
+  const data = res.headers.get("content-length") === "0" ? {} : await res.json()
+  return { [res.status]: data } as ExtractResponse<paths[Path]["get"]>
 }
 
 export async function post<Path extends PostPaths>(
