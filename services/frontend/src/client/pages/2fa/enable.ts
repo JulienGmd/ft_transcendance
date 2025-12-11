@@ -28,6 +28,7 @@ export function onMount(): void {
 
   setupPage()
 
+  els.totpFormInput.addEventListener("input", onTotpInput)
   els.form.addEventListener("submit", onSubmit)
 }
 
@@ -41,6 +42,11 @@ async function setupPage(): Promise<void> {
     navigate("/login", "Session expired. Please log in again.", "warning")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
+}
+
+function onTotpInput(): void {
+  if (els.totpFormInput.value.length === 6)
+    els.form.requestSubmit()
 }
 
 async function onSubmit(e: Event): Promise<void> {

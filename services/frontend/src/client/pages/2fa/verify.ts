@@ -27,7 +27,13 @@ export function onMount(): void {
     return
   }
 
+  els.totpFormInput.addEventListener("input", onTotpInput)
   els.form.addEventListener("submit", onSubmit)
+}
+
+function onTotpInput(): void {
+  if (els.totpFormInput.value.length === 6)
+    els.form.requestSubmit()
 }
 
 async function onSubmit(e: Event): Promise<void> {

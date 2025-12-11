@@ -18,6 +18,7 @@ export interface FormInputElement extends HTMLElement {
 class FormInput extends HTMLElement implements FormInputElement {
   private inputEl!: HTMLInputElement
   private errorEl!: HTMLElement
+  private numberOnly: boolean = false
 
   connectedCallback() {
     const name = this.getAttribute("name")
@@ -27,6 +28,8 @@ class FormInput extends HTMLElement implements FormInputElement {
     const required = this.getAttribute("required") !== null
     let autocomplete = this.getAttribute("autocomplete")
     const icon = this.getAttribute("icon")
+
+    this.numberOnly = this.getAttribute("number") !== null
 
     if (!name)
       throw new Error("FormInput component requires a valid name attribute")
@@ -68,6 +71,13 @@ class FormInput extends HTMLElement implements FormInputElement {
 
     this.inputEl = this.querySelector("input")!
     this.errorEl = this.querySelector(":scope > div:last-child")! // div that is the last child of the component
+
+    this.inputEl.addEventListener("input", this.onInput)
+  }
+
+  private onInput = (e: Event) => {
+    if (this.numberOnly)
+      this.inputEl.value = this.inputEl.value.replace(/[^\d]/g, "")
   }
 
   showError(msg: string): void {

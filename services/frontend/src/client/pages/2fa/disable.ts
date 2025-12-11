@@ -1,3 +1,4 @@
+import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
 import {
   checkEls,
@@ -11,11 +12,13 @@ import {
 
 let els: {
   form: HTMLFormElement
+  totpFormInput: FormInputElement
 }
 
 export function onMount(): void {
   els = {
     form: document.querySelector("form")!,
+    totpFormInput: document.querySelector("form-input[name='totp']")!,
   }
   checkEls(els)
 
@@ -25,7 +28,13 @@ export function onMount(): void {
     return
   }
 
+  els.totpFormInput.addEventListener("input", onTotpInput)
   els.form.addEventListener("submit", onSubmit)
+}
+
+function onTotpInput(): void {
+  if (els.totpFormInput.value.length === 6)
+    els.form.requestSubmit()
 }
 
 async function onSubmit(e: Event): Promise<void> {
