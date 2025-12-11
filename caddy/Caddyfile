@@ -2,10 +2,10 @@
 # and used to verify the self-signed cert between caddy and the services
 
 # To reload while the docker is running, run:
-# docker exec -w /etc/caddy ft_transcendance-caddy-1 caddy reload
+# docker exec -w /etc/caddy ft_transcendence-caddy-1 caddy reload
 
 # To test https with services:
-# docker exec -it ft_transcendance-caddy-1 /bin/sh
+# docker exec -it ft_transcendence-caddy-1 /bin/sh
 # apk add curl
 # curl --insecure https://frontend:3000
 # curl --insecure http://frontend:3000

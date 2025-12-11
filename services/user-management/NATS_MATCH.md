@@ -76,13 +76,13 @@ docker compose up -d
 ### 2. Tester la création de match via NATS
 
 ```bash
-docker exec ft_transcendance-auth-1 npx tsx src/nats/testMatchCreate.ts
+docker exec ft_transcendence-auth-1 npx tsx src/nats/testMatchCreate.ts
 ```
 
 ### 3. Vérifier les logs
 
 ```bash
-docker logs ft_transcendance-auth-1 --tail 50
+docker logs ft_transcendence-auth-1 --tail 50
 ```
 
 ## 🔌 Utilisation depuis un autre service

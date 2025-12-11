@@ -3,7 +3,7 @@ import speakeasy from "speakeasy"
 
 export function generate2FASecret(email: string): { base32: string; otpauth_url: string } {
   const secret = speakeasy.generateSecret({
-    name: `ft_transcendance: ${email}`,
+    name: `ft_transcendence: ${email}`,
     length: 32,
   })
 

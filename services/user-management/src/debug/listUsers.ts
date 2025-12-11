@@ -1,5 +1,5 @@
 // To execute:
-// docker exec -it fr-transcendance-1 /bin/sh
+// docker exec -it fr-transcendence-1 /bin/sh
 // cd services/user-management
 // npx tsx src/debug/listUsers.ts
 
