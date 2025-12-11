@@ -1,5 +1,14 @@
 import { navigate } from "../persistent/router.js"
-import { checkEls, get, getUser, inputsValuesToObject, post, reportFormErrors, setUser } from "../utils.js"
+import {
+  checkEls,
+  get,
+  getUser,
+  inputsValuesToObject,
+  post,
+  reportFormValidationErrors,
+  setUser,
+  showNotify,
+} from "../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -37,13 +46,13 @@ async function onSubmit(e: Event): Promise<void> {
   const data = await post("/api/user/login", inputsValuesToObject(els.form) as any)
   if (data[200]) {
     setUser(data[200].user)
-    navigate("/")
+    navigate("/", "Login successful")
   } else if (data[202])
     navigate(`/2fa/verify?email=${encodeURIComponent(data[202].email)}`)
   else if (data[400])
-    reportFormErrors(els.form, data[400].details, undefined)
+    reportFormValidationErrors(els.form, data[400].details)
   else if (data[401])
-    reportFormErrors(els.form, undefined, data[401].message)
+    showNotify("Invalid email or password", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

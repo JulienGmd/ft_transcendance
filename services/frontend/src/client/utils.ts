@@ -97,19 +97,7 @@ export function inputsValuesToObject(form: Element): Record<string, string> {
   return body
 }
 
-export function reportFormErrors(
-  form: Element,
-  validationErrors?: { field: string; message: string }[],
-  formError?: string,
-): void {
-  updateFormValidationErrors(form, validationErrors)
-  if (formError)
-    getNotificationBanner()?.showErrorMessage(formError)
-  else
-    getNotificationBanner()?.hide()
-}
-
-function updateFormValidationErrors(form: Element, errors?: { field: string; message: string }[]): void {
+export function reportFormValidationErrors(form: Element, errors?: { field: string; message: string }[]): void {
   const FormInputEls = form.querySelectorAll<FormInputElement>("form-input")
   FormInputEls.forEach((input) => input.clearError())
 
@@ -132,6 +120,12 @@ export function getUser(): User | null {
   return user ? JSON.parse(user) as User : null
 }
 
-export function getNotificationBanner(): NotificationBannerElement | null {
-  return document.querySelector("notification-banner")
+export function showNotify(msg: string, type: "success" | "warning" | "error" = "success"): void {
+  const banner = document.querySelector<NotificationBannerElement>("notification-banner")
+  if (type === "success")
+    banner?.showSuccessMessage(msg)
+  else if (type === "warning")
+    banner?.showWarningMessage(msg)
+  else
+    banner?.showErrorMessage(msg)
 }

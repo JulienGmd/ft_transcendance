@@ -1,6 +1,6 @@
 import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { checkEls, getUser, post, reportFormErrors, setUser } from "../../utils.js"
+import { checkEls, getUser, post, reportFormValidationErrors, setUser, showNotify } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -40,13 +40,15 @@ async function onSubmit(e: Event): Promise<void> {
   })
   if (data[200]) {
     setUser(data[200].user)
-    navigate("/")
+    navigate("/", "2FA verification successful")
   } else if (data[400])
-    reportFormErrors(els.form, data[400].details, undefined)
+    reportFormValidationErrors(els.form, data[400].details)
   else if (data[401])
-    reportFormErrors(els.form, [{ field: "totp", message: data[401].message }], undefined)
+    navigate("/login", "Session expired, please log in again", "warning")
+  else if (data[403])
+    showNotify("Invalid 2FA code", "error")
   else if (data[404])
-    navigate("/login")
+    navigate("/", "2FA is not enabled on your account", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

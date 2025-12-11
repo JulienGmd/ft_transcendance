@@ -1,6 +1,6 @@
 import { FormInputElement } from "../../components/formInput.js"
 import { navigate } from "../../persistent/router.js"
-import { checkEls, getUser, post, reportFormErrors, setUser } from "../../utils.js"
+import { checkEls, getUser, post, reportFormValidationErrors, setUser, showNotify } from "../../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -38,7 +38,7 @@ async function setupPage(): Promise<void> {
     els.secretEl.textContent = data[200].secret
     els.qrcodeImg.src = data[200].qrCode
   } else if (data[401])
-    navigate("/login")
+    navigate("/login", "Session expired. Please log in again.", "warning")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }
@@ -53,11 +53,13 @@ async function onSubmit(e: Event): Promise<void> {
   })
   if (data[200]) {
     setUser(data[200].user)
-    navigate("/")
+    navigate("/", "2FA enabled successfully")
   } else if (data[400])
-    reportFormErrors(els.form, data[400].details, undefined)
+    reportFormValidationErrors(els.form, data[400].details)
   else if (data[401])
-    navigate("/login")
+    navigate("/login", "Session expired, please log in again", "warning")
+  else if (data[403])
+    showNotify("Invalid 2FA code", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

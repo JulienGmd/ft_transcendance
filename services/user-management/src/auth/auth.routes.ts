@@ -225,6 +225,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
+        403: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -233,7 +234,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return res.status(401).send({ message: "Invalid token" })
 
     if (!verify2FACode(req.body.secret, req.body.totp))
-      return res.status(401).send({ message: "Invalid verification code" })
+      return res.status(403).send({ message: "Invalid verification code" })
 
     const user = getUser(jwt.email)!
     user.twofa_secret = req.body.secret
@@ -249,6 +250,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
+        403: z.object({ message: z.string() }),
         404: z.object({ message: z.string() }),
       },
     },
@@ -262,7 +264,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return res.status(404).send({ message: "2FA not enabled" })
 
     if (!verify2FACode(user.twofa_secret, req.body.totp))
-      return res.status(401).send({ message: "Invalid verification code" })
+      return res.status(403).send({ message: "Invalid verification code" })
 
     user.twofa_secret = null
     updateUser(user.email, user)
@@ -277,6 +279,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
+        403: z.object({ message: z.string() }),
         404: z.object({ message: z.string() }),
       },
     },
@@ -294,7 +297,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return res.status(401).send({ message: "2FA verification time expired" })
 
     if (!verify2FACode(user.twofa_secret, req.body.totp))
-      return res.status(401).send({ message: "Invalid verification code" })
+      return res.status(403).send({ message: "Invalid verification code" })
 
     user.twofa_verify_time = null
     setJWT(res, user)

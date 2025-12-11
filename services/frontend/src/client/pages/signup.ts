@@ -1,6 +1,15 @@
 import { FormInputElement } from "../components/formInput.js"
 import { navigate } from "../persistent/router.js"
-import { checkEls, get, getUser, inputsValuesToObject, post, reportFormErrors, setUser } from "../utils.js"
+import {
+  checkEls,
+  get,
+  getUser,
+  inputsValuesToObject,
+  post,
+  reportFormValidationErrors,
+  setUser,
+  showNotify,
+} from "../utils.js"
 
 let els: {
   form: HTMLFormElement
@@ -47,11 +56,11 @@ async function onSubmit(e: Event): Promise<void> {
   const data = await post("/api/user/register", inputsValuesToObject(els.form) as any)
   if (data[200]) {
     setUser(data[200].user)
-    navigate("/")
+    navigate("/", "Registration successful")
   } else if (data[400])
-    reportFormErrors(els.form, data[400].details, undefined)
+    reportFormValidationErrors(els.form, data[400].details)
   else if (data[409])
-    reportFormErrors(els.form, undefined, data[409].message)
+    showNotify(data[409].message, "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

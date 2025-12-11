@@ -67,7 +67,7 @@ class AppHeader extends HTMLElement implements AppHeaderElement {
   private logout = async (): Promise<void> => {
     await post("/api/user/logout", {})
     setUser(null)
-    navigate("/")
+    navigate("/", "Logged out successfully")
   }
 }
 

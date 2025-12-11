@@ -1,3 +1,5 @@
+import { showNotify } from "../utils.js"
+
 const app: HTMLElement = document.getElementById("app")!
 let loadedModules: { onMount?: () => void; onDestroy?: () => void }[] = []
 
@@ -22,7 +24,7 @@ async function preload(route: string): Promise<void> {
  * @param route The page route ('/', '/login', etc.)
  * @param pushHistory Whether to push the new route to browser history (default: true)
  */
-export async function navigate(route: string, pushHistory = true): Promise<void> {
+async function _navigate(route: string, pushHistory = true): Promise<void> {
   loadedModules.forEach((m) => m.onDestroy?.())
   loadedModules = []
 
@@ -46,6 +48,17 @@ export async function navigate(route: string, pushHistory = true): Promise<void>
 
   window.dispatchEvent(new CustomEvent("pageLoaded"))
   loadedModules.forEach((m) => m.onMount?.())
+}
+
+export function navigate(
+  route: string,
+  notification?: string,
+  notificationType: "success" | "warning" | "error" = "success",
+): void {
+  _navigate(route)
+
+  if (notification)
+    showNotify(notification, notificationType)
 }
 
 /**
@@ -90,12 +103,12 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent): boolean {
 // On first navigation, /public/_index.html and this script will be served,
 // if url is /user, this navigate will then display /public/pages/user inside #app,
 // load scripts, etc.
-navigate(window.location.pathname, false)
+_navigate(window.location.pathname, false)
 
 /** Handle browser navigation (back/forward buttons) */
 window.addEventListener("popstate", () => {
   // Back/forward button will change the url in the address bar, so simply navigate to it
-  navigate(window.location.pathname, false)
+  _navigate(window.location.pathname, false)
 })
 
 /** When hovering a handled <a>, preload the page */
@@ -119,5 +132,5 @@ document.addEventListener("click", (e) => {
     return
 
   e.preventDefault()
-  navigate(a.pathname)
+  _navigate(a.pathname)
 })

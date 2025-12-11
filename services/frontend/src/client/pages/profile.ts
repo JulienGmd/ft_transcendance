@@ -1,6 +1,6 @@
 import { navigate } from "../persistent/router.js"
 import { Stats } from "../types.js"
-import { checkEls, get, getUser, post, setUser } from "../utils.js"
+import { checkEls, get, getUser, post, setUser, showNotify } from "../utils.js"
 
 let els: {
   avatarInput: HTMLInputElement
@@ -122,7 +122,7 @@ function onAvatarInputChange(): void {
 
   // Limit file size to 2MB
   if (file.size > 2 * 1024 * 1024) {
-    alert("Image must be less than 2MB")
+    showNotify("Avatar file size must be less than 2MB.", "error")
     els.avatarInput.value = ""
     return
   }
@@ -131,17 +131,19 @@ function onAvatarInputChange(): void {
   reader.onload = async (e) => {
     const result = e.target?.result as string | null
     if (!result) {
-      alert("Failed to read image file. Please try again.")
+      showNotify("Failed to read image file. Please try again.", "error")
       return
     }
 
     const data = await post("/api/user/set-avatar", { avatar: result })
     if (data[200])
       setUser(data[200].user)
+    else if (data[400])
+      showNotify("Invalid image file. Please try again.", "error")
     else if (data[401])
       navigate("/login")
     else
-      alert("Failed to upload avatar. Please try again.")
+      showNotify("Failed to upload avatar. Please try again.", "error")
   }
   reader.readAsDataURL(file)
 }
@@ -157,11 +159,11 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
     setUser(data[200].user)
     els.usernameInput.blur() // unfocus
   } else if (data[400])
-    alert(data[400].details[0].message)
+    showNotify(data[400].details[0].message, "error")
   else if (data[401])
     navigate("/login")
   else if (data[409])
-    alert("Username already taken. Please choose another one.")
+    showNotify("Username already taken. Please choose another one.", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }
