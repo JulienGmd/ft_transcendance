@@ -14,6 +14,7 @@ COPY services/user-management ./services/user-management
 RUN npm ci --workspaces
 
 FROM base AS development
+RUN npm run build --workspace=shared
 CMD ["npm", "run", "dev", "--workspaces"]
 
 FROM base AS production

@@ -3,7 +3,6 @@ TODO
 global:
 - ? eslint
 - ? noImplicitAny and functions return types in tsconfig.json / eslint
-- en mode dev, defois le service lance npm run dev avant shared, du coup il trouve pas le dossier dist de shared
 
 shared:
 
