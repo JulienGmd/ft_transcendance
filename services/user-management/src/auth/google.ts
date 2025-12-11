@@ -14,7 +14,6 @@ export function getGoogleAuthUrl(): string {
     response_type: "code",
     scope: "openid email profile",
     access_type: "offline",
-    prompt: "consent",
   })
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`
 }
@@ -33,12 +32,14 @@ export async function getGoogleProfile(code: string): Promise<GoogleProfile | nu
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
     )
     const { access_token } = tokenRes.data
+    if (!access_token)
+      return null
 
     const profileRes = await axios.get(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       { headers: { Authorization: `Bearer ${access_token}` } },
     )
-    return profileRes.data
+    return profileRes?.data
   } catch (error) {
     return null
   }
