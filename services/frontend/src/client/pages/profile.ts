@@ -49,10 +49,8 @@ export function onDestroy(): void {
 
 function displayUserInfo(): void {
   const user = getUser()
-  if (!user) {
-    navigate("/login")
+  if (!user)
     return
-  }
   els.usernameInput.value = user.username || "Anonymous"
   els.emailEl.textContent = user.email
   els.twofaBtn.textContent = user.twofa_enabled ? "enabled" : "disabled"
