@@ -32,8 +32,8 @@ export async function startServer(): Promise<void> {
   await fastify.register(fastifySwagger, {
     openapi: {
       info: {
-        title: "SampleApi",
-        description: "Sample backend service",
+        title: "User Management Service API",
+        description: "API documentation for the user-management service",
         version: "1.0.0",
       },
       servers: [],
