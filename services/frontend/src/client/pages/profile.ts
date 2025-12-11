@@ -72,45 +72,47 @@ async function displayStats(): Promise<void> {
 }
 
 async function displayMatchHistory(): Promise<void> {
+  const user = getUser()
+  if (!user)
+    return
   const data = await get(`/api/user/matches/me`, { limit: 10 })
   const matches = data[200] ? data[200].matches : []
 
   if (matches.length === 0)
     return
 
-  // matchHistoryEl.innerHTML = matches.map((match) => {
-  //   const isPlayer1 = match.p1_id === user.id // TODO pas d'id dans user car pas safe
-  //   const isWinner = match.winner_id === user.id
-  //   const userName = isPlayer1 ? match.p1_username : match.p2_username
-  //   const opponentName = isPlayer1 ? match.p2_username : match.p1_username
-  //   const userScore = isPlayer1 ? match.p1_score : match.p2_score
-  //   const opponentScore = isPlayer1 ? match.p2_score : match.p1_score
-  //   const userPrecision = isPlayer1 ? match.p1_precision : match.p2_precision
-  //   const date = new Date(match.created_at).toLocaleDateString()
+  els.matchHistoryEl.innerHTML = matches.map((match) => {
+    const isP1 = match.p1_username === user.username
+    const win = match.winner_username === user.username
+    const playerScore = isP1 ? match.p1_score : match.p2_score
+    const playerPrecision = isP1 ? match.p1_precision : match.p2_precision
+    const opponentUsername = isP1 ? match.p2_username : match.p1_username
+    const opponentScore = isP1 ? match.p2_score : match.p1_score
+    const date = new Date(match.created_at).toLocaleDateString()
 
-  //   return `
-  //     <div class="rounded-lg p-4 flex items-center justify-between border border-surface shadow-2xl">
-  //       <div>
-  //         <div
-  //           class="font-semibold text-lg"
-  //           style="color: ${isWinner ? "var(--color-success)" : "var(--color-error)"};"
-  //         >
-  //           ${userName} vs ${opponentName}
-  //         </div>
-  //         <div class="text-text-muted text-sm">${date}</div>
-  //       </div>
-  //       <div class="text-right">
-  //         <div
-  //           class="font-bold text-xl mb-1"
-  //           style="color: ${isWinner ? "var(--color-success)" : "var(--color-error)"};"
-  //         >
-  //           ${userScore} - ${opponentScore}
-  //         </div>
-  //         <div class="text-text-muted text-sm">Precision: ${userPrecision.toFixed(1)}%</div>
-  //       </div>
-  //     </div>
-  //   `
-  // }).join("")
+    return `
+      <div class="rounded-lg p-4 flex items-center justify-between border border-surface shadow-sm">
+        <div>
+          <div
+            class="font-semibold text-lg"
+            style="color: ${win ? "var(--color-success)" : "var(--color-error)"};"
+          >
+            ${user.username} vs ${opponentUsername}
+          </div>
+          <div class="text-text-muted text-sm">${date}</div>
+        </div>
+        <div class="text-right">
+          <div
+            class="font-bold text-xl mb-1"
+            style="color: ${win ? "var(--color-success)" : "var(--color-error)"};"
+          >
+            ${playerScore} - ${opponentScore}
+          </div>
+          <div class="text-text-muted text-sm">Precision: ${playerPrecision.toFixed(1)}%</div>
+        </div>
+      </div>
+    `
+  }).join("")
 }
 
 function onAvatarInputChange(): void {

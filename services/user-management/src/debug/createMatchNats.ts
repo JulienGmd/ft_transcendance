@@ -1,6 +1,11 @@
+// To execute:
+// docker exec -it fr-transcendance-1 /bin/sh
+// cd services/user-management
+// npx tsx src/debug/createMatchNats.ts
+
 import { MatchCreatePayload } from "@ft_transcendence/shared"
 import { Topics } from "@ft_transcendence/shared"
-import { closeNatsClient, getCodec, getNatsClient, initNatsClient } from "./connection"
+import { closeNatsClient, getCodec, getNatsClient, initNatsClient } from "../nats/connection"
 
 async function testMatchCreate() {
   await initNatsClient()

@@ -1,4 +1,5 @@
 import Database from "better-sqlite3"
+import config from "./config"
 
 // Singleton pattern
 let db: Database.Database | null = null
@@ -13,7 +14,7 @@ export function initDb(): Database.Database {
   if (db)
     throw new Error("Database already initialized.")
 
-  db = new Database("auth.db")
+  db = new Database(config.ROOT_DIR + "/auth.db")
 
   // users table
   db.prepare(`

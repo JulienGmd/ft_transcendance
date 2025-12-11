@@ -1,4 +1,4 @@
-import { getDb, type User } from "../db/db"
+import { getDb, type User } from "../db"
 import { PublicUser } from "./schemas"
 
 export function getUser(email: string): User | null {
@@ -18,6 +18,7 @@ export function createGoogleUser(email: string, googleId: string): User {
   const db = getDb()
   const stmt = db.prepare(`INSERT INTO users (email, google_id) VALUES (?, ?)`)
   const info = stmt.run(email, googleId)
+  db.prepare(`UPDATE users SET username = ? WHERE id = ?`).run(`user${info.lastInsertRowid}`, info.lastInsertRowid)
   return db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid) as User
 }
 

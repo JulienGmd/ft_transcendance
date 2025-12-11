@@ -1,6 +1,6 @@
 import { MatchCreatePayload } from "@ft_transcendence/shared"
 import { PublicMatch, PublicStats } from "../auth/schemas"
-import { getDb, Match, User } from "../db/db"
+import { getDb, Match, User } from "../db"
 
 export function createMatch(matchPayload: MatchCreatePayload): Match {
   const db = getDb()
@@ -67,19 +67,18 @@ export function getPlayerStats(email: string): PublicStats {
 export function matchToPublicMatch(match: Match): PublicMatch {
   const db = getDb()
 
-  const p1 = db.prepare("SELECT username FROM users WHERE id = ?").get(match.p1_id) as { username: string } | undefined
-  const p2 = db.prepare("SELECT username FROM users WHERE id = ?").get(match.p2_id) as { username: string } | undefined
+  const p1 = db.prepare("SELECT * FROM users WHERE id = ?").get(match.p1_id) as User | undefined
+  const p2 = db.prepare("SELECT * FROM users WHERE id = ?").get(match.p2_id) as User | undefined
+  const winner_username = match.winner_id === p1?.id ? p1?.username : match.winner_id === p2?.id ? p2?.username : null
 
   return {
-    p1_id: match.p1_id,
-    p2_id: match.p2_id,
+    p1_username: p1?.username || "Anonymous",
+    p2_username: p2?.username || "Unknown",
     p1_score: match.p1_score,
     p2_score: match.p2_score,
     p1_precision: match.p1_precision,
     p2_precision: match.p2_precision,
-    winner_id: match.winner_id,
-    p1_username: p1?.username || "Unknown",
-    p2_username: p2?.username || "Unknown",
+    winner_username,
     created_at: match.created_at,
   }
 }

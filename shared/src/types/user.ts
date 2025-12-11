@@ -914,15 +914,13 @@ export interface paths {
                     content: {
                         "application/json": {
                             matches: {
-                                p1_id: number;
-                                p2_id: number;
+                                p1_username: string;
+                                p2_username: string;
                                 p1_score: number;
                                 p2_score: number;
                                 p1_precision: number;
                                 p2_precision: number;
-                                winner_id: number | null;
-                                p1_username: string;
-                                p2_username: string;
+                                winner_username: string | null;
                                 created_at: string;
                             }[];
                         };

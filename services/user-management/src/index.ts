@@ -1,5 +1,4 @@
-import "dotenv/config"
-import { closeDb, initDb } from "./db/db"
+import { closeDb, initDb } from "./db"
 import { closeNatsClient, initNatsClient } from "./nats/connection"
 import { setupSubscribers } from "./nats/subscriber"
 import { startServer, stopServer } from "./server"

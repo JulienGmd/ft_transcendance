@@ -1,3 +1,7 @@
+import "dotenv/config"
+import { dirname, join } from "path"
+import { fileURLToPath } from "url"
+
 const config = {
   // Mandatory env
   JWT_SECRET: process.env.JWT_SECRET!,
@@ -9,6 +13,9 @@ const config = {
   NODE_ENV: process.env.NODE_ENV || "production",
   PORT: process.env.PORT ? parseInt(process.env.PORT) : 3000,
   NATS_URL: process.env.NATS_URL || "nats://nats:4222",
+
+  // Constants
+  ROOT_DIR: join(dirname(fileURLToPath(import.meta.url)), ".."),
 }
 
 for (const [key, value] of Object.entries(config)) {

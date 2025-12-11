@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
 import config from "../config"
-import { User } from "../db/db"
+import { User } from "../db"
 
 export function setJWT(res: FastifyReply, user: User): void {
   const jwtToken = jwt.sign({ email: user.email }, config.JWT_SECRET, { expiresIn: "365d" })
