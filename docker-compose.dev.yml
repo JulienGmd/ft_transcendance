@@ -7,7 +7,7 @@ services:
     environment:
       - NODE_ENV=development
     volumes:
-      - ./shared:/app/shared
+      - ./shared/src:/app/shared/src
       - ./services/user-management/src:/app/services/user-management/src
 
   frontend:
@@ -16,6 +16,6 @@ services:
     environment:
       - NODE_ENV=development
     volumes:
-      - ./shared:/app/shared
+      - ./shared/src:/app/shared/src
       - ./services/frontend/src:/app/services/frontend/src
       - ./services/frontend/public:/app/services/frontend/public
