@@ -16,4 +16,5 @@ checks:
 - process.env.VAR -> config.VAR
 - location.href = "/" -> navigate("/")
 - alert("msg) -> utils.showNotify("msg")
+- window.addEventListener and document.addEventListener in pages scripts -> onDestroy: removeEventListener
 - ! (ts assertion)

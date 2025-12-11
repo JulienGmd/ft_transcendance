@@ -1,12 +1,12 @@
 # Frontend Service
 
-SPA frontend with client-side routing and auto-import features.
+SPA frontend with client-side routing, caching and auto-import features.
 
 ## Features
 
 - Client-side SPA routing with page caching
 - Script loading with lifecycle hooks (`onMount`, `onDestroy`)
-- TypeScript compilation
+- TypeScript compilation for client and server
 - Tailwind CSS processing
 - Live reload in development
 
@@ -41,9 +41,6 @@ SPA frontend with client-side routing and auto-import features.
 
 ### Navigation
 
-URLs map directly to files in the `public/pages/` directories.
-Use standard anchor tags for SPA navigation:
-
 ```html
 <!-- On click, `/public/pages/user/info.html` will be injected in #app -->
 <a href="/user/info">Link</a>
@@ -51,79 +48,51 @@ Use standard anchor tags for SPA navigation:
 
 ### Styling
 
-Use Tailwind classes inline:
-
 ```html
-<div class="bg-blue-500 text-white p-4 rounded">
-  Some content
-</div>
+<div class="bg-blue-500 text-primary p-4 rounded">Content</div>
 ```
 
 ### Script Loading
 
 #### Pages scripts
 
-Pages scripts (`src/client/pages`) are extracted from `<script src="...">` tags in the HTML and loaded dynamically. They can have imports and they will be resolved correctly.
-
-Note: Pages scripts are preloaded on `<a>` hover, so top level code will execute before the page is loaded, use lifecycle hooks instead.
-
 ```html
 <!-- Load `dist/public/pages/user.js` (transpiled from `src/client/pages/user.ts`) -->
 <script src="/public/pages/user.js"></script>
 ```
 
-Lifecycle hooks:
-
-- `onMount()` is called after the page HTML is injected, can be used to query, manipulate DOM and set up event listeners. Can be async.
-- `onDestroy()` is called before the page HTML is removed, can be used to clean up event listeners.
-
 ```ts
+import { showNotify } from "../utils.js" // .js extension is required
+
+// Top level code runs on preload (on <a> hover), use onMount for page load logic
 console.log("Page not loaded yet")
 
+// Called by the router when the page is loaded, can be used to query/manipulate DOM, set up event listeners, etc.
 export async function onMount(): Promise<void> {
-  console.log("Page loaded")
+  showNotify("Page loaded")
 }
 
+// Called by the router before the page is removed, can be used to clean up window/document event listeners.
 export function onDestroy(): void {
-  console.log("Page will be removed")
+  showNotify("Page unloaded", "error")
 }
 ```
 
 #### Persistent scripts
 
-Persistent scripts should be imported in _index.html. `onPageLoaded` window event can be used to detect page changes:
+Persistent scripts should be imported in _index.html.
 
 ```ts
-window.addEventListener("onPageLoaded", onPageLoaded)
+console.log("Persistent script loaded")
 
-function onPageLoaded(): void {
-  console.log("New page loaded:", detail.newPageUrl)
-  // To call only once:
-  // window.removeEventListener("onPageLoaded", onPageLoaded)
-}
-```
-
-### Run
-
-```sh
-npm i && npm run dev # Local development
-make dev # Docker development
-```
-
-## Production
-
-### Run
-
-```bash
-npm i && npm run build && npm start # Local build
-make start # Docker production
+window.addEventListener("onPageLoaded", () => {
+  console.log("SPA navigation occurred")
+})
 ```
 
 ## Configuration
 
-These are set in Dockerfile.
-
-| Variable   | Description | Development   | Production   |
-| ---------- | ----------- | ------------- | ------------ |
-| `PORT`     | Server port | `3000`        | `3000`       |
-| `NODE_ENV` | Environment | `development` | `production` |
+| Variable   | Default       | Description |
+| ---------- | ------------- | ----------- |
+| `NODE_ENV` | `development` | Environment |
+| `PORT`     | `3000`        | Server port |

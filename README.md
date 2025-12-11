@@ -3,23 +3,25 @@
 ## Prerequisites
 
 - [Docker engine](https://docs.docker.com/engine/install/)
-- [NodeJS](https://nodejs.org/en/download)
 
 ## SSL Configuration
 
 The project uses SSL for secure communication between client <-> gateway <-> services.
 
-- Caddy communicates with clients over HTTPS (using self-signed certificates in localhost).
-- All services (auth, frontend, ...) have `cert.pem` and `key.pem` (mounted from `./certs` to `/certs`).
+- SSL certificates (`./certs/cert.pem` and `./cert/key.pem`) are generated with `make setup` or `make start` or `make dev`.
+- Caddy communicates with clients over HTTPS by default.
+- All services (auth, frontend, ...) have cert.pem + key.pem copy.
+- Caddy have cert.pem copy.
 - Internal services run HTTPS servers using these self-signed certificates.
-- Caddy has `cert.pem` (mounted from `./certs/cert.pem` to `/certs/cert.pem`).
-- Caddy reverse proxies requests to services over HTTPS, using the cert, so services can trust Caddy.
+- Caddy reverse proxies requests to services over HTTPS, using the cert.pem to verify service identity.
 
 ## Development
 
 ### Setup (vscode)
 
-#### Formatter
+#### Formatters
+
+Prettier is used to format HTML, CSS, dprint is used to format the rest.
 
 - Install [Dprint extension](https://marketplace.visualstudio.com/items?itemName=dprint.dprint)
 - Install [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
@@ -42,78 +44,17 @@ The project uses SSL for secure communication between client <-> gateway <-> ser
   },
   ```
 - Enable [format on save](vscode://settings/editor.formatOnSave)
-- `make setup`
-- F1 > Reload Window
+
+_`F1 > Reload Window` if formatting doesn't work after installing extensions._
 
 #### Intellisense
 
+- Install [NodeJS](https://nodejs.org/en/download)
 - Install [Tailwind extension](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
-### Add new service
-
-- Add folder in `services/`
-- Copy paste `Dockerfile` and `tsconfig.json` from another service
-- Copy paste and rename service block in `docker-compose.yml` and `docker-compose.dev.yml`
-- Add `package.json`:
-  ```ts
-  {
-    "name": "servicename",
-    "version": "1.0.0",
-    "private": true,
-    "type": "module",
-    "scripts": {
-      "dev": "tsx watch src/server/_index.ts",
-      "build": "tsc",
-      "start": "node dist/server/_index.js"
-    },
-    "devDependencies": {
-      "@types/node": "^22.7.4",
-      "tsx": "^4.20.6",
-      "typescript": "^5.6.3"
-    },
-    "dependencies": {
-      "fastify": "^5.6.1"
-    }
-  }
-  ```
-- Add `src/_index.ts`:
-  ```ts
-  import Fastify from "fastify"
-
-  // Create HTTPS server (/certs mounted from ./certs in docker-compose.yml)
-  const fastify = Fastify({
-    https: {
-      key: readFileSync("/certs/key.pem"),
-      cert: readFileSync("/certs/cert.pem"),
-    },
-  })
-
-  // Routes
-  fastify.get("/user/dashboard", async (req, res) => res.send({ some: "data" }))
-
-  // Start server
-  await fastify.listen({ port: 3000, host: "0.0.0.0" })
-  ```
-- Add in `caddy/Caddyfile` (will redirect all `/user/*` requests to the new service):
-  ```
-  reverse_proxy /user/* https://servicename:3000 {
-  	transport http {
-  		tls
-  		tls_trusted_ca_certs /certs/cert.pem
-  	}
-  }
-  ```
-
-### Run
+## Run
 
 ```sh
-make dev
-```
-
-## Production
-
-### Run
-
-```sh
-make start
+make dev # Development with live reload
+make start # Production
 ```

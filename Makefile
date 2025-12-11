@@ -3,7 +3,7 @@ all: start
 setup:
 # Install node_modules in all services because they are all part of the workspace defined in root package.json
 	if [ ! -f node_modules ]; then \
-		npm ci; \
+		npm i --workspaces; \
 	fi
 # Generate self-signed SSL certificate, will then be copied to all services so they can communicate using HTTPS with caddy.
 # "DNS:servicename,..." ($${SERVICES}) is required for https communication between caddy and services.
