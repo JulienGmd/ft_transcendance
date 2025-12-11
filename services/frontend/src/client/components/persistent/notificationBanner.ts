@@ -57,9 +57,11 @@ class NotificationBanner extends HTMLElement implements NotificationBannerElemen
     if (this.currentAnimation)
       this.currentAnimation.cancel()
 
+    this.container.style.pointerEvents = "auto"
+
     this.currentAnimation = this.container.animate([
-      { transform: "translateY(-100%)", opacity: 0, pointerEvents: "none" },
-      { transform: "translateY(0)", opacity: 1, pointerEvents: "auto" },
+      { transform: "translateY(-100%)", opacity: 0 },
+      { transform: "translateY(0)", opacity: 1 },
     ], {
       duration: 300,
       easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)", // quad out
@@ -79,8 +81,8 @@ class NotificationBanner extends HTMLElement implements NotificationBannerElemen
       this.currentAnimation.cancel()
 
     this.currentAnimation = this.container.animate([
-      { transform: "translateY(0)", opacity: 1, pointerEvents: "auto" },
-      { transform: "translateY(-100%)", opacity: 0, pointerEvents: "none" },
+      { transform: "translateY(0)", opacity: 1 },
+      { transform: "translateY(-100%)", opacity: 0 },
     ], {
       duration: 250,
       easing: "cubic-bezier(0.55, 0.085, 0.68, 0.53)", // quad in
@@ -88,10 +90,11 @@ class NotificationBanner extends HTMLElement implements NotificationBannerElemen
     })
 
     try {
-      await this.currentAnimation.finished.catch()
+      await this.currentAnimation.finished
     } catch (error) {
       // In case the animation is cancelled
     }
+    this.container.style.pointerEvents = "none"
     this.currentAnimation = null
   }
 }
