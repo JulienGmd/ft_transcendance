@@ -2,17 +2,20 @@
 
 services:
   user-management:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development
     volumes:
       - ./shared:/app/shared
       - ./services/user-management/src:/app/services/user-management/src
-    environment:
-      - NODE_ENV=development
-    command: npm run dev --workspaces
 
   frontend:
-    volumes:
-      - ./services/frontend/src:/app/services/frontend/src
-      - ./services/frontend/public:/app/services/frontend/public
+    build:
+      target: development
     environment:
       - NODE_ENV=development
-    command: npm run dev --workspaces
+    volumes:
+      - ./shared:/app/shared
+      - ./services/frontend/src:/app/services/frontend/src
+      - ./services/frontend/public:/app/services/frontend/public
