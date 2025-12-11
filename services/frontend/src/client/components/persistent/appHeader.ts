@@ -16,7 +16,7 @@ class AppHeader extends HTMLElement implements AppHeaderElement {
 
         <div class="animate-slide-left animate-delay-[0.2s]">
           <!-- Login button (shown when not authenticated) -->
-          <a id="header-login" class="hover-skew font-orbitron" href="/login">LOGIN</a>
+          <a id="header-login" class="hover:text-primary font-orbitron transition" href="/login">LOGIN</a>
 
           <!-- User profile (shown when authenticated) -->
           <div id="header-profile-container" class="group relative">
