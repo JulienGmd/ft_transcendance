@@ -1,0 +1,19 @@
+TODO
+
+global:
+- en mode dev, defois le service lance npm run dev avant shared, du coup il trouve pas le dossier dist de shared
+- ? eslint
+- noImplicitAny and functions return types in tsconfig.json / eslint
+
+shared:
+- fix les permissions de shared pour `make fclean`
+
+front:
+
+user-management:
+
+checks:
+- process.env.VAR -> config.VAR
+- location.href = "/" -> navigate("/")
+- alert("msg) -> utils.showNotify("msg")
+- ! (ts assertion)
