@@ -9,23 +9,17 @@ let els: {
 
 let email = ""
 
+export function onGuard(route: string): boolean {
+  email = new URLSearchParams(route.split("?")[1]).get("email") || ""
+  return !!getUser() && !!email
+}
+
 export function onMount(): void {
   els = {
     form: document.querySelector("form")!,
     totpFormInput: document.querySelector("form-input[name='totp']")!,
   }
   checkEls(els)
-
-  if (getUser()) {
-    navigate("/")
-    return
-  }
-
-  email = new URLSearchParams(window.location.search).get("email") || ""
-  if (!email) {
-    navigate("/login")
-    return
-  }
 
   els.totpFormInput.addEventListener("input", onTotpInput)
   els.form.addEventListener("submit", onSubmit)

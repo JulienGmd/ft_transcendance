@@ -14,6 +14,10 @@ let els: {
   matchHistoryEl: HTMLElement
 }
 
+export function onGuard(): boolean {
+  return !!getUser()
+}
+
 export function onMount(): void {
   els = {
     avatarInput: document.querySelector("#avatar-input")!,
@@ -27,11 +31,6 @@ export function onMount(): void {
     matchHistoryEl: document.querySelector("#match-history")!,
   }
   checkEls(els)
-
-  if (!getUser()) {
-    navigate("/login")
-    return
-  }
 
   displayUserInfo()
   displayStats()

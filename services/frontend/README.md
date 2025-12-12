@@ -67,12 +67,17 @@ import { showNotify } from "../utils.js" // .js extension is required
 // Top level code runs on preload (on <a> hover), use onMount for page load logic
 console.log("Page not loaded yet")
 
+// Called by the router before navigating to this page, return false to cancel navigation
+export function onGuard(route: string): boolean {
+  return !!getUser()
+}
+
 // Called by the router when the page is loaded, can be used to query/manipulate DOM, set up event listeners, etc.
 export async function onMount(): Promise<void> {
   showNotify("Page loaded")
 }
 
-// Called by the router before the page is removed, can be used to clean up window/document event listeners.
+// Called by the router before the page is removed, can be used to clean up window/document event listeners
 export function onDestroy(): void {
   showNotify("Page unloaded", "error")
 }

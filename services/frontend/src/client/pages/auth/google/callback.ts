@@ -1,14 +1,14 @@
 import { navigate } from "../../../persistent/router.js"
 import { post, setUser, sleep } from "../../../utils.js"
 
+let code = ""
+
+export function onGuard(route: string): boolean {
+  code = new URLSearchParams(route.split("?")[1]).get("code") || ""
+  return !!code
+}
+
 export async function onMount(): Promise<void> {
-  const code = new URLSearchParams(window.location.search).get("code")
-
-  if (!code) {
-    navigate("/login")
-    return
-  }
-
   await sleep(3000)
   const data = await post("/api/user/google/callback", { code })
   if (data[200]) {

@@ -18,6 +18,10 @@ let els: {
   googleBtn: HTMLButtonElement
 }
 
+export function onGuard(route: string): boolean {
+  return !getUser()
+}
+
 export function onMount(): void {
   els = {
     form: document.querySelector("form")!,
@@ -26,11 +30,6 @@ export function onMount(): void {
     googleBtn: document.querySelector("#google-btn")!,
   }
   checkEls(els)
-
-  if (getUser()) {
-    navigate("/")
-    return
-  }
 
   els.form.addEventListener("submit", onSubmit)
   els.googleBtn.addEventListener("click", onGoogleBtnClick)

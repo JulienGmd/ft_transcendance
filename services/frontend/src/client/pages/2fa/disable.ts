@@ -15,18 +15,17 @@ let els: {
   totpFormInput: FormInputElement
 }
 
+export function onGuard(route: string): boolean {
+  const user = getUser()
+  return !!user && user.twofa_enabled
+}
+
 export function onMount(): void {
   els = {
     form: document.querySelector("form")!,
     totpFormInput: document.querySelector("form-input[name='totp']")!,
   }
   checkEls(els)
-
-  const user = getUser()
-  if (!user || !user.twofa_enabled) {
-    navigate("/")
-    return
-  }
 
   els.totpFormInput.addEventListener("input", onTotpInput)
   els.form.addEventListener("submit", onSubmit)

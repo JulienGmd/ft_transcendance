@@ -11,6 +11,11 @@ let els: {
 
 let secretKey = ""
 
+export function onGuard(route: string): boolean {
+  const user = getUser()
+  return !!user && !user.twofa_enabled
+}
+
 export function onMount(): void {
   els = {
     form: document.querySelector("form")!,
@@ -19,12 +24,6 @@ export function onMount(): void {
     totpFormInput: document.querySelector("form-input[name='totp']")!,
   }
   checkEls(els)
-
-  const user = getUser()
-  if (!user || user.twofa_enabled) {
-    navigate("/")
-    return
-  }
 
   setupPage()
 

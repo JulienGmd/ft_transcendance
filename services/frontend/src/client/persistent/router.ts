@@ -1,10 +1,15 @@
-import { showNotify } from "../utils.js"
+import { checkEls, showNotify } from "../utils.js"
+
+type Module = {
+  onGuard?: (route: string) => boolean
+  onMount?: () => void
+  onDestroy?: () => void
+}
 
 const app: HTMLElement = document.getElementById("app")!
-let loadedModules: { onMount?: () => void; onDestroy?: () => void }[] = []
+const loadedModules: Module[] = []
 
-if (!app)
-  throw new Error("App element not found")
+checkEls({ app })
 
 /**
  * Preload the page HTML and scripts (safe to call multiple times)
@@ -26,14 +31,14 @@ async function preload(route: string): Promise<void> {
  */
 async function _navigate(route: string, pushHistory = true): Promise<void> {
   loadedModules.forEach((m) => m.onDestroy?.())
-  loadedModules = []
+  loadedModules.length = 0
 
   let page = await fetchHtml(route) // Can be cached if header Cache-Control is set server-side
   if (!page) {
     // This should never happens because 404.html should be in `page`.
     app.innerHTML = "<h1>Error 404: Not Found</h1>"
     if (pushHistory)
-      window.history.pushState({}, "", route)
+      history.pushState({}, "", route)
     return
   }
 
@@ -41,24 +46,22 @@ async function _navigate(route: string, pushHistory = true): Promise<void> {
   for (const scriptSrc of scriptsSrc)
     loadedModules.push(await import(scriptSrc)) // Cached by browser
 
+  for (const m of loadedModules) {
+    if (m.onGuard && !m.onGuard(route)) {
+      loadedModules.length = 0
+      history.replaceState({}, "", "/") // Avoid back trap (e.g. land on /profile: guard to / -> back button -> /profile etc)
+      _navigate("/", false)
+      return // Cancel navigation
+    }
+  }
+
   app.innerHTML = newPage
 
   if (pushHistory)
-    window.history.pushState({}, "", route)
+    history.pushState({}, "", route)
 
   window.dispatchEvent(new CustomEvent("pageLoaded"))
   loadedModules.forEach((m) => m.onMount?.())
-}
-
-export function navigate(
-  route: string,
-  notification?: string,
-  notificationType: "success" | "warning" | "error" = "success",
-): void {
-  _navigate(route)
-
-  if (notification)
-    showNotify(notification, notificationType)
 }
 
 /**
@@ -98,17 +101,28 @@ function shouldHandleLink(a: HTMLAnchorElement, e: MouseEvent): boolean {
     && !e.ctrlKey && !e.metaKey && !e.shiftKey // No modifier
 }
 
+export function navigate(
+  route: string,
+  notification?: string,
+  notificationType: "success" | "warning" | "error" = "success",
+): void {
+  _navigate(route)
+
+  if (notification)
+    showNotify(notification, notificationType)
+}
+
 // ----------------------------------------------------------------------------
 
-// On first navigation, /public/_index.html and this script will be served,
+// On landing, /public/_index.html and this script will be served,
 // if url is /user, this navigate will then display /public/pages/user inside #app,
 // load scripts, etc.
-_navigate(window.location.pathname, false)
+_navigate(window.location.pathname + window.location.search, false)
 
 /** Handle browser navigation (back/forward buttons) */
 window.addEventListener("popstate", () => {
   // Back/forward button will change the url in the address bar, so simply navigate to it
-  _navigate(window.location.pathname, false)
+  _navigate(window.location.pathname + window.location.search, false)
 })
 
 /** When hovering a handled <a>, preload the page */
