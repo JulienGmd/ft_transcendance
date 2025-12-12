@@ -19,3 +19,9 @@ services:
       - ./shared/src:/app/shared/src
       - ./services/frontend/src:/app/services/frontend/src
       - ./services/frontend/public:/app/services/frontend/public
+
+  game:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development

@@ -21,6 +21,8 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      game:
+        condition: service_healthy
     networks:
       - internal
     restart: unless-stopped
@@ -59,6 +61,14 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
+  
+  game:
+    build: ./services/game/
+    depends_on:
+      - nats
+    networks:
+      - internal
+    restart: unless-stopped
 
 volumes:
   # Defining these volumes make them persistent across container restarts, so we
