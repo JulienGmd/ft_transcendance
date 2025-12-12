@@ -69,6 +69,11 @@ services:
     networks:
       - internal
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-kf", "https://localhost:3000/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
 volumes:
   # Defining these volumes make them persistent across container restarts, so we
