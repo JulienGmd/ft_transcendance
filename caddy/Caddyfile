@@ -25,6 +25,13 @@ https://localhost:8080 {
 		}
 	}
 
+	reverse_proxy /api/game/* https://game:3000 {
+		transport http {
+			tls
+			tls_trust_pool file /certs/cert.pem
+		}
+	}
+
 	reverse_proxy /* https://frontend:3000 {
 		transport http {
 			tls
