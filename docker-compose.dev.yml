@@ -27,3 +27,4 @@ services:
       - NODE_ENV=development
     volumes:
       - ./shared/src:/app/shared/src
+      - ./services/game/src:/app/services/game/src

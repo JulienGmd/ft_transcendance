@@ -63,7 +63,9 @@ services:
       retries: 10
   
   game:
-    build: ./services/game/
+    build:
+      context: .
+      dockerfile: ./services/game/Dockerfile
     depends_on:
       - nats
     networks:
