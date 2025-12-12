@@ -96,3 +96,30 @@ export interface Game {
   lastUpdateTime: number;
   countdownEnd: number | null;
 }
+
+
+// --- WebSocket Messages ---
+
+// Client -> Server
+export type ClientMessage =
+  | { type: 'join_queue'; playerId: string }
+  | { type: 'leave_queue'; playerId: string }
+  | { type: 'input'; key: InputKey; action: InputAction }
+  | { type: 'ping' };
+
+// Server -> Client
+export type ServerMessage =
+  | { type: 'queue_joined'; position: number }
+  | { type: 'queue_left' }
+  | { type: 'game_found'; gameId: string; side: PlayerSide; opponent: string }
+  | { type: 'countdown'; seconds: number }
+  | { type: 'game_start' }
+  | { type: 'game_state'; state: Game }
+  | { type: 'ball_sync'; ball: Ball }
+  | { type: 'paddle_update'; side: PlayerSide; y: number; direction: -1 | 0 | 1 }
+  | { type: 'score_update'; left: number; right: number }
+  | { type: 'game_over'; winnerId: string; finalScore: { left: number; right: number } }
+  | { type: 'opponent_disconnected' }
+  | { type: 'opponent_reconnected' }
+  | { type: 'error'; message: string }
+  | { type: 'pong' };
