@@ -31,10 +31,14 @@ export async function startServer(): Promise<void> {
   fastify.addHook("onRequest", async (req, rep) => {
     if (config.NODE_ENV === "production")
       return
-    if (req.url === "/dev/file-timestamps")
+    if (req.url === "/health" || req.url === "/dev/file-timestamps")
       return
 
     console.log(`${req.method} ${req.url}`)
+  })
+
+  fastify.get("/health", async (req, res) => {
+    res.type("application/json").send({ status: "ok" })
   })
 
   // By default, all routes serve _index.html

@@ -66,8 +66,14 @@ export async function startServer(): Promise<void> {
   fastify.addHook("onRequest", async (req, rep) => {
     if (config.NODE_ENV === "production")
       return
+    if (req.url === "/health")
+      return
 
     console.log(`${req.method} ${req.url}`)
+  })
+
+  fastify.get("/health", async (req, res) => {
+    res.type("application/json").send({ status: "ok" })
   })
 
   // Register routes

@@ -17,9 +17,10 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - nats
-      - user-management
-      - frontend
+      user-management:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     networks:
       - internal
     restart: unless-stopped
@@ -40,6 +41,11 @@ services:
     networks:
       - internal
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-kf", "https://localhost:3000/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
   frontend:
     build:
@@ -48,6 +54,11 @@ services:
     networks:
       - internal
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-kf", "https://localhost:3000/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
 volumes:
   # Defining these volumes make them persistent across container restarts, so we
