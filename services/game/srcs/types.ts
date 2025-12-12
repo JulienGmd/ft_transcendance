@@ -114,8 +114,8 @@ export type ServerMessage =
   | { type: 'game_found'; gameId: string; side: PlayerSide; opponent: string }
   | { type: 'countdown'; seconds: number }
   | { type: 'game_start' }
-  | { type: 'game_state'; state: Game }
-  | { type: 'ball_sync'; ball: Ball }
+  | { type: 'game_state'; state: GameState }
+  | { type: 'ball_sync'; ball: BallSync }
   | { type: 'paddle_update'; side: PlayerSide; y: number; direction: -1 | 0 | 1 }
   | { type: 'score_update'; left: number; right: number }
   | { type: 'game_over'; winnerId: string; finalScore: { left: number; right: number } }
@@ -123,3 +123,23 @@ export type ServerMessage =
   | { type: 'opponent_reconnected' }
   | { type: 'error'; message: string }
   | { type: 'pong' };
+
+// Snapshot for full state sync
+export interface GameStateSnapshot {
+  gameId: string;
+  state: GameState;
+  ball: BallSync;
+  paddles: {
+    left: { y: number; direction: -1 | 0 | 1 };
+    right: { y: number; direction: -1 | 0 | 1 };
+  };
+  score: { left: number; right: number };
+  timestamp: number;
+}
+
+// Ball sync data
+export interface BallSync {
+  position: Vector2D;
+  velocity: Vector2D;
+  timestamp: number;
+}
