@@ -6,6 +6,8 @@ export interface UserAvatarElement extends HTMLElement {
 class UserAvatar extends HTMLElement implements UserAvatarElement {
   private img!: HTMLImageElement
   private letter!: HTMLElement
+  private container!: HTMLElement
+  private observer?: ResizeObserver
 
   connectedCallback() {
     this.innerHTML = `
@@ -15,8 +17,12 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
       </div>
     `
 
+    this.container = this.querySelector(":scope > div")! as HTMLElement
     this.img = this.querySelector(":scope > div> img")! as HTMLImageElement
     this.letter = this.querySelector(":scope > div > span")!
+
+    this.observer = new ResizeObserver((entries) => this.adjustFontSize())
+    this.observer.observe(this.container)
 
     this.update()
 
@@ -25,6 +31,7 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
 
   disconnectedCallback() {
     window.removeEventListener("userChanged", this.update)
+    this.observer?.disconnect()
   }
 
   // Using arrow function because regular function loose 'this' context when called from event listener
@@ -47,6 +54,12 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
       this.letter.classList.remove("hidden")
       this.img.classList.add("hidden")
     }
+    this.adjustFontSize()
+  }
+
+  private adjustFontSize = (): void => {
+    const size = this.container.clientWidth * 0.55
+    this.letter.style.fontSize = `${size}px`
   }
 }
 
