@@ -52,6 +52,14 @@ _`F1 > Reload Window` if formatting doesn't work after installing extensions._
 - Install [NodeJS](https://nodejs.org/en/download)
 - Install [Tailwind extension](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
+## Scripts
+
+```sh
+npm run generate-types # Generate types from OpenAPI specs
+npm run create-matches # Create fake matches data for the 1st user in the database
+npm run list-users     # List all users in the database
+```
+
 ## Run
 
 ```sh

@@ -1,6 +1,7 @@
 TODO
 
 global:
+- rename le repo en ft_transcendence puis find all transcendance -> transcendence
 - ? eslint
 - ? noImplicitAny and functions return types in tsconfig.json / eslint
 
