@@ -17,7 +17,6 @@ export async function authRoutes(fastify: FastifyInstance) {
     res.send({ url: getGoogleAuthUrl() })
   })
 
-  // TODO tester mauvais code ou cancel flow
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/google/callback", {
     schema: {
       body: z.object({ code: z.string() }),
@@ -58,14 +57,14 @@ export async function authRoutes(fastify: FastifyInstance) {
     schema: {
       body: z.object({
         email: z.email(),
-        password: z.string().min(8).max(128).regex(
-          /^(?=.*[a-zA-Z])(?=.*\d).+$/,
-          "Password must contain at least one letter and one number",
-        ),
-        username: z.string().min(3).max(20).regex(
-          /^[a-zA-Z0-9_]+$/,
-          "Username can only contain letters, numbers, and underscores",
-        ),
+        password: z.string()
+          .min(8, "Password must be at least 8 characters long")
+          .max(128, "Password must be at most 128 characters long")
+          .regex(/^(?=.*[a-zA-Z])(?=.*\d).+$/, "Password must contain at least one letter and one number"),
+        username: z.string()
+          .min(3, "Username must be at least 3 characters long")
+          .max(20, "Username must be at most 20 characters long")
+          .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
       }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
@@ -148,10 +147,10 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-username", {
     schema: {
       body: z.object({
-        username: z.string().min(3).max(20).regex(
-          /^[a-zA-Z0-9_]+$/,
-          "Username can only contain letters, numbers, and underscores",
-        ),
+        username: z.string()
+          .min(3, "Username must be at least 3 characters long")
+          .max(20, "Username must be at most 20 characters long")
+          .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
       }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),

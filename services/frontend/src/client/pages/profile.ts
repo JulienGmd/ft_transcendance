@@ -139,7 +139,7 @@ function onAvatarInputChange(): void {
     if (data[200])
       setUser(data[200].user)
     else if (data[400])
-      showNotify("Invalid image file. Please try again.", "error")
+      showNotify(data[400].details[0].message, "error")
     else if (data[401])
       navigate("/login")
     else
