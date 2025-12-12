@@ -1,10 +1,6 @@
 all: start
 
 setup:
-# Install node_modules in all services because they are all part of the workspace defined in root package.json
-	if [ ! -f node_modules ]; then \
-		npm i; \
-	fi
 # Generate self-signed SSL certificate, will then be copied to all services so they can communicate using HTTPS with caddy.
 # "DNS:servicename,..." ($${SERVICES}) is required for https communication between caddy and services.
 	if [ ! -d certs ]; then \
@@ -15,6 +11,8 @@ setup:
 
 # This will use docker-compose.dev.yml on top of docker-compose.yml, which defines the Dockerfile stage to development and mount volumes for live code reloading.
 dev: setup
+# Install node_modules in all services because they are all part of the workspace defined in root package.json
+	if [ ! -f node_modules ]; then npm i; fi
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 start: setup

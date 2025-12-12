@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - [Docker engine](https://docs.docker.com/engine/install/)
+- [NodeJS](https://nodejs.org/en/download)
 
 ## SSL Configuration
 
@@ -49,7 +50,6 @@ _`F1 > Reload Window` if formatting doesn't work after installing extensions._
 
 #### Intellisense
 
-- Install [NodeJS](https://nodejs.org/en/download)
 - Install [Tailwind extension](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
 ## Scripts
@@ -65,4 +65,15 @@ npm run list-users     # List all users in the database
 ```sh
 make dev # Development with live reload
 make start # Production
+```
+
+## Troubleshoot
+
+### Npm errors on `make dev`: Update NodeJS
+
+```sh
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+exec $SHELL # reload shell
+\. "$HOME/.nvm/nvm.sh"
+nvm install 25
 ```
