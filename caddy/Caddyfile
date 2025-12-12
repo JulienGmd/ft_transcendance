@@ -11,8 +11,9 @@
 # curl --insecure http://frontend:3000
 {
 	log {
-		format console
-		level INFO
+		format console {
+			time_format " "
+		}
 	}
 }
 

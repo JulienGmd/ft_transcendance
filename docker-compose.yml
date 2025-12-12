@@ -26,6 +26,7 @@ services:
 
   nats:
     image: nats:2.10-alpine
+    command: ["-T=false"] # Disable timestamps in logs
     networks:
       - internal
     restart: unless-stopped
