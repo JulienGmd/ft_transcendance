@@ -64,7 +64,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         username: z.string()
           .min(3, "Username must be at least 3 characters long")
           .max(20, "Username must be at most 20 characters long")
-          .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+          .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
+          .refine((val) => !val.toLowerCase().includes("user"), { message: "Username cannot contain the word 'user'" }),
       }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
@@ -150,7 +151,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         username: z.string()
           .min(3, "Username must be at least 3 characters long")
           .max(20, "Username must be at most 20 characters long")
-          .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+          .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
+          .refine((val) => !val.toLowerCase().includes("user"), { message: "Username cannot contain the word 'user'" }),
       }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
