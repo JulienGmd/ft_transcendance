@@ -135,9 +135,10 @@ function onAvatarInputChange(): void {
     }
 
     const data = await post("/api/user/set-avatar", { avatar: result })
-    if (data[200])
+    if (data[200]) {
+      showNotify("Avatar updated successfully.")
       setUser(data[200].user)
-    else if (data[400])
+    } else if (data[400])
       showNotify(data[400].details[0].message, "error")
     else if (data[401])
       navigate("/login")
@@ -155,6 +156,7 @@ async function onUsernameKeyup(e: KeyboardEvent): Promise<void> {
 
   const data = await post("/api/user/set-username", { username })
   if (data[200]) {
+    showNotify("Username updated successfully.")
     setUser(data[200].user)
     els.usernameInput.blur() // unfocus
   } else if (data[400])
