@@ -270,8 +270,8 @@ export function checkWin(score: number): boolean {
 // PLAYER
 // ============================================
 
-export function createPlayer(id: string, side: PlayerSide): Player {
-  return { id, side, paddle: createPaddle(), score: 0, connected: true, lastInputTime: Date.now() }
+export function createPlayer(id: string, username: string, side: PlayerSide): Player {
+  return { id, username, side, paddle: createPaddle(), score: 0, connected: true, lastInputTime: Date.now() }
 }
 
 export function incrementScore(player: Player): void {
@@ -286,7 +286,13 @@ export function generateGameId(): string {
   return ulid()
 }
 
-export function createGame(player1Id: string, player2Id: string, mode: GameMode = GameMode.NORMAL): Game {
+export function createGame(
+  player1Id: string,
+  player1Username: string,
+  player2Id: string,
+  player2Username: string,
+  mode: GameMode = GameMode.NORMAL,
+): Game {
   const game: Game = {
     id: generateGameId(),
     mode,
@@ -300,8 +306,8 @@ export function createGame(player1Id: string, player2Id: string, mode: GameMode 
     lastUpdateTime: Date.now(),
     countdownEnd: Date.now() + GAME_CONFIG.COUNTDOWN_SECONDS * 1000,
   }
-  game.players.set(player1Id, createPlayer(player1Id, PlayerSide.LEFT))
-  game.players.set(player2Id, createPlayer(player2Id, PlayerSide.RIGHT))
+  game.players.set(player1Id, createPlayer(player1Id, player1Username, PlayerSide.LEFT))
+  game.players.set(player2Id, createPlayer(player2Id, player2Username, PlayerSide.RIGHT))
   return game
 }
 

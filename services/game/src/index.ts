@@ -90,8 +90,8 @@ function handleLeaveQueue(playerId: string, socket: ISocket): void {
   sendQueueLeft(socket)
 }
 
-function handleInput(playerId: string, key: InputKey, action: InputAction): void {
-  gameManager.handleInput(playerId, key, action)
+function handleInput(playerId: string, socket: ISocket, key: InputKey, action: InputAction): void {
+  gameManager.handleInput(playerId, socket, key, action)
 }
 
 function handlePing(socket: ISocket): void {
@@ -122,7 +122,7 @@ function handleMessage(
 
     case "input":
       if (playerId)
-        handleInput(playerId, message.key, message.action)
+        handleInput(playerId, socket, message.key, message.action)
       return playerId
 
     case "ping":

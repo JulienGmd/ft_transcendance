@@ -455,8 +455,10 @@ function startGameLoop(): void {
 }
 
 function gameLoop(): void {
-  if (!gameState.isPlaying)
+  if (!gameState.isPlaying) {
+    animationFrameId = null // Reset so startGameLoop can restart it
     return
+  }
 
   const now = performance.now()
   const deltaTime = (now - lastFrameTime) / 1000

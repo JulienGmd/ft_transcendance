@@ -29,7 +29,7 @@ import {
 import { sendMatchResult } from "./nats.js"
 import { Game, GAME_CONFIG, GameMode, GameState, InputAction, InputKey, PlayerSide } from "./types.js"
 
-interface GameSession {
+export interface GameSession {
   game: Game
   sockets: Map<string, ISocket>
   tickInterval: ReturnType<typeof setInterval> | null
@@ -52,6 +52,14 @@ class GameManager {
 
   addGame(game: Game, socket1: ISocket, socket2: ISocket): void {
     const players = [...game.players.keys()]
+
+    // Clean up any existing game mappings for these players (important for tournament 2nd match)
+    for (const playerId of players) {
+      const oldGameId = this.playerToGame.get(playerId)
+      if (oldGameId && oldGameId !== game.id)
+        console.log(`[GameManager] Player ${playerId} was in game ${oldGameId}, moving to new game ${game.id}`)
+    }
+
     const session: GameSession = {
       game,
       sockets: new Map([[players[0], socket1], [players[1], socket2]]),
@@ -203,7 +211,7 @@ class GameManager {
     broadcastBallSync(sockets, ballSync)
   }
 
-  handleInput(playerId: string, key: InputKey, action: InputAction): void {
+  handleInput(playerId: string, socket: ISocket, key: InputKey, action: InputAction): void {
     const session = this.getPlayerGame(playerId)
     if (!session)
       return
@@ -213,6 +221,14 @@ class GameManager {
     const player = session.game.players.get(playerId)
     if (!player)
       return
+
+    // Update socket if it has changed (important for tournament 2nd match)
+    const currentSocket = session.sockets.get(playerId)
+    if (currentSocket !== socket) {
+      console.log(`[GameManager] Updating socket for player ${playerId} in game ${session.game.id}`)
+      session.sockets.set(playerId, socket)
+    }
+
     player.lastInputTime = Date.now()
     if (action === InputAction.PRESS)
       player.paddle.direction = key === InputKey.UP ? -1 : 1
@@ -253,7 +269,7 @@ class GameManager {
     if (opponentSocket && isSocketOpen(opponentSocket))
       sendOpponentReconnected(opponentSocket)
     const opponent = getOpponent(session.game, playerId)
-    sendGameFound(socket, session.game.id, player.side, opponent?.id ?? "", session.game.mode)
+    sendGameFound(socket, session.game.id, player.side, opponent?.username ?? "", session.game.mode)
     const snapshot = createGameSnapshot(session.game)
     sendGameState(socket, snapshot)
     // Le jeu continue pendant la déconnexion, donc pas besoin de redémarrer les intervals
@@ -344,8 +360,12 @@ class GameManager {
     if (!session)
       return
     this.stopIntervals(session)
-    for (const playerId of session.game.players.keys())
-      this.playerToGame.delete(playerId)
+    // Only delete playerToGame mapping if it still points to this game
+    // (important for tournaments where players move to a new game immediately)
+    for (const playerId of session.game.players.keys()) {
+      if (this.playerToGame.get(playerId) === gameId)
+        this.playerToGame.delete(playerId)
+    }
     this.games.delete(gameId)
     console.log(`[GameManager] Game ${gameId} cleaned up`)
   }

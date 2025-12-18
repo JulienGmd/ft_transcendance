@@ -85,6 +85,7 @@ export interface Paddle {
 
 export interface Player {
   id: string
+  username: string
   side: PlayerSide
   paddle: Paddle
   score: number
