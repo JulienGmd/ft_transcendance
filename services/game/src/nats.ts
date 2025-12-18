@@ -59,6 +59,7 @@ export interface TokenVerifyRequest {
 export interface TokenVerifyResponse {
   valid: boolean
   userId?: number
+  username?: string
   email?: string
   error?: string
 }
@@ -67,11 +68,16 @@ export interface TokenVerifyResponse {
 // VERIFY TOKEN
 // ============================================
 
+export interface VerifiedUser {
+  id: number
+  username: string
+}
+
 /**
- * Verify a JWT token via NATS and get the user ID
- * Returns the user ID if valid, null otherwise
+ * Verify a JWT token via NATS and get the user ID and username
+ * Returns user info if valid, null otherwise
  */
-export async function verifyToken(token: string): Promise<number | null> {
+export async function verifyToken(token: string): Promise<VerifiedUser | null> {
   if (!nc) {
     console.error("❌ NATS not connected, cannot verify token")
     return null
@@ -88,9 +94,9 @@ export async function verifyToken(token: string): Promise<number | null> {
 
     const result: TokenVerifyResponse = JSON.parse(codec.decode(response.data))
 
-    if (result.valid && result.userId) {
-      return result.userId
-    } else {
+    if (result.valid && result.userId)
+      return { id: result.userId, username: result.username || `Player${result.userId}` }
+    else {
       console.warn(`⚠️ Token verification failed: ${result.error}`)
       return null
     }
@@ -169,11 +175,10 @@ export async function sendMatchResult(
 
     const result: MatchCreateResponse = JSON.parse(codec.decode(response.data))
 
-    if (result.success) {
+    if (result.success)
       console.log(`✅ Match recorded: ${result.match?.id}`)
-    } else {
+    else
       console.error(`❌ Failed to record match: ${result.error}`)
-    }
 
     return result
   } catch (err) {

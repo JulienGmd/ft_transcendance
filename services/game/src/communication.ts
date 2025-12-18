@@ -3,12 +3,7 @@
 // Abstracts WebSocket/transport to allow easy changes
 // ============================================
 
-import {
-  ServerMessage,
-  PlayerSide,
-  GameStateSnapshot,
-  BallSync,
-} from "./types.js"
+import { BallSync, GameStateSnapshot, PlayerSide, ServerMessage } from "./types.js"
 
 // ============================================
 // SOCKET INTERFACE
@@ -55,7 +50,8 @@ export function parseClientMessage(data: string): unknown {
  * Send raw message to socket
  */
 export function sendRaw(socket: ISocket, message: ServerMessage): boolean {
-  if (!isSocketOpen(socket)) return false
+  if (!isSocketOpen(socket))
+    return false
   socket.send(serializeMessage(message))
   return true
 }
@@ -66,9 +62,8 @@ export function sendRaw(socket: ISocket, message: ServerMessage): boolean {
 export function broadcastRaw(sockets: Iterable<ISocket>, message: ServerMessage): void {
   const msgStr = serializeMessage(message)
   for (const socket of sockets) {
-    if (isSocketOpen(socket)) {
+    if (isSocketOpen(socket))
       socket.send(msgStr)
-    }
   }
 }
 
@@ -106,13 +101,13 @@ export function sendGameFound(
   socket: ISocket,
   gameId: string,
   side: PlayerSide,
-  opponentId: string
+  opponentName: string,
 ): boolean {
   return sendRaw(socket, {
     type: "game_found",
     gameId,
     side,
-    opponent: opponentId,
+    opponentName,
   })
 }
 
@@ -209,7 +204,7 @@ export function sendPaddleUpdate(
   socket: ISocket,
   side: PlayerSide,
   y: number,
-  direction: -1 | 0 | 1
+  direction: -1 | 0 | 1,
 ): boolean {
   return sendRaw(socket, {
     type: "paddle_update",
@@ -226,7 +221,7 @@ export function broadcastPaddleUpdate(
   sockets: Iterable<ISocket>,
   side: PlayerSide,
   y: number,
-  direction: -1 | 0 | 1
+  direction: -1 | 0 | 1,
 ): void {
   broadcastRaw(sockets, {
     type: "paddle_update",
@@ -257,7 +252,7 @@ export function sendScoreUpdate(socket: ISocket, left: number, right: number): b
 export function broadcastScoreUpdate(
   sockets: Iterable<ISocket>,
   left: number,
-  right: number
+  right: number,
 ): void {
   broadcastRaw(sockets, {
     type: "score_update",
@@ -277,7 +272,7 @@ export function sendGameOver(
   socket: ISocket,
   winnerId: string,
   leftScore: number,
-  rightScore: number
+  rightScore: number,
 ): boolean {
   return sendRaw(socket, {
     type: "game_over",
@@ -293,8 +288,8 @@ export function broadcastGameOver(
   sockets: Iterable<ISocket>,
   winnerId: string,
   leftScore: number,
-  rightScore: number
-): void {
+  rightScore: number,
+): void { // Need better data to send, and maybe update user-management, need to see
   broadcastRaw(sockets, {
     type: "game_over",
     winnerId,

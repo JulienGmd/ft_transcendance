@@ -1,22 +1,22 @@
+// TODO
+// username instead of playerId
+// simple tournament mode, matchmaking 4 players, 4 match, 1st round, top3 + final
+// update endgame info to send (precision?) : GameID, Dates, ?
+
 // ============================================
 // GAME SERVICE - Main Entry Point
 // Backend only, no static files
 // ============================================
 
-import Fastify from "fastify"
 import fastifyWebsocket from "@fastify/websocket"
+import Fastify from "fastify"
 import { readFileSync } from "fs"
 import type { WebSocket } from "ws"
-import { ClientMessage, InputAction, InputKey } from "./types.js"
-import {
-  ISocket,
-  sendQueueJoined,
-  sendQueueLeft,
-  sendError,
-  sendPong,
-  parseClientMessage,
-} from "./communication.js"
+import { ISocket, parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication.js"
+import { GameManager } from "./gameManager.js"
 import { connectNats } from "./nats.js"
+import { MatchmakingQueue } from "./queue.js"
+import { ClientMessage, InputAction, InputKey } from "./types.js"
 
 // ============================================
 // INITIALIZE
@@ -28,6 +28,9 @@ try {
 } catch (err) {
   console.warn("⚠️ NATS connection failed, match results won't be recorded:", err)
 }
+
+const gameManager = new GameManager()
+const queue = new MatchmakingQueue(gameManager)
 
 // ============================================
 // CREATE SERVER
@@ -49,6 +52,8 @@ await fastify.register(fastifyWebsocket)
 fastify.get("/health", async () => {
   return {
     status: "ok",
+    activeGames: gameManager.activeGames,
+    queueSize: queue.size,
   }
 })
 
@@ -56,12 +61,51 @@ fastify.get("/health", async () => {
 // WEBSOCKET MESSAGE HANDLERS
 // ============================================
 
+function handleJoinQueue(playerId: string, username: string, socket: ISocket): void {
+  if (gameManager.handleReconnect(playerId, socket)) {
+    console.log(`[WS] Player ${playerId} reconnected to game`)
+    return
+  }
+  const result = queue.join(playerId, username, socket)
+  if (!result.matched)
+    sendQueueJoined(socket, result.position)
+}
+
+function handleLeaveQueue(playerId: string, socket: ISocket): void {
+  queue.leave(playerId)
+  sendQueueLeft(socket)
+}
+
+function handleInput(playerId: string, key: InputKey, action: InputAction): void {
+  gameManager.handleInput(playerId, key, action)
+}
+
 function handlePing(socket: ISocket): void {
   sendPong(socket)
 }
 
-function handleMessage(socket: ISocket, playerId: string | null, message: ClientMessage): string | null {
+function handleMessage(
+  socket: ISocket,
+  playerId: string | null,
+  username: string | null,
+  message: ClientMessage,
+): string | null {
   switch (message.type) {
+    case "join_queue":
+      if (username)
+        handleJoinQueue(message.playerId, username, socket)
+      return message.playerId
+
+    case "leave_queue":
+      if (playerId)
+        handleLeaveQueue(playerId, socket)
+      return playerId
+
+    case "input":
+      if (playerId)
+        handleInput(playerId, message.key, message.action)
+      return playerId
+
     case "ping":
       handlePing(socket)
       return playerId
@@ -69,6 +113,13 @@ function handleMessage(socket: ISocket, playerId: string | null, message: Client
     default:
       return playerId
   }
+}
+
+function handleDisconnect(playerId: string | null): void {
+  if (!playerId)
+    return
+  queue.handleDisconnect(playerId)
+  gameManager.handleDisconnect(playerId)
 }
 
 // ============================================
@@ -80,39 +131,44 @@ fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, reque
 
   // Extract JWT token from cookie
   const cookies = request.headers.cookie || ""
-  const tokenMatch = cookies.match(/token=([^;]+)/)
+  const tokenMatch = cookies.match(/authToken=([^;]+)/)
   const token = tokenMatch ? tokenMatch[1] : null
 
-  let numericUserId: number | null = null
+  let verifiedUser: { id: number; username: string } | null = null
 
-  // Validate token via NATS to get user ID
+  // Validate token via NATS to get user ID and username
   if (token) {
     const { verifyToken } = await import("./nats.js")
-    numericUserId = await verifyToken(token)
-    if (numericUserId) {
-      console.log(`[WS] Authenticated user ID: ${numericUserId}`)
-    } else {
+    verifiedUser = await verifyToken(token)
+    if (verifiedUser)
+      console.log(`[WS] Authenticated user: ${verifiedUser.username} (ID: ${verifiedUser.id})`)
+    else
       console.warn("[WS] Token validation failed, user will not be able to play ranked")
-    }
   } else {
     console.warn("[WS] No token in cookies, user will not be able to play ranked")
   }
 
-  // Use numeric user ID as string, or null if not authenticated
-  let playerId: string | null = numericUserId ? String(numericUserId) : null
+  // Use verified user info
+  let playerId: string | null = verifiedUser ? String(verifiedUser.id) : null
+  const username: string | null = verifiedUser?.username || null
   const socketWrapper: ISocket = socket
 
   socket.on("message", (data: Buffer) => {
     try {
       const message = parseClientMessage(data.toString()) as ClientMessage
-      if (message.type === "join_queue" && numericUserId) {
-        message.playerId = String(numericUserId)
-      }
-      playerId = handleMessage(socketWrapper, playerId, message)
+      // If user is authenticated, use their numeric ID instead of client-provided ID
+      if (message.type === "join_queue" && verifiedUser)
+        message.playerId = String(verifiedUser.id)
+      playerId = handleMessage(socketWrapper, playerId, username, message)
     } catch (err) {
       console.error("[WS] Invalid message:", err)
       sendError(socketWrapper, "Invalid message format")
     }
+  })
+
+  socket.on("close", () => {
+    console.log(`[WS] Connection closed for player ${playerId}`)
+    handleDisconnect(playerId)
   })
 
   socket.on("error", (err: Error) => {
