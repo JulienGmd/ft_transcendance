@@ -55,13 +55,24 @@
     </button>
   </div>
 </div>
-  <!-- Queue button -->
-  <button
-    id="join-queue-btn"
-    class="font-orbitron rounded-lg bg-gradient-to-r from-cyan-600 to-fuchsia-600 px-8 py-4 text-2xl font-bold text-white hover:from-cyan-500 hover:to-fuchsia-500 transition-all"
-  >
-    JOIN QUEUE
-  </button>
+  <!-- Queue buttons container -->
+  <div id="queue-buttons" class="hidden flex gap-4">
+    <!-- Normal Queue button -->
+    <button
+      id="join-normal-btn"
+      class="font-orbitron cursor-pointer rounded-lg bg-gradient-to-r from-cyan-600 to-cyan-500 px-8 py-4 text-2xl font-bold text-white hover:from-cyan-500 hover:to-cyan-400 transition-all"
+    >
+      NORMAL
+    </button>
+
+    <!-- Tournament Queue button -->
+    <button
+      id="join-tournament-btn"
+      class="font-orbitron cursor-pointer rounded-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 px-8 py-4 text-2xl font-bold text-white hover:from-fuchsia-500 hover:to-fuchsia-400 transition-all"
+    >
+      TOURNAMENT
+    </button>
+  </div>
 
   <!-- Leave queue button -->
   <button
@@ -70,4 +81,17 @@
   >
     LEAVE QUEUE
   </button>
+
+  <!-- Tournament result overlay -->
+  <div id="tournament-result-overlay" class="hidden absolute inset-0 flex items-center justify-center bg-black/80">
+    <div class="flex flex-col items-center gap-6 bg-gray-900 p-8 rounded-lg border-2 border-fuchsia-500">
+      <h2 class="font-orbitron text-4xl font-bold text-fuchsia-400">TOURNAMENT RESULTS</h2>
+      <div id="tournament-rankings" class="flex flex-col gap-2 text-xl">
+        <!-- Rankings will be inserted here -->
+      </div>
+      <button id="tournament-done-btn" class="font-orbitron mt-4 rounded-lg bg-fuchsia-600 px-8 py-3 text-xl font-bold text-white hover:bg-fuchsia-500 transition-colors">
+        DONE
+      </button>
+    </div>
+  </div>
 </div>

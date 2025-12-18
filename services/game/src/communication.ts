@@ -3,7 +3,7 @@
 // Abstracts WebSocket/transport to allow easy changes
 // ============================================
 
-import { BallSync, GameStateSnapshot, PlayerSide, ServerMessage } from "./types.js"
+import { BallSync, GameMode, GameStateSnapshot, PlayerSide, ServerMessage, TournamentRanking } from "./types.js"
 
 // ============================================
 // SOCKET INTERFACE
@@ -74,10 +74,11 @@ export function broadcastRaw(sockets: Iterable<ISocket>, message: ServerMessage)
 /**
  * Notify player they joined the queue
  */
-export function sendQueueJoined(socket: ISocket, position: number): boolean {
+export function sendQueueJoined(socket: ISocket, position: number, mode: GameMode): boolean {
   return sendRaw(socket, {
     type: "queue_joined",
     position,
+    mode,
   })
 }
 
@@ -102,12 +103,14 @@ export function sendGameFound(
   gameId: string,
   side: PlayerSide,
   opponentName: string,
+  mode: GameMode,
 ): boolean {
   return sendRaw(socket, {
     type: "game_found",
     gameId,
     side,
     opponentName,
+    mode,
   })
 }
 
@@ -270,14 +273,14 @@ export function broadcastScoreUpdate(
  */
 export function sendGameOver(
   socket: ISocket,
-  winnerId: string,
   leftScore: number,
   rightScore: number,
+  mode: GameMode,
 ): boolean {
   return sendRaw(socket, {
     type: "game_over",
-    winnerId,
     finalScore: { left: leftScore, right: rightScore },
+    mode,
   })
 }
 
@@ -286,14 +289,54 @@ export function sendGameOver(
  */
 export function broadcastGameOver(
   sockets: Iterable<ISocket>,
-  winnerId: string,
   leftScore: number,
   rightScore: number,
-): void { // Need better data to send, and maybe update user-management, need to see
+  mode: GameMode,
+): void {
   broadcastRaw(sockets, {
     type: "game_over",
-    winnerId,
     finalScore: { left: leftScore, right: rightScore },
+    mode,
+  })
+}
+
+/**
+ * Send tournament waiting message
+ */
+export function sendTournamentWaiting(socket: ISocket, message: string): boolean {
+  return sendRaw(socket, {
+    type: "tournament_waiting",
+    message,
+  })
+}
+
+/**
+ * Broadcast tournament waiting
+ */
+export function broadcastTournamentWaiting(sockets: Iterable<ISocket>, message: string): void {
+  broadcastRaw(sockets, {
+    type: "tournament_waiting",
+    message,
+  })
+}
+
+/**
+ * Send tournament final result
+ */
+export function sendTournamentResult(socket: ISocket, rankings: TournamentRanking[]): boolean {
+  return sendRaw(socket, {
+    type: "tournament_result",
+    rankings,
+  })
+}
+
+/**
+ * Broadcast tournament result
+ */
+export function broadcastTournamentResult(sockets: Iterable<ISocket>, rankings: TournamentRanking[]): void {
+  broadcastRaw(sockets, {
+    type: "tournament_result",
+    rankings,
   })
 }
 

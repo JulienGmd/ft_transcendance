@@ -4,6 +4,11 @@
 
 // --- Enums ---
 
+export enum GameMode {
+  NORMAL = "normal",
+  TOURNAMENT = "tournament",
+}
+
 export enum GameState {
   WAITING = "waiting",
   COUNTDOWN = "countdown",
@@ -89,6 +94,7 @@ export interface Player {
 
 export interface Game {
   id: string
+  mode: GameMode
   state: GameState
   players: Map<string, Player>
   ball: Ball
@@ -103,28 +109,38 @@ export interface Game {
 // --- WebSocket Messages ---
 
 // Client -> Server
+// Note: playerId is determined server-side from the authenticated token
 export type ClientMessage =
-  | { type: "join_queue"; playerId: string }
-  | { type: "leave_queue"; playerId: string }
+  | { type: "join_normal" }
+  | { type: "join_tournament" }
+  | { type: "leave_queue" }
   | { type: "input"; key: InputKey; action: InputAction }
   | { type: "ping" }
 
 // Server -> Client
 export type ServerMessage =
-  | { type: "queue_joined"; position: number }
+  | { type: "queue_joined"; position: number; mode: GameMode }
   | { type: "queue_left" }
-  | { type: "game_found"; gameId: string; side: PlayerSide; opponent: string }
+  | { type: "game_found"; gameId: string; side: PlayerSide; opponentName: string; mode: GameMode }
   | { type: "countdown"; seconds: number }
   | { type: "game_start" }
   | { type: "game_state"; state: GameStateSnapshot }
   | { type: "ball_sync"; ball: BallSync }
   | { type: "paddle_update"; side: PlayerSide; y: number; direction: -1 | 0 | 1 }
   | { type: "score_update"; left: number; right: number }
-  | { type: "game_over"; winnerId: string; finalScore: { left: number; right: number } }
+  | { type: "game_over"; finalScore: { left: number; right: number }; mode: GameMode }
+  | { type: "tournament_waiting"; message: string } // Waiting for other match to finish
+  | { type: "tournament_result"; rankings: TournamentRanking[] }
   | { type: "opponent_disconnected" }
   | { type: "opponent_reconnected" }
   | { type: "error"; message: string }
   | { type: "pong" }
+
+// Tournament result (sent to frontend - no playerId for security)
+export interface TournamentRanking {
+  rank: number // 1, 2, 3, 4
+  username: string
+}
 
 // Snapshot for full state sync
 export interface GameStateSnapshot {

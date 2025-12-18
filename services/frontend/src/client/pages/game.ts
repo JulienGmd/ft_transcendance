@@ -29,17 +29,26 @@ interface GameStateSnapshot {
   timestamp: number
 }
 
+type GameMode = "normal" | "tournament"
+
+interface TournamentRanking {
+  rank: number
+  username: string
+}
+
 type ServerMessage =
-  | { type: "queue_joined"; position: number }
+  | { type: "queue_joined"; position: number; mode: GameMode }
   | { type: "queue_left" }
-  | { type: "game_found"; gameId: string; side: "left" | "right"; opponentName: string }
+  | { type: "game_found"; gameId: string; side: "left" | "right"; opponentName: string; mode: GameMode }
   | { type: "countdown"; seconds: number }
   | { type: "game_start" }
   | { type: "game_state"; state: GameStateSnapshot }
   | { type: "ball_sync"; ball: BallSync }
   | { type: "paddle_update"; side: "left" | "right"; y: number; direction: -1 | 0 | 1 }
   | { type: "score_update"; left: number; right: number }
-  | { type: "game_over"; winnerId: string; finalScore: { left: number; right: number } }
+  | { type: "game_over"; finalScore: { left: number; right: number }; mode: GameMode }
+  | { type: "tournament_waiting"; message: string }
+  | { type: "tournament_result"; rankings: TournamentRanking[] }
   | { type: "opponent_disconnected" }
   | { type: "opponent_reconnected" }
   | { type: "error"; message: string }
@@ -60,9 +69,10 @@ const CONFIG = {
 // --- State ---
 
 let ws: WebSocket | null = null
-let playerId: string | null = null
+let myUsername: string | null = null
 let mySide: "left" | "right" | null = null
 let gameId: string | null = null
+let currentMode: GameMode | null = null
 let animationFrameId: number | null = null
 let lastFrameTime = 0
 
@@ -104,11 +114,16 @@ let gameOverOverlay: HTMLElement | null = null
 let winnerText: HTMLElement | null = null
 let finalScore: HTMLElement | null = null
 let playAgainBtn: HTMLElement | null = null
-let joinQueueBtn: HTMLElement | null = null
+let joinNormalBtn: HTMLElement | null = null
+let joinTournamentBtn: HTMLElement | null = null
+let queueButtons: HTMLElement | null = null
 let leaveQueueBtn: HTMLElement | null = null
 let disconnectLeft: HTMLElement | null = null
 let disconnectRight: HTMLElement | null = null
 let gameStatus: HTMLElement | null = null
+let tournamentResultOverlay: HTMLElement | null = null
+let tournamentRankings: HTMLElement | null = null
+let tournamentDoneBtn: HTMLElement | null = null
 
 // ============================================
 // LIFECYCLE
@@ -136,27 +151,33 @@ export function onMount(): void {
   winnerText = document.getElementById("winner-text")
   finalScore = document.getElementById("final-score")
   playAgainBtn = document.getElementById("play-again-btn")
-  joinQueueBtn = document.getElementById("join-queue-btn")
+  joinNormalBtn = document.getElementById("join-normal-btn")
+  joinTournamentBtn = document.getElementById("join-tournament-btn")
+  queueButtons = document.getElementById("queue-buttons")
   leaveQueueBtn = document.getElementById("leave-queue-btn")
   disconnectLeft = document.getElementById("disconnect-left")
   disconnectRight = document.getElementById("disconnect-right")
   gameStatus = document.getElementById("game-status")
+  tournamentResultOverlay = document.getElementById("tournament-result-overlay")
+  tournamentRankings = document.getElementById("tournament-rankings")
+  tournamentDoneBtn = document.getElementById("tournament-done-btn")
 
   // Event listeners
-  joinQueueBtn?.addEventListener("click", onJoinQueue)
+  joinNormalBtn?.addEventListener("click", onJoinNormal)
+  joinTournamentBtn?.addEventListener("click", onJoinTournament)
   leaveQueueBtn?.addEventListener("click", onLeaveQueue)
   playAgainBtn?.addEventListener("click", onPlayAgain)
+  tournamentDoneBtn?.addEventListener("click", onTournamentDone)
   document.addEventListener("keydown", onKeyDown)
   document.addEventListener("keyup", onKeyUp)
 
-  // Get player ID from authenticated user
-  // ID in-game is numeric, its not the username, need to get the real username via NATS
+  // Check user is authenticated
   const user = getUser()
   if (!user) {
     setStatus("Please login to play")
     return
   }
-  playerId = String(user.id)
+  myUsername = user.username
 
   // Connect WebSocket
   connectWebSocket()
@@ -191,7 +212,7 @@ function connectWebSocket(): void {
   ws.onopen = () => {
     console.log("[WS] Connected")
     setStatus("Ready to play!")
-    showElement(joinQueueBtn)
+    showElement(queueButtons)
   }
 
   ws.onmessage = (event) => {
@@ -226,28 +247,32 @@ function send(message: object): void {
 function handleServerMessage(msg: ServerMessage): void {
   switch (msg.type) {
     case "queue_joined":
-      setStatus("In queue...")
+      currentMode = msg.mode
+      setStatus(`In ${msg.mode} queue...`)
       positionNumber!.textContent = String(msg.position)
       showElement(queuePosition)
       showElement(leaveQueueBtn)
-      hideElement(joinQueueBtn)
+      hideElement(queueButtons)
       break
 
     case "queue_left":
+      currentMode = null
       setStatus("Ready to play!")
       hideElement(queuePosition)
       hideElement(leaveQueueBtn)
-      showElement(joinQueueBtn)
+      showElement(queueButtons)
       break
 
     case "game_found":
       gameId = msg.gameId
       mySide = msg.side
+      currentMode = msg.mode
       resetGameState()
-      setStatus("Game found!")
+      setStatus(msg.mode === "tournament" ? "Tournament match found!" : "Game found!")
       hideElement(queuePosition)
       hideElement(leaveQueueBtn)
-      hideElement(joinQueueBtn)
+      hideElement(queueButtons)
+      hideElement(gameOverOverlay)
       playerLeft!.textContent = mySide === "left" ? "You" : msg.opponentName
       playerRight!.textContent = mySide === "right" ? "You" : msg.opponentName
       break
@@ -300,7 +325,15 @@ function handleServerMessage(msg: ServerMessage): void {
 
     case "game_over":
       gameState.isPlaying = false
-      showGameOver(msg.winnerId, msg.finalScore)
+      showGameOver(msg.finalScore, msg.mode)
+      break
+
+    case "tournament_waiting":
+      setStatus(msg.message)
+      break
+
+    case "tournament_result":
+      showTournamentResult(msg.rankings)
       break
 
     case "opponent_disconnected":
@@ -575,14 +608,52 @@ function updateScoreDisplay(): void {
     scoreRight.textContent = String(gameState.score.right)
 }
 
-function showGameOver(winnerId: string, score: { left: number; right: number }): void {
+function showGameOver(score: { left: number; right: number }, mode: GameMode): void {
   hideElement(gameContainer)
-  const iWon = winnerId === playerId
+  // Determine if we won based on score and our side
+  const iWon = mySide === "left" ? score.left > score.right : score.right > score.left
   if (winnerText)
     winnerText.textContent = iWon ? "You Win!" : "You Lose"
   if (finalScore)
     finalScore.textContent = `${score.left} - ${score.right}`
+
+  // In tournament mode, hide play again button until tournament is fully over
+  if (mode === "tournament")
+    hideElement(playAgainBtn)
+  else
+    showElement(playAgainBtn)
+
   showElement(gameOverOverlay)
+}
+
+function showTournamentResult(rankings: TournamentRanking[]): void {
+  hideElement(gameOverOverlay)
+  hideElement(gameContainer)
+
+  if (tournamentRankings) {
+    const medals: Record<number, string> = {
+      1: "🥇",
+      2: "🥈",
+      3: "🥉",
+      4: "💩",
+    }
+    const medalColors: Record<number, string> = {
+      1: "text-yellow-400", // Gold
+      2: "text-gray-300", // Silver
+      3: "text-amber-600", // Bronze
+      4: "text-gray-500", // 4th
+    }
+    tournamentRankings.innerHTML = rankings.map((r) => {
+      const isMe = r.username === myUsername
+      const medal = medals[r.rank] || ""
+      const color = medalColors[r.rank] || "text-white"
+      const meTag = isMe ? " (You)" : ""
+      const highlight = isMe ? "bg-fuchsia-900/50 rounded px-2" : ""
+      return `<div class="${color} ${isMe ? "font-bold" : ""} ${highlight} py-1">${medal} ${r.username}${meTag}</div>`
+    }).join("")
+  }
+
+  showElement(tournamentResultOverlay)
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -593,22 +664,31 @@ function clamp(value: number, min: number, max: number): number {
 // BUTTON HANDLERS
 // ============================================
 
-function onJoinQueue(): void {
-  if (!playerId)
-    return
-  send({ type: "join_queue", playerId })
+function onJoinNormal(): void {
+  send({ type: "join_normal" })
+}
+
+function onJoinTournament(): void {
+  send({ type: "join_tournament" })
 }
 
 function onLeaveQueue(): void {
-  if (!playerId)
-    return
-  send({ type: "leave_queue", playerId })
+  send({ type: "leave_queue" })
 }
 
 function onPlayAgain(): void {
+  resetToMainMenu()
+}
+
+function onTournamentDone(): void {
+  resetToMainMenu()
+}
+
+function resetToMainMenu(): void {
   // Reset game state
   resetGameState()
   gameState.isPlaying = false
+  currentMode = null
 
   // Cancel any running animation frame
   if (animationFrameId) {
@@ -618,11 +698,12 @@ function onPlayAgain(): void {
 
   // Reset UI
   hideElement(gameOverOverlay)
+  hideElement(tournamentResultOverlay)
   hideElement(gameContainer)
   hideElement(disconnectLeft)
   hideElement(disconnectRight)
   showElement(gameStatus)
-  showElement(joinQueueBtn)
+  showElement(queueButtons)
   setStatus("Ready to play!")
 
   // Reset game session

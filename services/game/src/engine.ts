@@ -8,6 +8,7 @@ import {
   BallSync,
   Game,
   GAME_CONFIG,
+  GameMode,
   GameState,
   GameStateSnapshot,
   Paddle,
@@ -285,9 +286,10 @@ export function generateGameId(): string {
   return ulid()
 }
 
-export function createGame(player1Id: string, player2Id: string): Game {
+export function createGame(player1Id: string, player2Id: string, mode: GameMode = GameMode.NORMAL): Game {
   const game: Game = {
     id: generateGameId(),
+    mode,
     state: GameState.COUNTDOWN,
     players: new Map(),
     ball: createBall(),

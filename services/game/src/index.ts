@@ -1,8 +1,3 @@
-// TODO
-// username instead of playerId
-// simple tournament mode, matchmaking 4 players, 4 match, 1st round, top3 + final
-// update endgame info to send (precision?) : GameID, Dates, ?
-
 // ============================================
 // GAME SERVICE - Main Entry Point
 // Backend only, no static files
@@ -15,8 +10,8 @@ import type { WebSocket } from "ws"
 import { ISocket, parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication.js"
 import { GameManager } from "./gameManager.js"
 import { connectNats } from "./nats.js"
-import { MatchmakingQueue } from "./queue.js"
-import { ClientMessage, InputAction, InputKey } from "./types.js"
+import { NormalQueue, TournamentQueue } from "./queue.js"
+import { ClientMessage, GameMode, InputAction, InputKey } from "./types.js"
 
 // ============================================
 // INITIALIZE
@@ -30,7 +25,14 @@ try {
 }
 
 const gameManager = new GameManager()
-const queue = new MatchmakingQueue(gameManager)
+const normalQueue = new NormalQueue(gameManager)
+const tournamentQueue = new TournamentQueue(gameManager)
+
+// Register tournament callback for game endings
+gameManager.setOnGameEndCallback((gameId, winnerId) => {
+  if (tournamentQueue.isTournamentGame(gameId))
+    tournamentQueue.onGameEnd(gameId, winnerId)
+})
 
 // ============================================
 // CREATE SERVER
@@ -53,7 +55,8 @@ fastify.get("/health", async () => {
   return {
     status: "ok",
     activeGames: gameManager.activeGames,
-    queueSize: queue.size,
+    normalQueueSize: normalQueue.size,
+    tournamentQueueSize: tournamentQueue.size,
   }
 })
 
@@ -61,18 +64,29 @@ fastify.get("/health", async () => {
 // WEBSOCKET MESSAGE HANDLERS
 // ============================================
 
-function handleJoinQueue(playerId: string, username: string, socket: ISocket): void {
+function handleJoinNormal(playerId: string, username: string, socket: ISocket): void {
   if (gameManager.handleReconnect(playerId, socket)) {
     console.log(`[WS] Player ${playerId} reconnected to game`)
     return
   }
-  const result = queue.join(playerId, username, socket)
+  const result = normalQueue.join(playerId, username, socket)
   if (!result.matched)
-    sendQueueJoined(socket, result.position)
+    sendQueueJoined(socket, result.position, GameMode.NORMAL)
+}
+
+function handleJoinTournament(playerId: string, username: string, socket: ISocket): void {
+  if (gameManager.handleReconnect(playerId, socket)) {
+    console.log(`[WS] Player ${playerId} reconnected to game`)
+    return
+  }
+  const result = tournamentQueue.join(playerId, username, socket)
+  if (!result.matched)
+    sendQueueJoined(socket, result.position, GameMode.TOURNAMENT)
 }
 
 function handleLeaveQueue(playerId: string, socket: ISocket): void {
-  queue.leave(playerId)
+  normalQueue.leave(playerId)
+  tournamentQueue.leave(playerId)
   sendQueueLeft(socket)
 }
 
@@ -91,10 +105,15 @@ function handleMessage(
   message: ClientMessage,
 ): string | null {
   switch (message.type) {
-    case "join_queue":
-      if (username)
-        handleJoinQueue(message.playerId, username, socket)
-      return message.playerId
+    case "join_normal":
+      if (playerId && username)
+        handleJoinNormal(playerId, username, socket)
+      return playerId
+
+    case "join_tournament":
+      if (playerId && username)
+        handleJoinTournament(playerId, username, socket)
+      return playerId
 
     case "leave_queue":
       if (playerId)
@@ -118,7 +137,8 @@ function handleMessage(
 function handleDisconnect(playerId: string | null): void {
   if (!playerId)
     return
-  queue.handleDisconnect(playerId)
+  normalQueue.handleDisconnect(playerId)
+  tournamentQueue.handleDisconnect(playerId)
   gameManager.handleDisconnect(playerId)
 }
 
@@ -153,12 +173,13 @@ fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, reque
   const username: string | null = verifiedUser?.username || null
   const socketWrapper: ISocket = socket
 
+  // Check if player is in an existing game and reconnect them
+  if (playerId && gameManager.handleReconnect(playerId, socketWrapper))
+    console.log(`[WS] Player ${playerId} auto-reconnected to existing game`)
+
   socket.on("message", (data: Buffer) => {
     try {
       const message = parseClientMessage(data.toString()) as ClientMessage
-      // If user is authenticated, use their numeric ID instead of client-provided ID
-      if (message.type === "join_queue" && verifiedUser)
-        message.playerId = String(verifiedUser.id)
       playerId = handleMessage(socketWrapper, playerId, username, message)
     } catch (err) {
       console.error("[WS] Invalid message:", err)

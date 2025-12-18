@@ -27,7 +27,7 @@ import {
   predictBallArrival,
 } from "./engine.js"
 import { sendMatchResult } from "./nats.js"
-import { Game, GAME_CONFIG, GameState, InputAction, InputKey, PlayerSide } from "./types.js"
+import { Game, GAME_CONFIG, GameMode, GameState, InputAction, InputKey, PlayerSide } from "./types.js"
 
 interface GameSession {
   game: Game
@@ -68,9 +68,20 @@ class GameManager {
     return this.games.get(gameId)?.game
   }
 
+  getGameSession(gameId: string): GameSession | undefined {
+    return this.games.get(gameId)
+  }
+
   getPlayerGame(playerId: string): GameSession | undefined {
     const gameId = this.playerToGame.get(playerId)
     return gameId ? this.games.get(gameId) : undefined
+  }
+
+  // Callback for tournament queue to be notified of game endings
+  private onGameEndCallback: ((gameId: string, winnerId: string) => void) | null = null
+
+  setOnGameEndCallback(callback: (gameId: string, winnerId: string) => void): void {
+    this.onGameEndCallback = callback
   }
 
   startCountdown(gameId: string): void {
@@ -242,7 +253,7 @@ class GameManager {
     if (opponentSocket && isSocketOpen(opponentSocket))
       sendOpponentReconnected(opponentSocket)
     const opponent = getOpponent(session.game, playerId)
-    sendGameFound(socket, session.game.id, player.side, opponent?.id ?? "")
+    sendGameFound(socket, session.game.id, player.side, opponent?.id ?? "", session.game.mode)
     const snapshot = createGameSnapshot(session.game)
     sendGameState(socket, snapshot)
     // Le jeu continue pendant la déconnexion, donc pas besoin de redémarrer les intervals
@@ -261,8 +272,12 @@ class GameManager {
     const leftPlayer = getPlayerBySide(session.game, PlayerSide.LEFT)
     const rightPlayer = getPlayerBySide(session.game, PlayerSide.RIGHT)
     const sockets = getSessionSockets(session)
-    broadcastGameOver(sockets, winnerId, leftPlayer?.score ?? 0, rightPlayer?.score ?? 0)
+    broadcastGameOver(sockets, leftPlayer?.score ?? 0, rightPlayer?.score ?? 0, session.game.mode)
     console.log(`[GameManager] Game ${gameId} ended. Winner: ${winnerId}`)
+
+    // Notify tournament queue if this is a tournament game
+    if (this.onGameEndCallback)
+      this.onGameEndCallback(gameId, winnerId)
 
     // Send match result to user-management via NATS
     // Note: playerId should be numeric user IDs from the database
