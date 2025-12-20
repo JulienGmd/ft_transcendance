@@ -44,7 +44,6 @@ export const Topics = {
   },
   MATCH: {
     CREATE: "match.create",
-    CREATED: "match.created",
   },
 }
 
@@ -139,50 +138,33 @@ export interface MatchCreateResponse {
 
 /**
  * Send match result to user-management via NATS
- * Uses request/response pattern for confirmation
  */
-export async function sendMatchResult(
+export function sendMatchResult(
   player1Id: number,
   player2Id: number,
   scoreP1: number,
   scoreP2: number,
   precisionPlayer1: number = 0,
   precisionPlayer2: number = 0,
-): Promise<MatchCreateResponse> {
+): void {
   if (!nc) {
     console.error("❌ NATS not connected, cannot send match result")
-    return { success: false, error: "NATS not connected" }
+    return
   }
 
   const payload: MatchCreatePayload = {
-    player1Id,
-    player2Id,
-    precisionPlayer1,
-    precisionPlayer2,
-    scoreP1,
-    scoreP2,
+    p1_id: player1Id,
+    p2_id: player2Id,
+    p1_precision: precisionPlayer1,
+    p2_precision: precisionPlayer2,
+    p1_score: scoreP1,
+    p2_score: scoreP2,
   }
 
   try {
-    console.log(`📤 Sending match result via NATS:`, payload)
-
-    // Request/response with 5 second timeout
-    const response = await nc.request(
-      Topics.MATCH.CREATE,
-      codec.encode(JSON.stringify(payload)),
-      { timeout: 5000 },
-    )
-
-    const result: MatchCreateResponse = JSON.parse(codec.decode(response.data))
-
-    if (result.success)
-      console.log(`✅ Match recorded: ${result.match?.id}`)
-    else
-      console.error(`❌ Failed to record match: ${result.error}`)
-
-    return result
+    console.log(`📤 Sending match result via NATS :`, payload)
+    nc.publish(Topics.MATCH.CREATE, codec.encode(JSON.stringify(payload)))
   } catch (err) {
     console.error("❌ Error sending match result:", err)
-    return { success: false, error: String(err) }
   }
 }

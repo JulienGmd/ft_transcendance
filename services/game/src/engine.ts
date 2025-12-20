@@ -212,7 +212,7 @@ export function calculateNewSpeed(currentSpeed: number): number {
   return Math.min(currentSpeed + BALL_SPEED_INCREMENT, BALL_MAX_SPEED)
 }
 
-export function bounceBallOnPaddle(ball: Ball, paddle: Paddle, side: PlayerSide): void {
+export function bounceBallOnPaddle(ball: Ball, paddle: Paddle, side: PlayerSide, game?: Game): void {
   const bounceAngle = calculateBounceAngle(ball.position.y, paddle.y, paddle.height)
   const currentSpeed = getBallSpeed(ball.velocity)
   const newSpeed = calculateNewSpeed(currentSpeed)
@@ -220,6 +220,12 @@ export function bounceBallOnPaddle(ball: Ball, paddle: Paddle, side: PlayerSide)
   ball.velocity.x = Math.cos(bounceAngle) * newSpeed * direction
   ball.velocity.y = -Math.sin(bounceAngle) * newSpeed
   ball.predictedArrival = predictBallArrival(ball)
+  // Incrémente ballsReturned pour le joueur qui a renvoyé la balle
+  if (game) {
+    const player = getPlayerBySide(game, side)
+    if (player)
+      player.ballsReturned++
+  }
 }
 
 // ============================================
@@ -271,7 +277,16 @@ export function checkWin(score: number): boolean {
 // ============================================
 
 export function createPlayer(id: string, username: string, side: PlayerSide): Player {
-  return { id, username, side, paddle: createPaddle(), score: 0, connected: true, lastInputTime: Date.now() }
+  return {
+    id,
+    username,
+    side,
+    paddle: createPaddle(),
+    score: 0,
+    ballsReturned: 0,
+    connected: true,
+    lastInputTime: Date.now(),
+  }
 }
 
 export function incrementScore(player: Player): void {
@@ -380,7 +395,7 @@ export function gameTick(game: Game): GameTickResult {
       : WIDTH - PADDLE_MARGIN - PADDLE_WIDTH - BALL_RADIUS
     ball.position.y = ball.predictedArrival.y
     if (checkPaddleCollision(ball, player.paddle, side)) {
-      bounceBallOnPaddle(ball, player.paddle, side)
+      bounceBallOnPaddle(ball, player.paddle, side, game)
       result.paddleBounce = true
     } else {
       const scorer = side === PlayerSide.LEFT ? PlayerSide.RIGHT : PlayerSide.LEFT

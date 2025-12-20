@@ -299,22 +299,14 @@ class GameManager {
     // Note: playerId should be numeric user IDs from the database
     // The client must send their real user ID when joining the queue
     if (leftPlayer && rightPlayer) {
-      const player1Id = parseInt(leftPlayer.id, 10)
-      const player2Id = parseInt(rightPlayer.id, 10)
-
-      // Only send if we have valid numeric IDs
-      if (!isNaN(player1Id) && !isNaN(player2Id)) {
-        sendMatchResult(
-          player1Id,
-          player2Id,
-          leftPlayer.score,
-          rightPlayer.score,
-          0, // precision
-          0, // precision
-        ).catch((err) => console.error("[GameManager] Failed to send match result:", err))
-      } else {
-        console.warn("[GameManager] Cannot send match result: player IDs are not numeric")
-      }
+      sendMatchResult(
+        Number(leftPlayer.id),
+        Number(rightPlayer.id),
+        leftPlayer.score,
+        rightPlayer.score,
+        0, // precision
+        0, // precision
+      )
     }
 
     setTimeout(() => this.cleanup(gameId), 5000)

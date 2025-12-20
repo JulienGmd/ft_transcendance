@@ -118,6 +118,7 @@ let joinNormalBtn: HTMLElement | null = null
 let joinTournamentBtn: HTMLElement | null = null
 let queueButtons: HTMLElement | null = null
 let leaveQueueBtn: HTMLElement | null = null
+let disconnectOverlay: HTMLElement | null = null
 let disconnectLeft: HTMLElement | null = null
 let disconnectRight: HTMLElement | null = null
 let gameStatus: HTMLElement | null = null
@@ -155,6 +156,7 @@ export function onMount(): void {
   joinTournamentBtn = document.getElementById("join-tournament-btn")
   queueButtons = document.getElementById("queue-buttons")
   leaveQueueBtn = document.getElementById("leave-queue-btn")
+  disconnectOverlay = document.getElementById("disconnect-overlay")
   disconnectLeft = document.getElementById("disconnect-left")
   disconnectRight = document.getElementById("disconnect-right")
   gameStatus = document.getElementById("game-status")
@@ -213,6 +215,8 @@ function connectWebSocket(): void {
     console.log("[WS] Connected")
     setStatus("Ready to play!")
     showElement(queueButtons)
+    if (disconnectOverlay)
+      hideElement(disconnectOverlay)
   }
 
   ws.onmessage = (event) => {
@@ -227,6 +231,8 @@ function connectWebSocket(): void {
   ws.onclose = () => {
     console.log("[WS] Disconnected")
     setStatus("Disconnected. Reconnecting...")
+    // if (gameState.isPlaying)
+    showElement(disconnectOverlay)
     setTimeout(connectWebSocket, 2000)
   }
 

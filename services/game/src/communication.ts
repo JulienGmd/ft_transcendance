@@ -292,11 +292,15 @@ export function broadcastGameOver(
   leftScore: number,
   rightScore: number,
   mode: GameMode,
+  leftPrecision?: number,
+  rightPrecision?: number,
 ): void {
   broadcastRaw(sockets, {
     type: "game_over",
     finalScore: { left: leftScore, right: rightScore },
     mode,
+    leftPrecision,
+    rightPrecision,
   })
 }
 

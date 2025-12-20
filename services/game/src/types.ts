@@ -89,6 +89,7 @@ export interface Player {
   side: PlayerSide
   paddle: Paddle
   score: number
+  ballsReturned: number
   connected: boolean
   lastInputTime: number
 }
