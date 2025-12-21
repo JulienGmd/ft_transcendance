@@ -4,3 +4,4 @@ certs/
 .env*
 !.env.example
 *.db
+venv/

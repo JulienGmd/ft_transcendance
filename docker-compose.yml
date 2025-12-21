@@ -21,6 +21,8 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      game:
+        condition: service_healthy
     networks:
       - internal
     restart: unless-stopped
@@ -51,6 +53,21 @@ services:
     build:
       context: .
       dockerfile: ./services/frontend/Dockerfile
+    networks:
+      - internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-kf", "https://localhost:3000/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+  
+  game:
+    build:
+      context: .
+      dockerfile: ./services/game/Dockerfile
+    depends_on:
+      - nats
     networks:
       - internal
     restart: unless-stopped

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong Game WebSocket API</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col items-center py-8">
+  <main class="w-full max-w-2xl bg-gray-900 rounded-lg shadow-lg p-8 border border-cyan-700/30">
+    <h1 class="text-3xl font-bold font-orbitron text-cyan-400 mb-4">WebSocket Game API</h1>
+    <p class="mb-6">This page describes the WebSocket API to interact with the Pong game server.</p>
+
+    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Connection</h2>
+    <ul class="list-disc ml-6 mb-4">
+      <li><b>URL:</b> <code>ws(s)://&lt;host&gt;/api/game/ws</code></li>
+      <li><b>Authentication:</b> JWT in httpOnly cookie (same as the frontend)</li>
+    </ul>
+
+    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Client → Server Messages</h2>
+    <ul class="mb-4">
+      <li><b>join_normal</b>: join the normal queue
+        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "join_normal" }</pre>
+      </li>
+      <li><b>join_tournament</b>: join the tournament queue
+        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "join_tournament" }</pre>
+      </li>
+      <li><b>leave_queue</b>: leave the queue
+        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "leave_queue" }</pre>
+      </li>
+      <li><b>input</b>: send a paddle action
+        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "input", "key": "up"|"down", "action": "press"|"release" }</pre>
+      </li>
+      <li><b>ping</b>: ping the server
+        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "ping" }</pre>
+      </li>
+    </ul>
+
+    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Server → Client Messages</h2>
+    <p class="mb-2">Possible message types:</p>
+    <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto mb-4">queue_joined, queue_left, game_found, countdown, game_start, game_state, ball_sync, paddle_update, score_update, game_over, tournament_waiting, tournament_result, opponent_disconnected, opponent_reconnected, error, pong</pre>
+    <p class="mb-4">Below are the main server→client message types and their payload structures. All information needed to implement a client is included here.</p>
+    <div class="mb-4">
+      <b>queue_joined</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "queue_joined",
+  "position": number, // your position in the queue
+  "mode": "normal" | "tournament"
+}</pre>
+      <b>queue_left</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "queue_left"
+}</pre>
+      <b>game_found</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "game_found",
+  "gameId": string,
+  "side": "left" | "right",
+  "opponentName": string,
+  "mode": "normal" | "tournament"
+}</pre>
+      <b>countdown</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "countdown",
+  "seconds": number
+}</pre>
+      <b>game_state</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "game_state",
+  "state": {
+    "gameId": string,
+    "state": "waiting" | "playing" | "paused" | "over",
+    "ball": {
+      "position": { "x": number, "y": number },
+      "velocity": { "x": number, "y": number },
+      "timestamp": number
+    },
+    "paddles": {
+      "left": { "y": number, "direction": -1 | 0 | 1 },
+      "right": { "y": number, "direction": -1 | 0 | 1 }
+    },
+    "score": { "left": number, "right": number },
+    "timestamp": number
+  }
+}</pre>
+      <b>game_over</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "game_over",
+  "finalScore": { "left": number, "right": number },
+  "mode": "normal" | "tournament",
+  "leftPrecision": number, // 0..1
+  "rightPrecision": number // 0..1
+}</pre>
+      <b>error</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "error",
+  "message": string
+}</pre>
+      <b>pong</b>:
+      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  "type": "pong"
+}</pre>
+    </div>
+    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Example Sequence</h2>
+    <ol class="list-decimal ml-6 mb-4">
+      <li>Connect to the WebSocket</li>
+      <li>Send <code>{ "type": "join_normal" }</code></li>
+      <li>Receive <code>queue_joined</code>, then <code>game_found</code>, then <code>countdown</code>, etc.</li>
+      <li>During the game, send <code>{ "type": "input", ... }</code> to move the paddle</li>
+    </ol>
+
+    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Notes</h2>
+    <ul class="list-disc ml-6 mb-4">
+      <li>All commands are JSON.</li>
+      <li>See the source code for more details.</li>
+    </ul>
+  </main>
+</body>
+</html>
