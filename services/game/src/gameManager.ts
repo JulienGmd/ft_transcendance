@@ -82,7 +82,12 @@ class GameManager {
 
   getPlayerGame(playerId: string): GameSession | undefined {
     const gameId = this.playerToGame.get(playerId)
-    return gameId ? this.games.get(gameId) : undefined
+    if (!gameId)
+      return undefined
+    const session = this.games.get(gameId)
+    if (!session || session.game.state === "finished")
+      return undefined
+    return session
   }
 
   // Callback for tournament queue to be notified of game endings
@@ -173,7 +178,6 @@ class GameManager {
     }
 
     // Only handle scoring if a goal was scored
-    // Note: gameTick may have already changed state to FINISHED if game ended
     if (!result.scored)
       return
 
@@ -296,8 +300,6 @@ class GameManager {
       this.onGameEndCallback(gameId, winnerId)
 
     // Send match result to user-management via NATS
-    // Note: playerId should be numeric user IDs from the database
-    // The client must send their real user ID when joining the queue
     if (leftPlayer && rightPlayer) {
       sendMatchResult(
         Number(leftPlayer.id),
