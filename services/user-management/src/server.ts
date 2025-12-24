@@ -26,7 +26,7 @@ export async function startServer(): Promise<void> {
   fastify.setSerializerCompiler(serializerCompiler)
 
   // Plugin to parse and set cookies
-  await fastify.register(fastifyCookie, { secret: config.JWT_SECRET })
+  await fastify.register(fastifyCookie, { secret: config.JWT_PRIVATE })
 
   // Plugin to generate OpenAPI documentation
   await fastify.register(fastifySwagger, {

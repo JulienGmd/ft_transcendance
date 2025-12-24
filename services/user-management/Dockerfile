@@ -9,6 +9,10 @@ COPY package*.json ./
 COPY shared ./shared
 COPY services/user-management ./services/user-management
 
+# user-management only
+COPY secrets/jwt /secrets/jwt
+# end user-management only
+
 RUN npm ci --workspaces
 
 FROM base AS development

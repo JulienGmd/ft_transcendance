@@ -4,7 +4,7 @@ import config from "../config"
 import { User } from "../db"
 
 export function setJWT(res: FastifyReply, user: User): void {
-  const jwtToken = jwt.sign({ email: user.email }, config.JWT_SECRET, { expiresIn: "365d" })
+  const jwtToken = jwt.sign({ email: user.email }, config.JWT_PRIVATE, { algorithm: "RS256", expiresIn: "365d" })
 
   res.setCookie("authToken", jwtToken, {
     httpOnly: true, // no javascript access (XSS protection)
@@ -21,7 +21,7 @@ export function getJWT(req: FastifyRequest): { email: string } | null {
     return null
 
   try {
-    return jwt.verify(jwtToken, config.JWT_SECRET) as { email: string }
+    return jwt.verify(jwtToken, config.JWT_PUBLIC, { algorithms: ["RS256"] }) as { email: string }
   } catch (err) {
     return null
   }

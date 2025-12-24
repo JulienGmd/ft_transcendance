@@ -1,10 +1,12 @@
 import "dotenv/config"
+import { readFileSync } from "fs"
 import { dirname, join } from "path"
 import { fileURLToPath } from "url"
 
 const config = {
   // Mandatory env
-  JWT_SECRET: process.env.JWT_SECRET!,
+  JWT_PRIVATE: readFileSync("/secrets/jwt/private.pem"),
+  JWT_PUBLIC: readFileSync("/secrets/jwt/public.pem"),
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI!,

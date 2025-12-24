@@ -35,7 +35,6 @@ Create a `.env` file in the with the following variables:
 | `NODE_ENV`             | `development`      | Environment                |
 | `PORT`                 | `3000`             | Server port                |
 | `NATS_URL`             | `nats://nats:4222` | NATS server URL            |
-| `JWT_SECRET`           |                    | Secret for signing JWTs    |
 | `GOOGLE_CLIENT_ID`     |                    | Google OAuth Client ID     |
 | `GOOGLE_CLIENT_SECRET` |                    | Google OAuth Client Secret |
 | `GOOGLE_REDIRECT_URI`  |                    | Google OAuth Redirect URI  |

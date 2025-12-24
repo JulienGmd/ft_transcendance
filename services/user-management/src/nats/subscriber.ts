@@ -48,7 +48,7 @@ function setupTokenVerifySubscriber(nc: NatsConnection, codec: Codec<string>): v
 
 function verifyTokenAndGetUser(token: string): TokenVerifyResponse {
   try {
-    const decoded = jwt.verify(token, config.JWT_SECRET) as { email: string }
+    const decoded = jwt.verify(token, config.JWT_PUBLIC) as { email: string }
     const db = getDb()
     const user = db.prepare("SELECT id, username FROM users WHERE email = ?").get(decoded.email) as User | undefined
 
