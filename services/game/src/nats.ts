@@ -2,6 +2,7 @@
 // NATS CLIENT - Communication with user-management
 // ============================================
 
+import { type MatchCreatePayload, Topics } from "@ft_transcendence/shared"
 import { connect, NatsConnection, StringCodec } from "nats"
 
 let nc: NatsConnection | null = null
@@ -32,43 +33,6 @@ export async function disconnectNats(): Promise<void> {
 
 export function getNatsClient(): NatsConnection | null {
   return nc
-}
-
-// ============================================
-// TOPICS
-// ============================================
-
-export const Topics = {
-  MATCH: {
-    CREATE: "match.create",
-  },
-}
-
-// ============================================
-// MATCH PAYLOAD TYPES
-// ============================================
-
-export interface MatchCreatePayload {
-  player1Id: number
-  player2Id: number
-  precisionPlayer1: number
-  precisionPlayer2: number
-  scoreP1: number
-  scoreP2: number
-}
-
-export interface MatchCreateResponse {
-  success: boolean
-  match?: {
-    id: number
-    player1_id: number
-    player2_id: number
-    player1_score: number
-    player2_score: number
-    winner_id: number
-    created_at: string
-  }
-  error?: string
 }
 
 // ============================================
