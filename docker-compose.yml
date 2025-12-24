@@ -13,7 +13,7 @@ services:
       - "8080:8080/udp"
     volumes:
       - ./caddy:/etc/caddy
-      - ./shared/certs/cert.pem:/certs/cert.pem:ro # ro = read-only
+      - ./secrets/certs/cert.pem:/certs/cert.pem:ro # ro = read-only
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

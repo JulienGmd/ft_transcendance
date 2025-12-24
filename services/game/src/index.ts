@@ -42,8 +42,8 @@ gameManager.setOnGameEndCallback((gameId, winnerId) => {
 
 const fastify = Fastify({
   https: {
-    key: readFileSync("../../shared/certs/key.pem"),
-    cert: readFileSync("../../shared/certs/cert.pem"),
+    key: readFileSync("/secrets/certs/key.pem"),
+    cert: readFileSync("/secrets/certs/cert.pem"),
   },
 })
 

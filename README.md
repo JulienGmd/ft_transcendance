@@ -9,7 +9,7 @@
 
 The project uses SSL for secure communication between client <-> gateway <-> services.
 
-- SSL certificates (`./shared/certs`) are generated with `make setup` or `make start` or `make dev`.
+- SSL certificates (`./secrets/certs`) are generated with `make setup` or `make start` or `make dev`.
 - Caddy communicates with clients over HTTPS by default.
 - All services (auth, frontend, ...) have cert.pem + key.pem copy.
 - Caddy have cert.pem copy.

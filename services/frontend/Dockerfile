@@ -6,6 +6,7 @@ RUN apk add --no-cache curl
 WORKDIR /app
 
 COPY package*.json ./
+COPY secrets/certs /secrets/certs
 COPY shared ./shared
 COPY services/frontend ./services/frontend
 
