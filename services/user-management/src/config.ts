@@ -5,8 +5,8 @@ import { fileURLToPath } from "url"
 
 const config = {
   // Mandatory env
-  JWT_PRIVATE: readFileSync("/secrets/jwt/private.pem"),
-  JWT_PUBLIC: readFileSync("/secrets/jwt/public.pem"),
+  JWT_PRIVATE: readFileSync("/secrets/jwt/private.pem").toString(),
+  JWT_PUBLIC: readFileSync("/secrets/jwt/public.pem").toString(),
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI!,
