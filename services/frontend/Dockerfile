@@ -1,7 +1,3 @@
-# Note:
-# - certs allow to create https server
-# - root package.json defines workspaces
-
 FROM node:22-alpine AS base
 
 # For healthcheck
@@ -9,7 +5,6 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-COPY certs /certs
 COPY package*.json ./
 COPY shared ./shared
 COPY services/frontend ./services/frontend

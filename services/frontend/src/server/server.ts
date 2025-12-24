@@ -16,8 +16,8 @@ export async function startServer(): Promise<void> {
 
   fastify = Fastify({
     https: {
-      key: readFileSync("/certs/key.pem"),
-      cert: readFileSync("/certs/cert.pem"),
+      key: readFileSync("../../shared/certs/key.pem"),
+      cert: readFileSync("../../shared/certs/cert.pem"),
     },
   })
 

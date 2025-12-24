@@ -13,7 +13,7 @@ services:
       - "8080:8080/udp"
     volumes:
       - ./caddy:/etc/caddy
-      - ./certs/cert.pem:/certs/cert.pem:ro # ro = read-only
+      - ./shared/certs/cert.pem:/certs/cert.pem:ro # ro = read-only
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
@@ -61,7 +61,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
-  
+
   game:
     build:
       context: .
