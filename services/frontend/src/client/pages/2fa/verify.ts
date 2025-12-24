@@ -11,7 +11,7 @@ let email = ""
 
 export function onGuard(route: string): boolean {
   email = new URLSearchParams(route.split("?")[1]).get("email") || ""
-  return !!getUser() && !!email
+  return !getUser() && !!email
 }
 
 export function onMount(): void {
