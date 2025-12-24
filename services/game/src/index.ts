@@ -3,12 +3,14 @@
 // Backend only, no static files
 // ============================================
 
+import fastifyCookie from "@fastify/cookie"
 import fastifyWebsocket from "@fastify/websocket"
 import Fastify from "fastify"
 import { readFileSync } from "fs"
 import type { WebSocket } from "ws"
 import { ISocket, parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication.js"
 import { GameManager } from "./gameManager.js"
+import { getJWT } from "./jwt.js"
 import { connectNats } from "./nats.js"
 import { NormalQueue, TournamentQueue } from "./queue.js"
 import { ClientMessage, GameMode, InputAction, InputKey } from "./types.js"
@@ -46,6 +48,7 @@ const fastify = Fastify({
 })
 
 await fastify.register(fastifyWebsocket)
+await fastify.register(fastifyCookie)
 
 // ============================================
 // HEALTH CHECK
@@ -150,27 +153,16 @@ fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, reque
   console.log("[WS] New connection")
 
   // Extract JWT token from cookie
-  const cookies = request.headers.cookie || ""
-  const tokenMatch = cookies.match(/authToken=([^;]+)/)
-  const token = tokenMatch ? tokenMatch[1] : null
-
-  let verifiedUser: { id: number; username: string } | null = null
-
-  // Validate token via NATS to get user ID and username
-  if (token) {
-    const { verifyToken } = await import("./nats.js")
-    verifiedUser = await verifyToken(token)
-    if (verifiedUser)
-      console.log(`[WS] Authenticated user: ${verifiedUser.username} (ID: ${verifiedUser.id})`)
-    else
-      console.warn("[WS] Token validation failed, user will not be able to play ranked")
-  } else {
-    console.warn("[WS] No token in cookies, user will not be able to play ranked")
+  const jwt = await getJWT(request)
+  if (!jwt) {
+    console.log("[WS] Missing or invalid JWT, closing connection")
+    socket.close(1008, "Unauthorized")
+    return
   }
 
   // Use verified user info
-  let playerId: string | null = verifiedUser ? String(verifiedUser.id) : null
-  const username: string | null = verifiedUser?.username || null
+  let playerId: string | null = jwt.id
+  const username = jwt.username
   const socketWrapper: ISocket = socket
 
   // Check if player is in an existing game and reconnect them

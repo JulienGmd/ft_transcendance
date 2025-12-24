@@ -39,70 +39,9 @@ export function getNatsClient(): NatsConnection | null {
 // ============================================
 
 export const Topics = {
-  AUTH: {
-    TOKEN_VERIFY: "auth.token.verify",
-  },
   MATCH: {
     CREATE: "match.create",
   },
-}
-
-// ============================================
-// AUTH TYPES
-// ============================================
-
-export interface TokenVerifyRequest {
-  token: string
-}
-
-export interface TokenVerifyResponse {
-  valid: boolean
-  userId?: number
-  username?: string
-  email?: string
-  error?: string
-}
-
-// ============================================
-// VERIFY TOKEN
-// ============================================
-
-export interface VerifiedUser {
-  id: number
-  username: string
-}
-
-/**
- * Verify a JWT token via NATS and get the user ID and username
- * Returns user info if valid, null otherwise
- */
-export async function verifyToken(token: string): Promise<VerifiedUser | null> {
-  if (!nc) {
-    console.error("❌ NATS not connected, cannot verify token")
-    return null
-  }
-
-  const payload: TokenVerifyRequest = { token }
-
-  try {
-    const response = await nc.request(
-      Topics.AUTH.TOKEN_VERIFY,
-      codec.encode(JSON.stringify(payload)),
-      { timeout: 5000 },
-    )
-
-    const result: TokenVerifyResponse = JSON.parse(codec.decode(response.data))
-
-    if (result.valid && result.userId)
-      return { id: result.userId, username: result.username || `Player${result.userId}` }
-    else {
-      console.warn(`⚠️ Token verification failed: ${result.error}`)
-      return null
-    }
-  } catch (err) {
-    console.error("❌ Error verifying token:", err)
-    return null
-  }
 }
 
 // ============================================

@@ -2,7 +2,6 @@ import bcrypt from "bcrypt"
 import type { FastifyInstance } from "fastify"
 import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
-import config from "../config"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa"
 import { createGoogleUser, createUser, getUser, updateUser, userToPublicUser } from "./auth.service"
 import { getGoogleAuthUrl, getGoogleProfile } from "./google"
@@ -10,14 +9,6 @@ import { clearJWT, getJWT, setJWT } from "./jwt"
 import { PUBLIC_USER_SCHEMA, PUBLIC_VALIDATION_ERROR_SCHEMA } from "./schemas"
 
 export async function authRoutes(fastify: FastifyInstance) {
-  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/jwt-public", {
-    schema: {
-      response: { 200: z.object({ publicKey: z.string() }) },
-    },
-  }, async (req, res) => {
-    res.send({ publicKey: config.JWT_PUBLIC })
-  })
-
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google", {
     schema: {
       response: { 200: z.object({ url: z.string() }) },
@@ -179,6 +170,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       const user = getUser(jwt.email)!
       user.username = req.body.username
       updateUser(user.email, user)
+      setJWT(res, user)
 
       res.send({ user: userToPublicUser(user) })
     } catch (error) {

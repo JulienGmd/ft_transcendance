@@ -9,6 +9,9 @@ COPY package*.json ./
 COPY shared ./shared
 COPY services/game ./services/game
 
+# game service only
+COPY secrets/jwt/public.pem /secrets/jwt/public.pem
+
 RUN npm ci --workspaces
 
 FROM base AS development

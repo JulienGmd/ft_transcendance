@@ -4,7 +4,12 @@ import config from "../config"
 import { User } from "../db"
 
 export function setJWT(res: FastifyReply, user: User): void {
-  const jwtToken = jwt.sign({ email: user.email }, config.JWT_PRIVATE, { algorithm: "RS256", expiresIn: "365d" })
+  // RS256 is asymmetric: we sign with private key and verify with public key
+  const jwtToken = jwt.sign(
+    { id: user.id, email: user.email, username: user.username },
+    config.JWT_PRIVATE,
+    { algorithm: "RS256", expiresIn: "365d" },
+  )
 
   res.setCookie("authToken", jwtToken, {
     httpOnly: true, // no javascript access (XSS protection)
@@ -15,13 +20,17 @@ export function setJWT(res: FastifyReply, user: User): void {
   })
 }
 
-export function getJWT(req: FastifyRequest): { email: string } | null {
+export function getJWT(req: FastifyRequest): { id: string; email: string; username: string } | null {
   const jwtToken = req.cookies.authToken
   if (!jwtToken)
     return null
 
   try {
-    return jwt.verify(jwtToken, config.JWT_PUBLIC, { algorithms: ["RS256"] }) as { email: string }
+    return jwt.verify(
+      jwtToken,
+      config.JWT_PUBLIC,
+      { algorithms: ["RS256"] },
+    ) as { id: string; email: string; username: string }
   } catch (err) {
     return null
   }
