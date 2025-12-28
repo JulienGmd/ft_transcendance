@@ -17,9 +17,11 @@ secrets/jwt:
 	@openssl rsa -in secrets/jwt/private.pem -pubout -out secrets/jwt/public.pem 2>/dev/null
 	@echo "--> New JWT keys has been generated"
 
-dev: setup
 # Install node_modules in all services because they are all part of the workspace defined in root package.json
-	if [ ! -f node_modules ]; then npm i; fi
+node_modules:
+	npm i
+
+dev: node_modules setup
 # Use docker-compose.dev.yml on top of docker-compose.yml, which defines the Dockerfile stage to development and mount volumes for live code reloading.
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
