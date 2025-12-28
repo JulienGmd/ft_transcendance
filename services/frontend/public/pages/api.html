@@ -1,71 +1,110 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pong Game WebSocket API</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col items-center py-8">
-  <main class="w-full max-w-2xl bg-gray-900 rounded-lg shadow-lg p-8 border border-cyan-700/30">
-    <h1 class="text-3xl font-bold font-orbitron text-cyan-400 mb-4">WebSocket Game API</h1>
-    <p class="mb-6">This page describes the WebSocket API to interact with the Pong game server.</p>
+<div class="animate-slide-up w-full space-y-8">
+  <div class="space-y-4">
+    <h1 class="font-orbitron text-3xl font-bold">WebSocket Game API</h1>
+    <p>This page describes the WebSocket API to interact with the Pong game server.</p>
+  </div>
 
-    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Connection</h2>
-    <ul class="list-disc ml-6 mb-4">
+  <div class="space-y-4">
+    <h2 class="font-orbitron text-xl font-bold">Connection</h2>
+
+    <ul class="list-inside list-disc">
       <li><b>URL:</b> <code>ws(s)://&lt;host&gt;/api/game/ws</code></li>
       <li><b>Authentication:</b> JWT in httpOnly cookie (same as the frontend)</li>
     </ul>
+  </div>
 
-    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Client → Server Messages</h2>
-    <ul class="mb-4">
-      <li><b>join_normal</b>: join the normal queue
-        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "join_normal" }</pre>
+  <div class="space-y-4">
+    <h2 class="font-orbitron text-xl font-bold">Client → Server Messages</h2>
+
+    <ul class="space-y-4">
+      <li class="space-y-2">
+        <p><b class="font-orbitron">join_normal</b>: join the normal queue</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "join_normal" }</pre>
       </li>
-      <li><b>join_tournament</b>: join the tournament queue
-        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "join_tournament" }</pre>
+      <li class="space-y-2">
+        <p><b class="font-orbitron">join_tournament</b>: join the tournament queue</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "join_tournament" }</pre>
       </li>
-      <li><b>leave_queue</b>: leave the queue
-        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "leave_queue" }</pre>
+      <li class="space-y-2">
+        <p><b class="font-orbitron">leave_queue</b>: leave the queue</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "leave_queue" }</pre>
       </li>
-      <li><b>input</b>: send a paddle action
-        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "input", "key": "up"|"down", "action": "press"|"release" }</pre>
+      <li class="space-y-2">
+        <p><b class="font-orbitron">input</b>: send a paddle action</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{ "type": "input", "key": "up"|"down", "action": "press"|"release" }</pre
+        >
       </li>
-      <li><b>ping</b>: ping the server
-        <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{ "type": "ping" }</pre>
+      <li class="space-y-2">
+        <p><b class="font-orbitron">ping</b>: ping the server</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "ping" }</pre>
       </li>
     </ul>
+  </div>
 
-    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Server → Client Messages</h2>
-    <p class="mb-2">Possible message types:</p>
-    <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto mb-4">queue_joined, queue_left, game_found, countdown, game_start, game_state, ball_sync, paddle_update, score_update, game_over, tournament_waiting, tournament_result, opponent_disconnected, opponent_reconnected, error, pong</pre>
-    <p class="mb-4">Below are the main server→client message types and their payload structures. All information needed to implement a client is included here.</p>
-    <div class="mb-4">
-      <b>queue_joined</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+  <div class="space-y-4">
+    <h2 class="font-orbitron text-xl font-bold">Server → Client Messages</h2>
+
+    <div class="space-y-2">
+      <p>Possible message types:</p>
+      <pre class="bg-surface rounded px-2 py-1 text-sm whitespace-normal">
+        queue_joined, queue_left, game_found, countdown, game_start, game_state, ball_sync, paddle_update, score_update, game_over, tournament_waiting, tournament_result, opponent_disconnected, opponent_reconnected, error, pong    </pre
+      >
+    </div>
+
+    <p>
+      Below are the main server→client message types and their payload structures. All information needed to implement a
+      client is included here.
+    </p>
+
+    <ul class="space-y-4">
+      <li class="space-y-2">
+        <p><b class="font-orbitron">queue_joined</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "queue_joined",
   "position": number, // your position in the queue
   "mode": "normal" | "tournament"
-}</pre>
-      <b>queue_left</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">queue_left</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "queue_left"
-}</pre>
-      <b>game_found</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">game_found</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "game_found",
   "gameId": string,
   "side": "left" | "right",
   "opponentName": string,
   "mode": "normal" | "tournament"
-}</pre>
-      <b>countdown</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">countdown</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "countdown",
   "seconds": number
-}</pre>
-      <b>game_state</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">game_state</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "game_state",
   "state": {
     "gameId": string,
@@ -82,38 +121,58 @@
     "score": { "left": number, "right": number },
     "timestamp": number
   }
-}</pre>
-      <b>game_over</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">game_over</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "game_over",
   "finalScore": { "left": number, "right": number },
   "mode": "normal" | "tournament",
   "leftPrecision": number, // 0..1
   "rightPrecision": number // 0..1
-}</pre>
-      <b>error</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">error</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "error",
   "message": string
-}</pre>
-      <b>pong</b>:
-      <pre class="bg-gray-800 rounded p-2 text-sm overflow-x-auto">{
+}</pre
+        >
+      </li>
+
+      <li class="space-y-2">
+        <p><b class="font-orbitron">pong</b>:</p>
+        <pre class="bg-surface rounded px-2 py-1 text-sm">
+{
   "type": "pong"
-}</pre>
-    </div>
-    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Example Sequence</h2>
-    <ol class="list-decimal ml-6 mb-4">
+}</pre
+        >
+      </li>
+    </ul>
+  </div>
+
+  <div class="space-y-4">
+    <h2 class="font-orbitron text-xl font-bold">Example Sequence</h2>
+
+    <ol class="list-inside list-decimal">
       <li>Connect to the WebSocket</li>
       <li>Send <code>{ "type": "join_normal" }</code></li>
       <li>Receive <code>queue_joined</code>, then <code>game_found</code>, then <code>countdown</code>, etc.</li>
       <li>During the game, send <code>{ "type": "input", ... }</code> to move the paddle</li>
     </ol>
 
-    <h2 class="text-xl font-bold text-cyan-300 mt-6 mb-2">Notes</h2>
-    <ul class="list-disc ml-6 mb-4">
+    <h2 class="font-orbitron text-xl font-bold">Notes</h2>
+    <ul class="list-inside list-disc">
       <li>All commands are JSON.</li>
       <li>See the source code for more details.</li>
     </ul>
-  </main>
-</body>
-</html>
+  </div>
+</div>
