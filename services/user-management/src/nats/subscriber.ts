@@ -7,14 +7,10 @@ import { getCodec, getNatsClient } from "./connection"
 export function setupSubscribers(): void {
   const nc = getNatsClient()
   const codec = getCodec()
-  messagesLoop(nc, codec)
+  listenMatchCreate(nc, codec)
 }
 
-// ============================================
-// TOKEN VERIFY SUBSCRIBER (request/reply)
-// ============================================
-
-async function messagesLoop(nc: NatsConnection, codec: Codec<string>): Promise<void> {
+async function listenMatchCreate(nc: NatsConnection, codec: Codec<string>): Promise<void> {
   const sub = nc.subscribe(Topics.MATCH.CREATE)
   console.log(`📡 Listening on ${Topics.MATCH.CREATE}`)
 
