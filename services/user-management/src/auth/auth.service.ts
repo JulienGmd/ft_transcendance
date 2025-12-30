@@ -16,8 +16,9 @@ export function createUser(email: string, passwordHash: string, username: string
 
 export function createGoogleUser(email: string, googleId: string): User {
   const db = getDb()
-  const stmt = db.prepare(`INSERT INTO users (email, google_id) VALUES (?, ?)`)
-  const info = stmt.run(email, googleId)
+  // username is NOT NULL so we create a temporary one and update it right after
+  const stmt = db.prepare(`INSERT INTO users (email, google_id, username) VALUES (?, ?, ?)`)
+  const info = stmt.run(email, googleId, `temp_${googleId}`)
   db.prepare(`UPDATE users SET username = ? WHERE id = ?`).run(`user${info.lastInsertRowid}`, info.lastInsertRowid)
   return db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid) as User
 }
@@ -33,7 +34,7 @@ export function updateUser(email: string, user: User): void {
 export function userToPublicUser(user: User): PublicUser {
   return {
     email: user.email,
-    username: user.username || null,
+    username: user.username,
     avatar: user.avatar || null,
     twofa_enabled: !!user.twofa_secret,
   }

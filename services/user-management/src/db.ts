@@ -21,9 +21,9 @@ export function initDb(): Database.Database {
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL UNIQUE,
+            username TEXT NOT NULL UNIQUE,
             password_hash TEXT,
             google_id TEXT UNIQUE,
-            username TEXT UNIQUE,
             avatar TEXT,
             twofa_secret TEXT,
             twofa_verify_time DATETIME,
@@ -64,7 +64,7 @@ export type User = {
   email: string
   password_hash: string | null
   google_id: string | null
-  username: string | null
+  username: string
   avatar: string | null
   twofa_secret: string | null
   twofa_verify_time: string | null

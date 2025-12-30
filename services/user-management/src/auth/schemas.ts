@@ -2,7 +2,7 @@ import z from "zod"
 
 export const PUBLIC_USER_SCHEMA = z.object({
   email: z.email(),
-  username: z.string().nullable(),
+  username: z.string(),
   avatar: z.string().nullable(),
   twofa_enabled: z.boolean(),
 })
