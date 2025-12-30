@@ -17,7 +17,7 @@ import {
   sendGameState,
   sendOpponentDisconnected,
   sendOpponentReconnected,
-} from "./communication.js"
+} from "./communication"
 import {
   createBallSync,
   createGameSnapshot,
@@ -25,9 +25,9 @@ import {
   getOpponent,
   getPlayerBySide,
   predictBallArrival,
-} from "./engine.js"
-import { sendMatchResult } from "./nats.js"
-import { Game, GAME_CONFIG, GameMode, GameState, InputAction, InputKey, PlayerSide } from "./types.js"
+} from "./engine"
+import { sendMatchResult } from "./nats"
+import { Game, GAME_CONFIG, GameMode, GameState, InputAction, InputKey, PlayerSide } from "./types"
 
 export interface GameSession {
   game: Game

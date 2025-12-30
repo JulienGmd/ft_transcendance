@@ -3,7 +3,7 @@
 // Abstracts WebSocket/transport to allow easy changes
 // ============================================
 
-import { BallSync, GameMode, GameStateSnapshot, PlayerSide, ServerMessage, TournamentRanking } from "./types.js"
+import { BallSync, GameMode, GameStateSnapshot, PlayerSide, ServerMessage, TournamentRanking } from "./types"
 
 // ============================================
 // SOCKET INTERFACE

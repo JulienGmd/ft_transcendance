@@ -8,12 +8,12 @@ import fastifyWebsocket from "@fastify/websocket"
 import Fastify from "fastify"
 import { readFileSync } from "fs"
 import type { WebSocket } from "ws"
-import { ISocket, parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication.js"
-import { GameManager } from "./gameManager.js"
-import { getJWT } from "./jwt.js"
-import { connectNats } from "./nats.js"
-import { NormalQueue, TournamentQueue } from "./queue.js"
-import { ClientMessage, GameMode, InputAction, InputKey } from "./types.js"
+import { ISocket, parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication"
+import { GameManager } from "./gameManager"
+import { getJWT } from "./jwt"
+import { connectNats } from "./nats"
+import { NormalQueue, TournamentQueue } from "./queue"
+import { ClientMessage, GameMode, InputAction, InputKey } from "./types"
 
 // ============================================
 // INITIALIZE

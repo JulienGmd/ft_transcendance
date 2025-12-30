@@ -15,7 +15,7 @@ import {
   Player,
   PlayerSide,
   Vector2D,
-} from "./types.js"
+} from "./types"
 
 // ============================================
 // UTILITY

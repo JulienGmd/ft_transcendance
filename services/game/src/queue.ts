@@ -3,10 +3,10 @@
 // Normal (1v1) and Tournament (4 players) modes
 // ============================================
 
-import { broadcastTournamentResult, broadcastTournamentWaiting, ISocket, sendGameFound } from "./communication.js"
-import { createGame } from "./engine.js"
-import { GameManager } from "./gameManager.js"
-import { GameMode, PlayerSide, QueueEntry, TournamentRanking } from "./types.js"
+import { broadcastTournamentResult, broadcastTournamentWaiting, ISocket, sendGameFound } from "./communication"
+import { createGame } from "./engine"
+import { GameManager } from "./gameManager"
+import { GameMode, PlayerSide, QueueEntry, TournamentRanking } from "./types"
 
 // ============================================
 // NORMAL QUEUE (1v1)
