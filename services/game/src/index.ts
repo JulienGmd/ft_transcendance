@@ -11,7 +11,7 @@ import type { WebSocket } from "ws"
 import { ISocket, parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication"
 import { GameManager } from "./gameManager"
 import { getJWT } from "./jwt"
-import { connectNats } from "./nats"
+import { connectNats, disconnectNats } from "./nats"
 import { NormalQueue, TournamentQueue } from "./queue"
 import { ClientMessage, GameMode, InputAction, InputKey } from "./types"
 
@@ -186,6 +186,20 @@ fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, reque
 
   socket.on("error", (err: Error) => {
     console.error(`[WS] Socket error for player ${playerId}:`, err)
+  })
+})
+
+// ============================================
+// CLEAN EXIT
+// ============================================
+
+const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
+signals.forEach((signal) => {
+  process.on(signal, async () => {
+    console.log(`${signal} received, shutting down gracefully...`)
+    await fastify?.close()
+    await disconnectNats()
+    process.exit(0)
   })
 })
 

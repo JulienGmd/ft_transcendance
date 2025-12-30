@@ -31,10 +31,6 @@ export async function disconnectNats(): Promise<void> {
   }
 }
 
-export function getNatsClient(): NatsConnection | null {
-  return nc
-}
-
 // ============================================
 // SEND MATCH RESULT
 // ============================================
