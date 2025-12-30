@@ -3,7 +3,8 @@
 // Normal (1v1) and Tournament (4 players) modes
 // ============================================
 
-import { broadcastTournamentResult, broadcastTournamentWaiting, ISocket, sendGameFound } from "./communication"
+import type { WebSocket } from "ws"
+import { broadcastTournamentResult, broadcastTournamentWaiting, sendGameFound } from "./communication"
 import { createGame } from "./engine"
 import { GameManager } from "./gameManager"
 import { GameMode, PlayerSide, QueueEntry, TournamentRanking } from "./types"
@@ -17,7 +18,7 @@ class NormalQueue {
 
   constructor(private gameManager: GameManager) {}
 
-  join(playerId: string, username: string, socket: ISocket): { position: number; matched: boolean } {
+  join(playerId: string, username: string, socket: WebSocket): { position: number; matched: boolean } {
     if (this.isInQueue(playerId))
       return { position: this.getPosition(playerId), matched: false }
     if (this.gameManager.getPlayerGame(playerId))
@@ -85,7 +86,7 @@ interface TournamentPlayer {
 interface Tournament {
   id: string
   players: TournamentPlayer[] // [0,1] = semi1, [2,3] = semi2
-  sockets: Map<string, ISocket> // playerId -> socket, updated when semifinal ends
+  sockets: Map<string, WebSocket> // playerId -> socket, updated when semifinal ends
   semi1GameId: string
   semi2GameId: string
   finalsGameId: string | null
@@ -104,7 +105,7 @@ class TournamentQueue {
 
   constructor(private gameManager: GameManager) {}
 
-  join(playerId: string, username: string, socket: ISocket): { position: number; matched: boolean } {
+  join(playerId: string, username: string, socket: WebSocket): { position: number; matched: boolean } {
     if (this.isInQueue(playerId))
       return { position: this.getPosition(playerId), matched: false }
     if (this.gameManager.getPlayerGame(playerId))
@@ -160,7 +161,7 @@ class TournamentQueue {
     this.gameManager.addGame(game2, entries[2].socket, entries[3].socket)
 
     // Initialize sockets map with initial sockets from queue entries
-    const socketsMap = new Map<string, ISocket>()
+    const socketsMap = new Map<string, WebSocket>()
     entries.forEach((e) => socketsMap.set(e.playerId, e.socket))
 
     const tournament: Tournament = {

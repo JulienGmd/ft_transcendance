@@ -2,6 +2,8 @@
 // GAME TYPES & STATES
 // ============================================
 
+import type { WebSocket } from "ws"
+
 // --- Enums ---
 
 export enum GameMode {
@@ -166,15 +168,9 @@ export interface BallSync {
 
 // --- Queue ---
 
-// Socket interface for queue (matches ISocket from communication.ts)
-export interface QueueSocket {
-  send(data: string): void
-  readyState: number
-}
-
 export interface QueueEntry {
   playerId: string
   username: string
   joinedAt: number
-  socket: QueueSocket
+  socket: WebSocket
 }

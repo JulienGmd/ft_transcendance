@@ -3,6 +3,7 @@
 // Uses communication layer for messaging
 // ============================================
 
+import type { WebSocket } from "ws"
 import {
   broadcastBallSync,
   broadcastCountdown,
@@ -11,7 +12,6 @@ import {
   broadcastGameState,
   broadcastPaddleUpdate,
   broadcastScoreUpdate,
-  ISocket,
   isSocketOpen,
   sendGameFound,
   sendGameState,
@@ -31,17 +31,17 @@ import { Game, GAME_CONFIG, GameMode, GameState, InputAction, InputKey, PlayerSi
 
 export interface GameSession {
   game: Game
-  sockets: Map<string, ISocket>
+  sockets: Map<string, WebSocket>
   tickInterval: ReturnType<typeof setInterval> | null
   syncInterval: ReturnType<typeof setInterval> | null
   countdownInterval: ReturnType<typeof setInterval> | null
 }
 
-function getSessionSockets(session: GameSession): ISocket[] {
+function getSessionSockets(session: GameSession): WebSocket[] {
   return [...session.sockets.values()]
 }
 
-function getOpponentSocket(session: GameSession, playerId: string): ISocket | undefined {
+function getOpponentSocket(session: GameSession, playerId: string): WebSocket | undefined {
   const opponentEntry = [...session.sockets.entries()].find(([id]) => id !== playerId)
   return opponentEntry?.[1]
 }
@@ -50,7 +50,7 @@ class GameManager {
   private games: Map<string, GameSession> = new Map()
   private playerToGame: Map<string, string> = new Map()
 
-  addGame(game: Game, socket1: ISocket, socket2: ISocket): void {
+  addGame(game: Game, socket1: WebSocket, socket2: WebSocket): void {
     const players = [...game.players.keys()]
 
     // Clean up any existing game mappings for these players (important for tournament 2nd match)
@@ -215,7 +215,7 @@ class GameManager {
     broadcastBallSync(sockets, ballSync)
   }
 
-  handleInput(playerId: string, socket: ISocket, key: InputKey, action: InputAction): void {
+  handleInput(playerId: string, socket: WebSocket, key: InputKey, action: InputAction): void {
     const session = this.getPlayerGame(playerId)
     if (!session)
       return
@@ -260,7 +260,7 @@ class GameManager {
     console.log(`[GameManager] Player ${playerId} disconnected from game ${session.game.id} (game continues)`)
   }
 
-  handleReconnect(playerId: string, socket: ISocket): boolean {
+  handleReconnect(playerId: string, socket: WebSocket): boolean {
     const session = this.getPlayerGame(playerId)
     if (!session)
       return false
