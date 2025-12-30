@@ -37,9 +37,7 @@ export async function startServer(): Promise<void> {
     console.log(`${req.method} ${req.url}`)
   })
 
-  fastify.get("/health", async (req, res) => {
-    res.type("application/json").send({ status: "ok" })
-  })
+  fastify.get("/health", async () => ({ status: "ok" }))
 
   // By default, all routes serve _index.html
   fastify.get("/*", async (req, res) => {

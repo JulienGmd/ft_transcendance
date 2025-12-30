@@ -72,9 +72,7 @@ export async function startServer(): Promise<void> {
     console.log(`${req.method} ${req.url}`)
   })
 
-  fastify.get("/health", async (req, res) => {
-    res.type("application/json").send({ status: "ok" })
-  })
+  fastify.get("/health", async () => ({ status: "ok" }))
 
   // Register routes
   await authRoutes(fastify)

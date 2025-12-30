@@ -54,14 +54,7 @@ await fastify.register(fastifyCookie)
 // HEALTH CHECK
 // ============================================
 
-fastify.get("/health", async () => {
-  return {
-    status: "ok",
-    activeGames: gameManager.activeGames,
-    normalQueueSize: normalQueue.size,
-    tournamentQueueSize: tournamentQueue.size,
-  }
-})
+fastify.get("/health", async () => ({ status: "ok" }))
 
 // ============================================
 // WEBSOCKET MESSAGE HANDLERS
