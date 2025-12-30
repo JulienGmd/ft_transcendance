@@ -301,14 +301,14 @@ class GameManager {
 
     // Send match result to user-management via NATS
     if (leftPlayer && rightPlayer) {
-      sendMatchResult(
-        Number(leftPlayer.id),
-        Number(rightPlayer.id),
-        leftPlayer.score,
-        rightPlayer.score,
-        0, // precision
-        0, // precision
-      )
+      sendMatchResult({
+        p1_id: Number(leftPlayer.id),
+        p2_id: Number(rightPlayer.id),
+        p1_score: leftPlayer.score,
+        p2_score: rightPlayer.score,
+        p1_precision: 0,
+        p2_precision: 0,
+      })
     }
 
     setTimeout(() => this.cleanup(gameId), 5000)
