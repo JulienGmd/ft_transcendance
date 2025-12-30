@@ -54,13 +54,8 @@ await fastify.register(fastifyCookie)
 // REQUESTS LOG
 // ============================================
 
-// In development, log all requests
-fastify.addHook("onRequest", async (req, rep) => {
-  if (process.env.NODE_ENV === "production")
-    return
-  if (req.url === "/health")
-    return
-
+fastify.addHook("onRequest", async (req, res) => {
+  if (process.env.NODE_ENV !== "production" && req.url !== "/health")
   console.log(`${req.method} ${req.url}`)
 })
 

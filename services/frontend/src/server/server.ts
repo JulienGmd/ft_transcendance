@@ -28,13 +28,9 @@ export async function startServer(): Promise<void> {
   })
 
   // In development, log all requests
-  fastify.addHook("onRequest", async (req, rep) => {
-    if (config.NODE_ENV === "production")
-      return
-    if (req.url === "/health" || req.url === "/dev/file-timestamps")
-      return
-
-    console.log(`${req.method} ${req.url}`)
+  fastify.addHook("onRequest", async (req, res) => {
+    if (config.NODE_ENV !== "production" && req.url !== "/health" && req.url !== "/dev/file-timestamps")
+      console.log(`${req.method} ${req.url}`)
   })
 
   fastify.get("/health", async () => ({ status: "ok" }))
