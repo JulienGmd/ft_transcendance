@@ -33,9 +33,8 @@ clean:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 fclean: clean
-	docker compose down -v --remove-orphans
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans
-	docker system prune -af --volumes
+	docker compose down -v --remove-orphans --rmi all
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans --rmi all
 	git clean -fdX
 
 .PHONY: setup dev start clean fclean

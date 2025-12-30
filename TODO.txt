@@ -2,6 +2,7 @@ TODO
 
 global:
 - rename le repo en ft_transcendence puis find all transcendance -> transcendence
+- remove precision
 - ? eslint
 - ? noImplicitAny and functions return types in tsconfig.json / eslint
 
@@ -10,6 +11,9 @@ shared:
 front:
 
 user-management:
+
+game:
+- ? remove playerId or username in game service, use only username or only playerId
 
 checks:
 - process.env.VAR -> config.VAR
