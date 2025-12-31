@@ -4,7 +4,9 @@
 // ============================================
 
 import type { WebSocket } from "ws"
-import { BallSync, GameMode, GameStateSnapshot, PlayerSide, ServerMessage, TournamentRanking } from "./types"
+import { SerializedEngine, SerializedPaddle } from "./engine"
+import { GameMode } from "./gameManager"
+import { ServerMessage, Side, TournamentRanking } from "./types"
 
 // ============================================
 // SOCKET INTERFACE
@@ -96,14 +98,12 @@ export function sendQueueLeft(socket: WebSocket): boolean {
  */
 export function sendGameFound(
   socket: WebSocket,
-  gameId: string,
-  side: PlayerSide,
+  side: Side,
   opponentName: string,
   mode: GameMode,
 ): boolean {
   return sendRaw(socket, {
     type: "game_found",
-    gameId,
     side,
     opponentName,
     mode,
@@ -155,9 +155,9 @@ export function broadcastGameStart(sockets: Iterable<WebSocket>): void {
 /**
  * Send full game state snapshot
  */
-export function sendGameState(socket: WebSocket, state: GameStateSnapshot): boolean {
+export function sendGameSync(socket: WebSocket, state: SerializedEngine): boolean {
   return sendRaw(socket, {
-    type: "game_state",
+    type: "game_sync",
     state,
   })
 }
@@ -165,30 +165,10 @@ export function sendGameState(socket: WebSocket, state: GameStateSnapshot): bool
 /**
  * Broadcast full game state
  */
-export function broadcastGameState(sockets: Iterable<WebSocket>, state: GameStateSnapshot): void {
+export function broadcastGameSync(sockets: Iterable<WebSocket>, state: SerializedEngine): void {
   broadcastRaw(sockets, {
-    type: "game_state",
+    type: "game_sync",
     state,
-  })
-}
-
-/**
- * Send ball sync data
- */
-export function sendBallSync(socket: WebSocket, ball: BallSync): boolean {
-  return sendRaw(socket, {
-    type: "ball_sync",
-    ball,
-  })
-}
-
-/**
- * Broadcast ball sync
- */
-export function broadcastBallSync(sockets: Iterable<WebSocket>, ball: BallSync): void {
-  broadcastRaw(sockets, {
-    type: "ball_sync",
-    ball,
   })
 }
 
@@ -201,15 +181,13 @@ export function broadcastBallSync(sockets: Iterable<WebSocket>, ball: BallSync):
  */
 export function sendPaddleUpdate(
   socket: WebSocket,
-  side: PlayerSide,
-  y: number,
-  direction: -1 | 0 | 1,
+  side: Side,
+  paddle: SerializedPaddle,
 ): boolean {
   return sendRaw(socket, {
     type: "paddle_update",
     side,
-    y,
-    direction,
+    paddle,
   })
 }
 
@@ -218,15 +196,13 @@ export function sendPaddleUpdate(
  */
 export function broadcastPaddleUpdate(
   sockets: Iterable<WebSocket>,
-  side: PlayerSide,
-  y: number,
-  direction: -1 | 0 | 1,
+  side: Side,
+  paddle: SerializedPaddle,
 ): void {
   broadcastRaw(sockets, {
     type: "paddle_update",
     side,
-    y,
-    direction,
+    paddle,
   })
 }
 
@@ -237,11 +213,10 @@ export function broadcastPaddleUpdate(
 /**
  * Send score update
  */
-export function sendScoreUpdate(socket: WebSocket, left: number, right: number): boolean {
+export function sendScoreUpdate(socket: WebSocket, score: { left: number; right: number }): boolean {
   return sendRaw(socket, {
     type: "score_update",
-    left,
-    right,
+    score,
   })
 }
 
@@ -250,13 +225,11 @@ export function sendScoreUpdate(socket: WebSocket, left: number, right: number):
  */
 export function broadcastScoreUpdate(
   sockets: Iterable<WebSocket>,
-  left: number,
-  right: number,
+  score: { left: number; right: number },
 ): void {
   broadcastRaw(sockets, {
     type: "score_update",
-    left,
-    right,
+    score,
   })
 }
 
@@ -269,14 +242,9 @@ export function broadcastScoreUpdate(
  */
 export function sendGameOver(
   socket: WebSocket,
-  leftScore: number,
-  rightScore: number,
-  mode: GameMode,
 ): boolean {
   return sendRaw(socket, {
     type: "game_over",
-    finalScore: { left: leftScore, right: rightScore },
-    mode,
   })
 }
 
@@ -285,18 +253,9 @@ export function sendGameOver(
  */
 export function broadcastGameOver(
   sockets: Iterable<WebSocket>,
-  leftScore: number,
-  rightScore: number,
-  mode: GameMode,
-  leftPrecision?: number,
-  rightPrecision?: number,
 ): void {
   broadcastRaw(sockets, {
     type: "game_over",
-    finalScore: { left: leftScore, right: rightScore },
-    mode,
-    leftPrecision,
-    rightPrecision,
   })
 }
 
@@ -337,28 +296,6 @@ export function broadcastTournamentResult(sockets: Iterable<WebSocket>, rankings
   broadcastRaw(sockets, {
     type: "tournament_result",
     rankings,
-  })
-}
-
-// ============================================
-// CONNECTION STATUS MESSAGES
-// ============================================
-
-/**
- * Notify opponent disconnected
- */
-export function sendOpponentDisconnected(socket: WebSocket): boolean {
-  return sendRaw(socket, {
-    type: "opponent_disconnected",
-  })
-}
-
-/**
- * Notify opponent reconnected
- */
-export function sendOpponentReconnected(socket: WebSocket): boolean {
-  return sendRaw(socket, {
-    type: "opponent_reconnected",
   })
 }
 

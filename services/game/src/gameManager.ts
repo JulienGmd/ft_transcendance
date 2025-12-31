@@ -3,370 +3,241 @@
 // Uses communication layer for messaging
 // ============================================
 
-import type { WebSocket } from "ws"
 import {
-  broadcastBallSync,
   broadcastCountdown,
   broadcastGameOver,
   broadcastGameStart,
-  broadcastGameState,
+  broadcastGameSync,
   broadcastPaddleUpdate,
   broadcastScoreUpdate,
-  isSocketOpen,
   sendGameFound,
-  sendGameState,
-  sendOpponentDisconnected,
-  sendOpponentReconnected,
 } from "./communication"
-import {
-  createBallSync,
-  createGameSnapshot,
-  gameTick,
-  getOpponent,
-  getPlayerBySide,
-  predictBallArrival,
-} from "./engine"
+import { Engine } from "./engine"
+import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig"
 import { sendMatchResult } from "./nats"
-import { Game, GAME_CONFIG, GameMode, GameState, InputAction, InputKey, PlayerSide } from "./types"
+import { InputAction, InputKey, Player, Side } from "./types"
 
-export interface GameSession {
-  game: Game
-  sockets: Map<string, WebSocket>
-  tickInterval: ReturnType<typeof setInterval> | null
-  syncInterval: ReturnType<typeof setInterval> | null
-  countdownInterval: ReturnType<typeof setInterval> | null
+export enum GameMode {
+  NORMAL = "normal",
+  TOURNAMENT = "tournament",
 }
 
-function getSessionSockets(session: GameSession): WebSocket[] {
-  return [...session.sockets.values()]
+export enum GameState {
+  WAITING = "waiting",
+  COUNTDOWN = "countdown",
+  PLAYING = "playing",
+  FINISHED = "finished",
 }
 
-function getOpponentSocket(session: GameSession, playerId: string): WebSocket | undefined {
-  const opponentEntry = [...session.sockets.entries()].find(([id]) => id !== playerId)
-  return opponentEntry?.[1]
+export interface Game {
+  p1: Player
+  p2: Player
+  mode: GameMode
+  engine: Engine
+  state: GameState
+  countdownInterval?: NodeJS.Timeout
 }
 
-class GameManager {
-  private games: Map<string, GameSession> = new Map()
-  private playerToGame: Map<string, string> = new Map()
+export class GameManager {
+  private games: Game[] = []
+  private playerIdToGame: Map<number, Game> = new Map()
+  private tickInterval: NodeJS.Timeout
+  private syncInterval: NodeJS.Timeout
 
-  addGame(game: Game, socket1: WebSocket, socket2: WebSocket): void {
-    const players = [...game.players.keys()]
-
-    // Clean up any existing game mappings for these players (important for tournament 2nd match)
-    for (const playerId of players) {
-      const oldGameId = this.playerToGame.get(playerId)
-      if (oldGameId && oldGameId !== game.id)
-        console.log(`[GameManager] Player ${playerId} was in game ${oldGameId}, moving to new game ${game.id}`)
-    }
-
-    const session: GameSession = {
-      game,
-      sockets: new Map([[players[0], socket1], [players[1], socket2]]),
-      tickInterval: null,
-      syncInterval: null,
-      countdownInterval: null,
-    }
-    this.games.set(game.id, session)
-    players.forEach((playerId) => this.playerToGame.set(playerId, game.id))
-    console.log(`[GameManager] Game ${game.id} created`)
+  constructor() {
+    this.tickInterval = setInterval(() => this.tick(), TICK_RATE_MS)
+    this.syncInterval = setInterval(() => this.sync(), SYNC_RATE_MS)
   }
 
-  getGame(gameId: string): Game | undefined {
-    return this.games.get(gameId)?.game
+  dispose(): void {
+    clearInterval(this.tickInterval)
+    clearInterval(this.syncInterval)
+    this.games.forEach((game) => clearInterval(game.countdownInterval))
   }
 
-  getGameSession(gameId: string): GameSession | undefined {
-    return this.games.get(gameId)
-  }
+  // ===== GAMES MANAGEMENT ===================
 
-  getPlayerGame(playerId: string): GameSession | undefined {
-    const gameId = this.playerToGame.get(playerId)
-    if (!gameId)
-      return undefined
-    const session = this.games.get(gameId)
-    if (!session || session.game.state === "finished")
-      return undefined
-    return session
-  }
-
-  // Callback for tournament queue to be notified of game endings
-  private onGameEndCallback: ((gameId: string, winnerId: string) => void) | null = null
-
-  setOnGameEndCallback(callback: (gameId: string, winnerId: string) => void): void {
-    this.onGameEndCallback = callback
-  }
-
-  startCountdown(gameId: string): void {
-    const session = this.games.get(gameId)
-    if (!session)
+  addGame(p1: Player, p2: Player, mode: GameMode): void {
+    if (this.getPlayerGame(p1) || this.getPlayerGame(p2))
       return
 
-    // Set state to COUNTDOWN and start intervals so paddles can move
-    session.game.state = GameState.COUNTDOWN
-    session.game.lastUpdateTime = Date.now()
-    this.startIntervals(session)
-
-    this.startCountdownTimer(gameId)
+    const game: Game = {
+      p1,
+      p2,
+      engine: new Engine(),
+      state: GameState.WAITING,
+      mode,
+    }
+    this.games.push(game)
+    this.playerIdToGame.set(p1.id, game)
+    this.playerIdToGame.set(p2.id, game)
+    console.log("[GameManager] Game added")
   }
 
-  private startCountdownTimer(gameId: string): void {
-    const session = this.games.get(gameId)
-    if (!session)
-      return
+  removeGame(game: Game): void {
+    clearInterval(game.countdownInterval)
 
-    // Prevent multiple concurrent countdowns
-    if (session.countdownInterval) {
-      console.warn(`[GameManager] Countdown already running for game ${gameId}, skipping`)
-      return
+    const index = this.games.indexOf(game)
+    if (index !== -1) {
+      this.games.splice(index, 1)
+      this.playerIdToGame.delete(game.p1.id)
+      this.playerIdToGame.delete(game.p2.id)
+      console.log("[GameManager] Game removed")
     }
+  }
 
-    let countdown = GAME_CONFIG.COUNTDOWN_SECONDS
-    const sockets = getSessionSockets(session)
+  getPlayerGame(player: Player): Game | undefined {
+    return this.playerIdToGame.get(player.id)
+  }
+
+  // TODO
+  // // Callback for tournament queue to be notified of game endings
+  // private onGameEndCallback: ((gameId: string, winnerId: string) => void) | null = null
+  // setOnGameEndCallback(callback: (gameId: string, winnerId: string) => void): void {
+  //   this.onGameEndCallback = callback
+  // }
+
+  // ===== GAMES LIFECYCLE ====================
+
+  startCountdown(game: Game): void {
+    game.state = GameState.COUNTDOWN
+
+    let countdown = COUNTDOWN_SECONDS
+    const sockets = [game.p1.socket, game.p2.socket]
     broadcastCountdown(sockets, countdown)
-    session.countdownInterval = setInterval(() => {
+
+    clearInterval(game.countdownInterval)
+    game.countdownInterval = setInterval(() => {
       countdown--
       broadcastCountdown(sockets, countdown) // Send even when 0 to hide overlay
-      if (countdown <= 0) {
-        // Clear interval BEFORE starting game to prevent race conditions
-        this.clearCountdownInterval(session)
-        this.startGame(gameId)
+
+      if (countdown <= 0 && game.countdownInterval) {
+        clearInterval(game.countdownInterval)
+        game.countdownInterval = undefined
+        this.startGame(game)
       }
     }, 1000)
   }
 
-  private startGame(gameId: string): void {
-    const session = this.games.get(gameId)
-    if (!session)
-      return
-    // Prevent starting if already playing (race condition guard)
-    if (session.game.state === GameState.PLAYING) {
-      console.warn(`[GameManager] Game ${gameId} already playing, skipping startGame`)
-      return
-    }
-    session.game.state = GameState.PLAYING
-    session.game.startedAt = Date.now()
-    session.game.lastUpdateTime = Date.now()
-    // Recalculate ball prediction to ensure it's in the future
-    session.game.ball.predictedArrival = predictBallArrival(session.game.ball)
-    console.log(`[GameManager] Game ${gameId} started`)
-    const sockets = getSessionSockets(session)
+  private startGame(game: Game): void {
+    game.state = GameState.PLAYING
+
+    game.engine.reset()
+    this.syncGame(game)
+
+    const sockets = [game.p1.socket, game.p2.socket]
     broadcastGameStart(sockets)
-    // Send ball sync so client has correct velocity after countdown
-    const ballSync = createBallSync(session.game.ball)
-    broadcastBallSync(sockets, ballSync)
-    // Intervals are already running from startCountdown, no need to restart them
+    console.log("[GameManager] Game started")
   }
 
-  private tick(gameId: string): void {
-    const session = this.games.get(gameId)
-    if (!session)
-      return
+  private endGame(game: Game): void {
+    game.state = GameState.FINISHED
 
-    // Only process game tick during COUNTDOWN and PLAYING
-    // gameTick handles paddle updates and (during PLAYING) ball physics
-    if (session.game.state !== GameState.COUNTDOWN && session.game.state !== GameState.PLAYING)
-      return
-
-    const result = gameTick(session.game)
-
-    // Send immediate sync if ball bounced on paddle (for responsive feel)
-    if (result.paddleBounce) {
-      const sockets = getSessionSockets(session)
-      const ballSync = createBallSync(session.game.ball)
-      broadcastBallSync(sockets, ballSync)
-    }
-
-    // Only handle scoring if a goal was scored
-    if (!result.scored)
-      return
-
-    // IMMEDIATELY change state to prevent multiple countdown triggers from concurrent ticks
-    // This must happen BEFORE any async operations or broadcasts
-    if (!result.gameOver) {
-      session.game.state = GameState.COUNTDOWN
-      session.game.countdownEnd = Date.now() + GAME_CONFIG.COUNTDOWN_SECONDS * 1000
-    }
-
-    const sockets = getSessionSockets(session)
-    const leftPlayer = getPlayerBySide(session.game, PlayerSide.LEFT)
-    const rightPlayer = getPlayerBySide(session.game, PlayerSide.RIGHT)
-    broadcastScoreUpdate(sockets, leftPlayer?.score ?? 0, rightPlayer?.score ?? 0)
-
-    // If game ended, handle it; otherwise start the countdown timer
-    if (result.gameOver && result.winnerId)
-      this.endGame(gameId, result.winnerId)
-    else {
-      // State already changed to COUNTDOWN above, just start the timer
-      this.clearCountdownInterval(session)
-      // Send game state to sync ball position after reset
-      const snapshot = createGameSnapshot(session.game)
-      broadcastGameState(sockets, snapshot)
-      this.startCountdownTimer(gameId)
-    }
-  }
-
-  private syncBall(gameId: string): void {
-    const session = this.games.get(gameId)
-    if (!session || session.game.state !== GameState.PLAYING)
-      return
-    const ballSync = createBallSync(session.game.ball)
-    const sockets = getSessionSockets(session)
-    broadcastBallSync(sockets, ballSync)
-  }
-
-  handleInput(playerId: string, socket: WebSocket, key: InputKey, action: InputAction): void {
-    const session = this.getPlayerGame(playerId)
-    if (!session)
-      return
-    // Allow inputs during COUNTDOWN and PLAYING states
-    if (session.game.state !== GameState.PLAYING && session.game.state !== GameState.COUNTDOWN)
-      return
-    const player = session.game.players.get(playerId)
-    if (!player)
-      return
-
-    // Update socket if it has changed (important for tournament 2nd match)
-    const currentSocket = session.sockets.get(playerId)
-    if (currentSocket !== socket) {
-      console.log(`[GameManager] Updating socket for player ${playerId} in game ${session.game.id}`)
-      session.sockets.set(playerId, socket)
-    }
-
-    player.lastInputTime = Date.now()
-    if (action === InputAction.PRESS)
-      player.paddle.direction = key === InputKey.UP ? -1 : 1
-    else {
-      const expectedDir = key === InputKey.UP ? -1 : 1
-      if (player.paddle.direction === expectedDir)
-        player.paddle.direction = 0
-    }
-    const sockets = getSessionSockets(session)
-    broadcastPaddleUpdate(sockets, player.side, player.paddle.y, player.paddle.direction)
-  }
-
-  handleDisconnect(playerId: string): void {
-    const session = this.getPlayerGame(playerId)
-    if (!session)
-      return
-    const player = session.game.players.get(playerId)
-    if (!player)
-      return
-    player.connected = false
-    const opponentSocket = getOpponentSocket(session, playerId)
-    if (opponentSocket && isSocketOpen(opponentSocket))
-      sendOpponentDisconnected(opponentSocket)
-    // Le jeu continue même si le joueur est déconnecté
-    console.log(`[GameManager] Player ${playerId} disconnected from game ${session.game.id} (game continues)`)
-  }
-
-  handleReconnect(playerId: string, socket: WebSocket): boolean {
-    const session = this.getPlayerGame(playerId)
-    if (!session)
-      return false
-    const player = session.game.players.get(playerId)
-    if (!player)
-      return false
-    player.connected = true
-    session.sockets.set(playerId, socket)
-    const opponentSocket = getOpponentSocket(session, playerId)
-    if (opponentSocket && isSocketOpen(opponentSocket))
-      sendOpponentReconnected(opponentSocket)
-    const opponent = getOpponent(session.game, playerId)
-    sendGameFound(socket, session.game.id, player.side, opponent?.username ?? "", session.game.mode)
-    const snapshot = createGameSnapshot(session.game)
-    sendGameState(socket, snapshot)
-    // Le jeu continue pendant la déconnexion, donc pas besoin de redémarrer les intervals
-    console.log(`[GameManager] Player ${playerId} reconnected to game ${session.game.id}`)
-    return true
-  }
-
-  private endGame(gameId: string, winnerId: string): void {
-    const session = this.games.get(gameId)
-    if (!session)
-      return
-    session.game.state = GameState.FINISHED
-    session.game.finishedAt = Date.now()
-    session.game.winnerId = winnerId
-    this.stopIntervals(session)
-    const leftPlayer = getPlayerBySide(session.game, PlayerSide.LEFT)
-    const rightPlayer = getPlayerBySide(session.game, PlayerSide.RIGHT)
-    const sockets = getSessionSockets(session)
-    broadcastGameOver(sockets, leftPlayer?.score ?? 0, rightPlayer?.score ?? 0, session.game.mode)
-    console.log(`[GameManager] Game ${gameId} ended. Winner: ${winnerId}`)
-
-    // Notify tournament queue if this is a tournament game
-    if (this.onGameEndCallback)
-      this.onGameEndCallback(gameId, winnerId)
+    // TODO
+    // // Notify tournament queue if this is a tournament game
+    // if (this.onGameEndCallback)
+    //   this.onGameEndCallback(gameId, winnerId)
 
     // Send match result to user-management via NATS
-    if (leftPlayer && rightPlayer) {
-      sendMatchResult({
-        p1_id: Number(leftPlayer.id),
-        p2_id: Number(rightPlayer.id),
-        p1_score: leftPlayer.score,
-        p2_score: rightPlayer.score,
-        p1_precision: 0,
-        p2_precision: 0,
-      })
-    }
+    const score = game.engine.getScore()
+    sendMatchResult({
+      p1_id: game.p1.id,
+      p2_id: game.p2.id,
+      p1_score: score.left,
+      p2_score: score.right,
+      p1_precision: 0,
+      p2_precision: 0,
+    })
 
-    setTimeout(() => this.cleanup(gameId), 5000)
+    const sockets = [game.p1.socket, game.p2.socket]
+    broadcastGameOver(sockets)
+    console.log("[GameManager] Game ended")
   }
 
-  private startIntervals(session: GameSession): void {
-    // Don't restart intervals if they're already running
-    if (!session.tickInterval)
-      session.tickInterval = setInterval(() => this.tick(session.game.id), GAME_CONFIG.TICK_RATE_MS)
-    if (!session.syncInterval)
-      session.syncInterval = setInterval(() => this.syncBall(session.game.id), GAME_CONFIG.SYNC_INTERVAL_MS)
+  private tick(): void {
+    const gamesToRemove: Game[] = []
+
+    this.games.forEach((game) => {
+      // Only process game tick during COUNTDOWN and PLAYING
+      // gameTick handles paddle updates and (during PLAYING) ball physics
+      if (game.state !== GameState.COUNTDOWN && game.state !== GameState.PLAYING)
+        return
+
+      const result = game.engine.tick(game.state === GameState.PLAYING)
+
+      // Send immediate sync if ball bounced on paddle (for responsive feel)
+      if (result.paddleBounce)
+        this.syncGame(game)
+
+      if (result.scorer) {
+        const sockets = [game.p1.socket, game.p2.socket]
+        broadcastScoreUpdate(sockets, game.engine.getScore())
+
+        if (result.gameOver) {
+          this.endGame(game)
+          gamesToRemove.push(game)
+          return
+        }
+
+        game.engine.reset()
+        this.startCountdown(game)
+      }
+    })
+
+    // Remove games after to not interfere with iteration
+    gamesToRemove.forEach((game) => this.removeGame(game))
   }
 
-  private stopIntervals(session: GameSession): void {
-    this.clearTickInterval(session)
-    this.clearSyncInterval(session)
-    this.clearCountdownInterval(session)
+  private sync(): void {
+    this.games.forEach((game) => this.syncGame(game))
   }
 
-  private clearTickInterval(session: GameSession): void {
-    if (session.tickInterval) {
-      clearInterval(session.tickInterval)
-      session.tickInterval = null
-    }
+  private syncGame(game: Game): void {
+    const sockets = [game.p1.socket, game.p2.socket]
+    broadcastGameSync(sockets, game.engine.serialize())
   }
 
-  private clearSyncInterval(session: GameSession): void {
-    if (session.syncInterval) {
-      clearInterval(session.syncInterval)
-      session.syncInterval = null
-    }
-  }
+  // ====== PLAYER INTERACTIONS ===============
 
-  private clearCountdownInterval(session: GameSession): void {
-    if (session.countdownInterval) {
-      clearInterval(session.countdownInterval)
-      session.countdownInterval = null
-    }
-  }
-
-  private cleanup(gameId: string): void {
-    const session = this.games.get(gameId)
-    if (!session)
+  handleInput(player: Player, key: InputKey, action: InputAction): void {
+    const game = this.getPlayerGame(player)
+    if (!game)
       return
-    this.stopIntervals(session)
-    // Only delete playerToGame mapping if it still points to this game
-    // (important for tournaments where players move to a new game immediately)
-    for (const playerId of session.game.players.keys()) {
-      if (this.playerToGame.get(playerId) === gameId)
-        this.playerToGame.delete(playerId)
-    }
-    this.games.delete(gameId)
-    console.log(`[GameManager] Game ${gameId} cleaned up`)
+
+    // Allow inputs during COUNTDOWN and PLAYING states
+    if (game.state !== GameState.COUNTDOWN && game.state !== GameState.PLAYING)
+      return
+
+    const side = player.id === game.p1.id ? Side.LEFT : Side.RIGHT
+    const paddle = game.engine.handleInput(side, key, action)
+
+    const sockets = [game.p1.socket, game.p2.socket]
+    broadcastPaddleUpdate(sockets, side, paddle)
   }
 
-  get activeGames(): number {
-    return this.games.size
+  handleDisconnect(player: Player): void {
+    // Le jeu continue même si le joueur est déconnecté
+    console.log(`[GameManager] Player ${player.username} disconnected from game (game continues)`)
+  }
+
+  handleReconnect(player: Player): boolean {
+    const game = this.getPlayerGame(player)
+    if (!game)
+      return false
+
+    const side = player.id === game.p1.id ? Side.LEFT : Side.RIGHT
+    const opponent = side === Side.LEFT ? game.p2 : game.p1
+
+    // Update socket reference
+    if (side === Side.LEFT)
+      game.p1 = player
+    else
+      game.p2 = player
+
+    sendGameFound(player.socket, side, opponent.username, game.mode)
+    this.syncGame(game)
+
+    console.log(`[GameManager] Player ${player.username} reconnected to game`)
+    return true
   }
 }
-
-export { GameManager }
