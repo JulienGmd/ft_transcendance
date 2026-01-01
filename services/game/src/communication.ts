@@ -5,8 +5,7 @@
 
 import type { WebSocket } from "ws"
 import { SerializedEngine, SerializedPaddle } from "./engine"
-import { GameMode } from "./gameManager"
-import { ServerMessage, Side, TournamentRanking } from "./types"
+import { ServerMessage, Side } from "./types"
 
 // ============================================
 // SOCKET INTERFACE
@@ -72,11 +71,10 @@ export function broadcastRaw(sockets: Iterable<WebSocket>, message: ServerMessag
 /**
  * Notify player they joined the queue
  */
-export function sendQueueJoined(socket: WebSocket, position: number, mode: GameMode): boolean {
+export function sendQueueJoined(socket: WebSocket, position: number): boolean {
   return sendRaw(socket, {
     type: "queue_joined",
     position,
-    mode,
   })
 }
 
@@ -100,13 +98,11 @@ export function sendGameFound(
   socket: WebSocket,
   side: Side,
   opponentName: string,
-  mode: GameMode,
 ): boolean {
   return sendRaw(socket, {
     type: "game_found",
     side,
     opponentName,
-    mode,
   })
 }
 
@@ -260,29 +256,9 @@ export function broadcastGameOver(
 }
 
 /**
- * Send tournament waiting message
- */
-export function sendTournamentWaiting(socket: WebSocket, message: string): boolean {
-  return sendRaw(socket, {
-    type: "tournament_waiting",
-    message,
-  })
-}
-
-/**
- * Broadcast tournament waiting
- */
-export function broadcastTournamentWaiting(sockets: Iterable<WebSocket>, message: string): void {
-  broadcastRaw(sockets, {
-    type: "tournament_waiting",
-    message,
-  })
-}
-
-/**
  * Send tournament final result
  */
-export function sendTournamentResult(socket: WebSocket, rankings: TournamentRanking[]): boolean {
+export function sendTournamentResult(socket: WebSocket, rankings: string[]): boolean {
   return sendRaw(socket, {
     type: "tournament_result",
     rankings,
@@ -292,7 +268,7 @@ export function sendTournamentResult(socket: WebSocket, rankings: TournamentRank
 /**
  * Broadcast tournament result
  */
-export function broadcastTournamentResult(sockets: Iterable<WebSocket>, rankings: TournamentRanking[]): void {
+export function broadcastTournamentResult(sockets: Iterable<WebSocket>, rankings: string[]): void {
   broadcastRaw(sockets, {
     type: "tournament_result",
     rankings,

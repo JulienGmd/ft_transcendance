@@ -5,7 +5,6 @@
 import { JWTUser } from "@ft_transcendence/shared"
 import type { WebSocket } from "ws"
 import { SerializedEngine, SerializedPaddle } from "./engine"
-import { GameMode } from "./gameManager"
 
 // --- Player ---
 
@@ -43,31 +42,15 @@ export type ClientMessage =
 
 // Server -> Client
 export type ServerMessage =
-  | { type: "queue_joined"; position: number; mode: GameMode }
+  | { type: "queue_joined"; position: number }
   | { type: "queue_left" }
-  | { type: "game_found"; side: Side; opponentName: string; mode: GameMode }
+  | { type: "game_found"; side: Side; opponentName: string }
   | { type: "countdown"; seconds: number }
   | { type: "game_start" }
   | { type: "game_sync"; state: SerializedEngine }
   | { type: "paddle_update"; side: Side; paddle: SerializedPaddle }
   | { type: "score_update"; score: { left: number; right: number } }
   | { type: "game_over" }
-  | { type: "tournament_waiting"; message: string } // Waiting for other match to finish
-  | { type: "tournament_result"; rankings: TournamentRanking[] }
+  | { type: "tournament_result"; rankings: string[] }
   | { type: "error"; message: string }
   | { type: "pong" }
-
-// Tournament result (sent to frontend - no playerId for security)
-export interface TournamentRanking {
-  rank: number // 1, 2, 3, 4
-  username: string
-}
-
-// --- Queue ---
-
-export interface QueueEntry {
-  playerId: string
-  username: string
-  joinedAt: number
-  socket: WebSocket
-}

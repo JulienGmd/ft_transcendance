@@ -30,12 +30,20 @@ export enum GameState {
 }
 
 export interface Game {
-  p1: Player
-  p2: Player
-  mode: GameMode
+  readonly p1: Player
+  readonly p2: Player
   engine: Engine
   state: GameState
   countdownInterval?: NodeJS.Timeout
+  onEndCallback: (result: GameEndResult) => void
+}
+
+export interface GameEndResult {
+  readonly p1: Player
+  readonly p2: Player
+  score: { left: number; right: number }
+  winner: Player
+  loser: Player
 }
 
 export class GameManager {
@@ -57,21 +65,27 @@ export class GameManager {
 
   // ===== GAMES MANAGEMENT ===================
 
-  addGame(p1: Player, p2: Player, mode: GameMode): void {
-    if (this.getPlayerGame(p1) || this.getPlayerGame(p2))
-      return
+  addGame(p1: Player, p2: Player): Promise<GameEndResult> {
+    return new Promise((resolve) => {
+      if (this.getPlayerGame(p1) || this.getPlayerGame(p2))
+        return
 
-    const game: Game = {
-      p1,
-      p2,
-      engine: new Engine(),
-      state: GameState.WAITING,
-      mode,
-    }
-    this.games.push(game)
-    this.playerIdToGame.set(p1.id, game)
-    this.playerIdToGame.set(p2.id, game)
-    console.log("[GameManager] Game added")
+      const game: Game = {
+        p1,
+        p2,
+        engine: new Engine(),
+        state: GameState.WAITING,
+        onEndCallback: (result) => resolve(result), // Resolve promise on game end
+      }
+      this.games.push(game)
+      this.playerIdToGame.set(p1.id, game)
+      this.playerIdToGame.set(p2.id, game)
+
+      this.syncGame(game)
+      this.startCountdown(game)
+
+      console.log("[GameManager] Game added")
+    })
   }
 
   removeGame(game: Game): void {
@@ -82,6 +96,7 @@ export class GameManager {
       this.games.splice(index, 1)
       this.playerIdToGame.delete(game.p1.id)
       this.playerIdToGame.delete(game.p2.id)
+
       console.log("[GameManager] Game removed")
     }
   }
@@ -89,13 +104,6 @@ export class GameManager {
   getPlayerGame(player: Player): Game | undefined {
     return this.playerIdToGame.get(player.id)
   }
-
-  // TODO
-  // // Callback for tournament queue to be notified of game endings
-  // private onGameEndCallback: ((gameId: string, winnerId: string) => void) | null = null
-  // setOnGameEndCallback(callback: (gameId: string, winnerId: string) => void): void {
-  //   this.onGameEndCallback = callback
-  // }
 
   // ===== GAMES LIFECYCLE ====================
 
@@ -122,9 +130,6 @@ export class GameManager {
   private startGame(game: Game): void {
     game.state = GameState.PLAYING
 
-    game.engine.reset()
-    this.syncGame(game)
-
     const sockets = [game.p1.socket, game.p2.socket]
     broadcastGameStart(sockets)
     console.log("[GameManager] Game started")
@@ -132,11 +137,6 @@ export class GameManager {
 
   private endGame(game: Game): void {
     game.state = GameState.FINISHED
-
-    // TODO
-    // // Notify tournament queue if this is a tournament game
-    // if (this.onGameEndCallback)
-    //   this.onGameEndCallback(gameId, winnerId)
 
     // Send match result to user-management via NATS
     const score = game.engine.getScore()
@@ -152,6 +152,14 @@ export class GameManager {
     const sockets = [game.p1.socket, game.p2.socket]
     broadcastGameOver(sockets)
     console.log("[GameManager] Game ended")
+
+    game.onEndCallback({
+      p1: game.p1,
+      p2: game.p2,
+      score,
+      winner: score.left > score.right ? game.p1 : game.p2,
+      loser: score.left > score.right ? game.p2 : game.p1,
+    })
   }
 
   private tick(): void {
@@ -180,6 +188,7 @@ export class GameManager {
         }
 
         game.engine.reset()
+        this.syncGame(game)
         this.startCountdown(game)
       }
     })
@@ -230,11 +239,11 @@ export class GameManager {
 
     // Update socket reference
     if (side === Side.LEFT)
-      game.p1 = player
+      game.p1.socket = player.socket
     else
-      game.p2 = player
+      game.p2.socket = player.socket
 
-    sendGameFound(player.socket, side, opponent.username, game.mode)
+    sendGameFound(player.socket, side, opponent.username)
     this.syncGame(game)
 
     console.log(`[GameManager] Player ${player.username} reconnected to game`)
