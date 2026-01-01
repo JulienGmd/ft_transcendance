@@ -91,8 +91,8 @@ export class NormalMatchmaking {
 
     const p1 = this.queue.shift()!
     const p2 = this.queue.shift()!
+    console.log(`[Normal] Creating game: ${p1.username} vs ${p2.username}`)
     createGame(this.gameManager, p1, p2)
-    console.log(`[Normal] Created game: ${p1.username} vs ${p2.username}`)
   }
 }
 

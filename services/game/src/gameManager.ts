@@ -80,11 +80,10 @@ export class GameManager {
       this.games.push(game)
       this.playerIdToGame.set(p1.id, game)
       this.playerIdToGame.set(p2.id, game)
+      console.log("[GameManager] Game added")
 
       this.syncGame(game)
       this.startCountdown(game)
-
-      console.log("[GameManager] Game added")
     })
   }
 
@@ -96,7 +95,6 @@ export class GameManager {
       this.games.splice(index, 1)
       this.playerIdToGame.delete(game.p1.id)
       this.playerIdToGame.delete(game.p2.id)
-
       console.log("[GameManager] Game removed")
     }
   }
@@ -138,8 +136,13 @@ export class GameManager {
   private endGame(game: Game): void {
     game.state = GameState.FINISHED
 
-    // Send match result to user-management via NATS
+    const sockets = [game.p1.socket, game.p2.socket]
+    broadcastGameOver(sockets)
+    console.log("[GameManager] Game ended")
+
     const score = game.engine.getScore()
+
+    // Send match result to user-management via NATS
     sendMatchResult({
       p1_id: game.p1.id,
       p2_id: game.p2.id,
@@ -148,10 +151,6 @@ export class GameManager {
       p1_precision: 0,
       p2_precision: 0,
     })
-
-    const sockets = [game.p1.socket, game.p2.socket]
-    broadcastGameOver(sockets)
-    console.log("[GameManager] Game ended")
 
     game.onEndCallback({
       p1: game.p1,
@@ -226,7 +225,7 @@ export class GameManager {
 
   handleDisconnect(player: Player): void {
     // Le jeu continue même si le joueur est déconnecté
-    console.log(`[GameManager] Player ${player.username} disconnected from game (game continues)`)
+    console.log(`[GameManager] Player ${player.username} disconnect from game (game continues)`)
   }
 
   handleReconnect(player: Player): boolean {
