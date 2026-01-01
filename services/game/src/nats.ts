@@ -13,9 +13,14 @@ const codec = StringCodec()
 // ============================================
 
 export async function connectNats(): Promise<void> {
-  const natsUrl = process.env.NATS_URL || "nats://nats:4222"
-  nc = await connect({ servers: natsUrl })
-  console.log(`📡 Connected to NATS at ${natsUrl}`)
+  try {
+    const natsUrl = process.env.NATS_URL || "nats://nats:4222"
+    nc = await connect({ servers: natsUrl })
+    console.log(`📡 Connected to NATS at ${natsUrl}`)
+  } catch (error) {
+    console.error("❌ Failed to connect to NATS:", error)
+    throw error
+  }
 }
 
 export async function disconnectNats(): Promise<void> {

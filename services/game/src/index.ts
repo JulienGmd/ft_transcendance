@@ -7,34 +7,24 @@ import fastifyCookie from "@fastify/cookie"
 import fastifyWebsocket from "@fastify/websocket"
 import Fastify from "fastify"
 import { readFileSync } from "fs"
-import type { WebSocket } from "ws"
-import { parseClientMessage, sendError, sendPong, sendQueueJoined, sendQueueLeft } from "./communication"
+import type { RawData, WebSocket } from "ws"
+import { parseClientMessage, sendError, sendPong } from "./communication"
 import { GameManager } from "./gameManager"
 import { getJWT } from "./jwt"
 import { connectNats, disconnectNats } from "./nats"
-import { NormalQueue, TournamentQueue } from "./queue"
-import { ClientMessage, GameMode, InputAction, InputKey } from "./types"
+import { NormalMatchmaking, TournamentMatchmaking } from "./queue"
+import { ClientMessage, Player } from "./types"
 
 // ============================================
 // INITIALIZE
 // ============================================
 
 // Connect to NATS for communication with user-management
-try {
-  await connectNats()
-} catch (err) {
-  console.warn("⚠️ NATS connection failed, match results won't be recorded:", err)
-}
+await connectNats()
 
 const gameManager = new GameManager()
-const normalQueue = new NormalQueue(gameManager)
-const tournamentQueue = new TournamentQueue(gameManager)
-
-// Register tournament callback for game endings
-gameManager.setOnGameEndCallback((gameId, winnerId) => {
-  if (tournamentQueue.isTournamentGame(gameId))
-    tournamentQueue.onGameEnd(gameId, winnerId)
-})
+const normalMatchmaking = new NormalMatchmaking(gameManager)
+const tournamentMatchmaking = new TournamentMatchmaking(gameManager)
 
 // ============================================
 // CREATE SERVER
@@ -56,7 +46,7 @@ await fastify.register(fastifyCookie)
 
 fastify.addHook("onRequest", async (req, res) => {
   if (process.env.NODE_ENV !== "production" && req.url !== "/health")
-  console.log(`${req.method} ${req.url}`)
+    console.log(`${req.method} ${req.url}`)
 })
 
 // ============================================
@@ -69,82 +59,46 @@ fastify.get("/health", async () => ({ status: "ok" }))
 // WEBSOCKET MESSAGE HANDLERS
 // ============================================
 
-function handleJoinNormal(playerId: string, username: string, socket: WebSocket): void {
-  if (gameManager.handleReconnect(playerId, socket)) {
-    console.log(`[WS] Player ${playerId} reconnected to game`)
-    return
-  }
-  const result = normalQueue.join(playerId, username, socket)
-  if (!result.matched)
-    sendQueueJoined(socket, result.position, GameMode.NORMAL)
-}
+function handleMessage(player: Player, data: RawData): void {
+  try {
+    const message = parseClientMessage(data.toString()) as ClientMessage
 
-function handleJoinTournament(playerId: string, username: string, socket: WebSocket): void {
-  if (gameManager.handleReconnect(playerId, socket)) {
-    console.log(`[WS] Player ${playerId} reconnected to game`)
-    return
-  }
-  const result = tournamentQueue.join(playerId, username, socket)
-  if (!result.matched)
-    sendQueueJoined(socket, result.position, GameMode.TOURNAMENT)
-}
+    switch (message.type) {
+      case "join_normal":
+        normalMatchmaking.join(player)
+        break
 
-function handleLeaveQueue(playerId: string, socket: WebSocket): void {
-  normalQueue.leave(playerId)
-  tournamentQueue.leave(playerId)
-  sendQueueLeft(socket)
-}
+      case "join_tournament":
+        tournamentMatchmaking.join(player)
+        break
 
-function handleInput(playerId: string, socket: WebSocket, key: InputKey, action: InputAction): void {
-  gameManager.handleInput(playerId, socket, key, action)
-}
+      case "leave_queue":
+        normalMatchmaking.leave(player)
+        tournamentMatchmaking.leave(player)
+        break
 
-function handlePing(socket: WebSocket): void {
-  sendPong(socket)
-}
+      case "input":
+        gameManager.handleInput(player, message.key, message.action)
+        break
 
-function handleMessage(
-  socket: WebSocket,
-  playerId: string | null,
-  username: string | null,
-  message: ClientMessage,
-): string | null {
-  switch (message.type) {
-    case "join_normal":
-      if (playerId && username)
-        handleJoinNormal(playerId, username, socket)
-      return playerId
+      case "ping":
+        sendPong(player.socket)
+        break
 
-    case "join_tournament":
-      if (playerId && username)
-        handleJoinTournament(playerId, username, socket)
-      return playerId
-
-    case "leave_queue":
-      if (playerId)
-        handleLeaveQueue(playerId, socket)
-      return playerId
-
-    case "input":
-      if (playerId)
-        handleInput(playerId, socket, message.key, message.action)
-      return playerId
-
-    case "ping":
-      handlePing(socket)
-      return playerId
-
-    default:
-      return playerId
+      default:
+        break
+    }
+  } catch (err) {
+    console.error("[WS] Invalid message")
+    sendError(player.socket, "Invalid message format")
   }
 }
 
-function handleDisconnect(playerId: string | null): void {
-  if (!playerId)
-    return
-  normalQueue.handleDisconnect(playerId)
-  tournamentQueue.handleDisconnect(playerId)
-  gameManager.handleDisconnect(playerId)
+function handleDisconnect(player: Player): void {
+  normalMatchmaking.leave(player)
+  tournamentMatchmaking.leave(player)
+  gameManager.handleDisconnect(player)
+  console.log(`[WS] Disconnected: ${player.username}`)
 }
 
 // ============================================
@@ -153,40 +107,21 @@ function handleDisconnect(playerId: string | null): void {
 
 fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, request) => {
   // Extract JWT token from cookie
-  const jwt = await getJWT(request)
-  if (!jwt) {
-    console.log("[WS] Missing or invalid JWT, closing connection")
+  const user = await getJWT(request)
+  if (!user) {
+    console.log("[WS] Refusing connection: Unauthorized")
     socket.close(1008, "Unauthorized")
     return
   }
-  console.log(`[WS] New connection: ${jwt.username}`)
-
-  // Use verified user info
-  let playerId: string | null = jwt.id
-  const username = jwt.username
+  const player: Player = { ...user, socket }
+  console.log(`[WS] Connected: ${player.username}`)
 
   // Check if player is in an existing game and reconnect them
-  if (playerId && gameManager.handleReconnect(playerId, socket))
-    console.log(`[WS] Player ${playerId} auto-reconnected to existing game`)
+  gameManager.handleReconnect(player)
 
-  socket.on("message", (data: Buffer) => {
-    try {
-      const message = parseClientMessage(data.toString()) as ClientMessage
-      playerId = handleMessage(socket, playerId, username, message)
-    } catch (err) {
-      console.error("[WS] Invalid message:", err)
-      sendError(socket, "Invalid message format")
-    }
-  })
-
-  socket.on("close", () => {
-    console.log(`[WS] Connection closed for player ${playerId}`)
-    handleDisconnect(playerId)
-  })
-
-  socket.on("error", (err: Error) => {
-    console.error(`[WS] Socket error for player ${playerId}:`, err)
-  })
+  socket.on("message", (data) => handleMessage(player, data))
+  socket.on("close", () => handleDisconnect(player))
+  socket.on("error", (err) => console.error(`[WS] Socket error for player ${player.username}:`, err))
 })
 
 // ============================================
@@ -199,6 +134,7 @@ signals.forEach((signal) => {
     console.log(`${signal} received, shutting down gracefully...`)
     await fastify?.close()
     await disconnectNats()
+    gameManager.dispose()
     process.exit(0)
   })
 })
