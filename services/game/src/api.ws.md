@@ -1,4 +1,3 @@
-
 # WebSocket Game API
 
 This page describes the WebSocket API to interact with the Pong game server.
@@ -33,7 +32,7 @@ This page describes the WebSocket API to interact with the Pong game server.
 
 ## Server → Client Messages
 
-- `queue_joined`, `queue_left`, `game_found`, `countdown`, `game_start`, `game_state`, `ball_sync`, `paddle_update`, `score_update`, `game_over`, `tournament_waiting`, `tournament_result`, `opponent_disconnected`, `opponent_reconnected`, `error`, `pong`
+- `queue_joined`, `queue_left`, `game_found`, `countdown`, `game_start`, `game_sync`, `paddle_update`, `score_update`, `game_over`, `tournament_result`, `error`, `pong`
 
 See the code for detailed payloads (see `ServerMessage` types in both frontend and backend).
 
@@ -45,8 +44,9 @@ See the code for detailed payloads (see `ServerMessage` types in both frontend a
 4. During the game, send `{ "type": "input", ... }` to move the paddle
 
 ## Notes
+
 - All commands are JSON.
-- Types and payloads are documented in `shared/src/natsPayloads.ts` and `shared/src/types/user.ts`.
+- Types and payloads are documented in `src/types.ts`.
 - To automate a bot or AI, simply implement this protocol.
 
 ---
