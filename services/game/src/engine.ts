@@ -15,44 +15,16 @@ import {
   WIDTH,
   WINNING_SCORE,
 } from "./gameConfig"
-import { InputAction, InputKey, Side } from "./types"
+import { SerializedBall, SerializedEngine, SerializedPaddle, Side, Vector2D } from "./sharedTypes"
 
 // ============================================
 // TYPES
 // ============================================
 
-interface Vector2D {
-  x: number
-  y: number
-}
-
 interface GameTickResult {
   scorer?: Side // If gameOver is true, this is also the winner
   gameOver?: boolean
   paddleBounce?: boolean // True if ball bounced off a paddle this tick
-}
-
-export interface SerializedPaddle {
-  y: number
-  direction: -1 | 0 | 1
-}
-
-export interface SerializedBall {
-  time: number
-  pos: Vector2D
-  velocity: Vector2D
-}
-
-export interface SerializedEngine {
-  ball: SerializedBall
-  paddles: {
-    left: SerializedPaddle
-    right: SerializedPaddle
-  }
-  score: {
-    left: number
-    right: number
-  }
 }
 
 // ============================================
@@ -79,7 +51,7 @@ class Paddle {
   readonly isLeft: boolean
   readonly x: number = 0
 
-  private y: number = 0
+  private y: number = HEIGHT / 2
   private direction: -1 | 0 | 1 = 0
 
   private readonly minY = PADDLE_HEIGHT / 2
@@ -174,6 +146,7 @@ class Ball {
 
   /**
    * Calculate duration to reach given X from last bounce/launch
+   * @returns duration in seconds, or undefined if not reachable
    */
   private calculateDurationToReachX(x: number): number | undefined {
     if (this.velocity.x === 0)
@@ -192,6 +165,8 @@ class Ball {
    *
    * Principle: unfold the reflections into a straight line, then fold back
    * with modulo and absolute value to simulate bounces
+   *
+   * @param duration duration in seconds
    */
   private calculateYAfterDuration(duration: number): number {
     const minY = BALL_RADIUS
@@ -373,16 +348,9 @@ export class Engine {
 
   // ===== INPUT ==============================
 
-  handleInput(side: Side, key: InputKey, action: InputAction): SerializedPaddle {
+  setPaddleDirection(side: Side, direction: -1 | 0 | 1): SerializedPaddle {
     const paddle = side === Side.LEFT ? this.paddles.left : this.paddles.right
-    if (action === InputAction.PRESS)
-      paddle.updateDirection(key === InputKey.UP ? -1 : 1)
-    else {
-      // Don't stop the paddle if the opposite key is still pressed
-      const expectedDir = key === InputKey.UP ? -1 : 1
-      if (paddle.getDirection() === expectedDir)
-        paddle.updateDirection(0)
-    }
+    paddle.updateDirection(direction)
     return paddle.serialize()
   }
 

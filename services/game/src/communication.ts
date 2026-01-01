@@ -4,8 +4,7 @@
 // ============================================
 
 import type { WebSocket } from "ws"
-import { SerializedEngine, SerializedPaddle } from "./engine"
-import { ServerMessage, Side } from "./types"
+import { SerializedEngine, SerializedPaddle, ServerMessage, Side } from "./sharedTypes"
 
 // ============================================
 // SOCKET INTERFACE

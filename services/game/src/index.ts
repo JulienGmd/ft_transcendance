@@ -13,7 +13,8 @@ import { GameManager } from "./gameManager"
 import { getJWT } from "./jwt"
 import { connectNats, disconnectNats } from "./nats"
 import { NormalMatchmaking, TournamentMatchmaking } from "./queue"
-import { ClientMessage, Player } from "./types"
+import { ClientMessage } from "./sharedTypes"
+import { Player } from "./types"
 
 // ============================================
 // INITIALIZE
@@ -65,11 +66,13 @@ function handleMessage(player: Player, data: RawData): void {
 
     switch (message.type) {
       case "join_normal":
-        normalMatchmaking.join(player)
+        if (!tournamentMatchmaking.isInQueue(player))
+          normalMatchmaking.join(player)
         break
 
       case "join_tournament":
-        tournamentMatchmaking.join(player)
+        if (!normalMatchmaking.isInQueue(player))
+          tournamentMatchmaking.join(player)
         break
 
       case "leave_queue":
@@ -77,8 +80,8 @@ function handleMessage(player: Player, data: RawData): void {
         tournamentMatchmaking.leave(player)
         break
 
-      case "input":
-        gameManager.handleInput(player, message.key, message.action)
+      case "move":
+        gameManager.handleInput(player, message.direction)
         break
 
       case "ping":

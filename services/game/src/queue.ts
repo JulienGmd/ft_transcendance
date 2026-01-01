@@ -5,7 +5,8 @@
 
 import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft } from "./communication"
 import { GameEndResult, GameManager, GameMode } from "./gameManager"
-import { Player, Side } from "./types"
+import { Side } from "./sharedTypes"
+import { Player } from "./types"
 
 class Queue {
   private readonly gameManager: GameManager
@@ -85,13 +86,17 @@ export class NormalMatchmaking {
     return this.queue.leave(player)
   }
 
+  isInQueue(player: Player): boolean {
+    return this.queue.isInQueue(player)
+  }
+
   private tryCreateGame(): void {
     if (this.queue.length < 2)
       return
 
     const p1 = this.queue.shift()!
     const p2 = this.queue.shift()!
-    console.log(`[Normal] Creating game: ${p1.username} vs ${p2.username}`)
+    console.log(`[NormalMatchmaking] Creating game: ${p1.username} vs ${p2.username}`)
     createGame(this.gameManager, p1, p2)
   }
 }
@@ -114,12 +119,16 @@ export class TournamentMatchmaking {
     return this.queue.leave(player)
   }
 
+  isInQueue(player: Player): boolean {
+    return this.queue.isInQueue(player)
+  }
+
   private async tryStartTournament(): Promise<void> {
     if (this.queue.length < 4)
       return
 
     const players = [this.queue.shift()!, this.queue.shift()!, this.queue.shift()!, this.queue.shift()!]
-    console.log(`[Tournament] Starting: ${players.map((p) => p.username).join(", ")}`)
+    console.log(`[TournamentMatchmaking] Starting: ${players.map((p) => p.username).join(", ")}`)
 
     // Note: since objects are passed by reference, even if a player reconnect to his game
     // during the tournament, their socket will be updated and reflected here.
@@ -127,15 +136,15 @@ export class TournamentMatchmaking {
     const semi1Promise = createGame(this.gameManager, players[0], players[1])
     const semi2Promise = createGame(this.gameManager, players[2], players[3])
     const [semi1, semi2] = await Promise.all([semi1Promise, semi2Promise])
-    console.log(`[Tournament] Semifinals complete. Winners: ${semi1.winner.username}, ${semi2.winner.username}`)
+    console.log(`[TournamentMatchmaking] Semifinals winners: ${semi1.winner.username}, ${semi2.winner.username}`)
 
     const finalPromise = createGame(this.gameManager, semi1.winner, semi2.winner)
     const thirdPromise = createGame(this.gameManager, semi1.loser, semi2.loser)
     const [final, third] = await Promise.all([finalPromise, thirdPromise])
-    console.log(`[Tournament] Finals complete. Winner: ${final.winner.username}, 3rd place: ${third.winner.username}`)
+    console.log(`[TournamentMatchmaking] Finals winners: ${final.winner.username}, 3rd place: ${third.winner.username}`)
 
     const rankings = [final.winner, final.loser, third.winner, third.loser]
-    console.log(`[Tournament] Complete! Rankings:`)
+    console.log(`[TournamentMatchmaking] Complete! Rankings:`)
     rankings.forEach((r, i) => console.log(`  ${i + 1}. ${r.username}`))
 
     const sockets = rankings.map((r) => r.socket)

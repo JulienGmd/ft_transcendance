@@ -10,10 +10,17 @@
   /* Color palette */
   --color-primary: #177fbf; /* Primary brand color */
   --color-primary-dark: #0d75bb; /* Darker shade of primary */
+
   --color-text: #d4d5d7; /* Main text color */
   --color-text-muted: #747983; /* Secondary text */
+
   --color-background: #15161c; /* Main background */
   --color-surface: #22272d; /* Cards, modals */
+
+  --color-game-background: #1b1d22; /* Game area background */
+  --color-game-player1: #3b82f6; /* Player 1 color - blue */
+  --color-game-player2: #f43f5e; /* Player 2 color - rose */
+
   --color-error: #ef4444; /* Error messages */
   --color-warning: #f59e0b; /* Warning messages */
   --color-success: #10b981; /* Success messages */
@@ -53,6 +60,10 @@
 
   .button-secondary {
     @apply bg-surface flex items-center justify-center gap-2 rounded-xl px-6 py-3 shadow-lg transition hover:scale-[1.02] hover:shadow-xl active:scale-[0.98];
+  }
+
+  .button-tertiary {
+    @apply text-text-muted hover:text-text px-6 py-3 font-bold transition;
   }
 
   .link {

@@ -2,60 +2,53 @@
 // GAME PAGE - Pong Client
 // ============================================
 
-import { getUser } from "../utils.js"
+// TODO tournament waiting
 
-// --- Types ( same as backend ) ---
+import { ClientMessage, SerializedEngine, ServerMessage, Side, Vector2D } from "../gameSharedTypes.js"
+import { checkEls, getUser } from "../utils.js"
 
-interface Vector2D {
-  x: number
-  y: number
+// ============================================
+// DOM ELEMENTS
+// ============================================
+
+let els: {
+  canvas: HTMLCanvasElement
+
+  menuOverlay: HTMLElement
+  menuJoinNormalBtn: HTMLElement
+  menuJoinTournamentBtn: HTMLElement
+
+  queueOverlay: HTMLElement
+  queuePosition: HTMLElement
+  queueLeaveBtn: HTMLElement
+
+  countdownOverlay: HTMLElement
+  countdownNumber: HTMLElement
+
+  gameOverOverlay: HTMLElement
+  gameOverText: HTMLElement
+  gameOverScore: HTMLElement
+  gameOverPlayAgainBtn: HTMLElement
+
+  tournamentResultOverlay: HTMLElement
+  tournamentResultRankings: HTMLElement
+  tournamentResultPlayAgainBtn: HTMLElement
+
+  disconnectedOverlay: HTMLElement
+
+  leftPlayerName: HTMLElement
+  rightPlayerName: HTMLElement
+  scoreLeft: HTMLElement
+  scoreRight: HTMLElement
 }
 
-interface BallSync {
-  position: Vector2D
-  velocity: Vector2D
-  timestamp: number
-}
+let ctx: CanvasRenderingContext2D
 
-interface GameStateSnapshot {
-  gameId: string
-  state: string
-  ball: BallSync
-  paddles: {
-    left: { y: number; direction: -1 | 0 | 1 }
-    right: { y: number; direction: -1 | 0 | 1 }
-  }
-  score: { left: number; right: number }
-  timestamp: number
-}
+// ============================================
+// CONSTANTS (same as backend)
+// ============================================
 
-type GameMode = "normal" | "tournament"
-
-interface TournamentRanking {
-  rank: number
-  username: string
-}
-
-type ServerMessage =
-  | { type: "queue_joined"; position: number; mode: GameMode }
-  | { type: "queue_left" }
-  | { type: "game_found"; gameId: string; side: "left" | "right"; opponentName: string; mode: GameMode }
-  | { type: "countdown"; seconds: number }
-  | { type: "game_start" }
-  | { type: "game_state"; state: GameStateSnapshot }
-  | { type: "ball_sync"; ball: BallSync }
-  | { type: "paddle_update"; side: "left" | "right"; y: number; direction: -1 | 0 | 1 }
-  | { type: "score_update"; left: number; right: number }
-  | { type: "game_over"; finalScore: { left: number; right: number }; mode: GameMode }
-  | { type: "tournament_waiting"; message: string }
-  | { type: "tournament_result"; rankings: TournamentRanking[] }
-  | { type: "opponent_disconnected" }
-  | { type: "opponent_reconnected" }
-  | { type: "error"; message: string }
-  | { type: "pong" }
-
-// --- Constants (same as backend) ---
-
+// TODO GET request to retrieve
 const CONFIG = {
   WIDTH: 800,
   HEIGHT: 600,
@@ -66,65 +59,41 @@ const CONFIG = {
   BALL_RADIUS: 10,
 } as const
 
-// --- State ---
+// ============================================
+// STATE
+// ============================================
 
-let ws: WebSocket | null = null
-let myUsername: string | null = null
-let mySide: "left" | "right" | null = null
-let gameId: string | null = null
-let currentMode: GameMode | null = null
-let animationFrameId: number | null = null
+let ws: WebSocket | undefined
+let shouldReconnect = true
+let reconnectInterval: number | undefined
+let animationFrameId: number | undefined
 let lastFrameTime = 0
 
-// Game state
-const gameState = {
-  ball: { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 },
-  ballVelocity: { x: 0, y: 0 },
-  ballLastSync: 0,
-  paddles: {
-    left: { y: CONFIG.HEIGHT / 2, direction: 0 as -1 | 0 | 1 },
-    right: { y: CONFIG.HEIGHT / 2, direction: 0 as -1 | 0 | 1 },
-  },
-  score: { left: 0, right: 0 },
-  isPlaying: false,
-  isCountdown: false,
+let state = defaultState()
+
+function defaultState(): {
+  game: SerializedEngine
+  side: Side
+  clientBallPrediction: Vector2D
+} {
+  return {
+    game: {
+      ball: {
+        time: 0, // Time since last bounce/launch
+        pos: { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 }, // Pos at last bounce/launch
+        velocity: { x: 0, y: 0 }, // Velocity at last bounce/launch
+      },
+      paddles: {
+        left: { y: CONFIG.HEIGHT / 2, direction: 0 },
+        right: { y: CONFIG.HEIGHT / 2, direction: 0 },
+      },
+      score: { left: 0, right: 0 },
+    },
+    side: Side.LEFT,
+    // Ball position simulated by the client based on last bounce pos/velocity
+    clientBallPrediction: { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 },
+  }
 }
-
-// Key states
-const keysPressed = {
-  up: false,
-  down: false,
-}
-
-// --- DOM Elements ---
-
-let statusText: HTMLElement | null = null
-let queuePosition: HTMLElement | null = null
-let positionNumber: HTMLElement | null = null
-let countdownOverlay: HTMLElement | null = null
-let countdownNumber: HTMLElement | null = null
-let gameContainer: HTMLElement | null = null
-let canvas: HTMLCanvasElement | null = null
-let ctx: CanvasRenderingContext2D | null = null
-let scoreLeft: HTMLElement | null = null
-let scoreRight: HTMLElement | null = null
-let playerLeft: HTMLElement | null = null
-let playerRight: HTMLElement | null = null
-let gameOverOverlay: HTMLElement | null = null
-let winnerText: HTMLElement | null = null
-let finalScore: HTMLElement | null = null
-let playAgainBtn: HTMLElement | null = null
-let joinNormalBtn: HTMLElement | null = null
-let joinTournamentBtn: HTMLElement | null = null
-let queueButtons: HTMLElement | null = null
-let leaveQueueBtn: HTMLElement | null = null
-let disconnectOverlay: HTMLElement | null = null
-let disconnectLeft: HTMLElement | null = null
-let disconnectRight: HTMLElement | null = null
-let gameStatus: HTMLElement | null = null
-let tournamentResultOverlay: HTMLElement | null = null
-let tournamentRankings: HTMLElement | null = null
-let tournamentDoneBtn: HTMLElement | null = null
 
 // ============================================
 // LIFECYCLE
@@ -136,53 +105,51 @@ export function onGuard(route: string): boolean {
 
 export function onMount(): void {
   // Get DOM elements
-  statusText = document.getElementById("status-text")
-  queuePosition = document.getElementById("queue-position")
-  positionNumber = document.getElementById("position-number")
-  countdownOverlay = document.getElementById("countdown-overlay")
-  countdownNumber = document.getElementById("countdown-number")
-  gameContainer = document.getElementById("game-container")
-  canvas = document.getElementById("game-canvas") as HTMLCanvasElement | null
-  ctx = canvas?.getContext("2d") ?? null
-  scoreLeft = document.getElementById("score-left")
-  scoreRight = document.getElementById("score-right")
-  playerLeft = document.getElementById("player-left")
-  playerRight = document.getElementById("player-right")
-  gameOverOverlay = document.getElementById("game-over-overlay")
-  winnerText = document.getElementById("winner-text")
-  finalScore = document.getElementById("final-score")
-  playAgainBtn = document.getElementById("play-again-btn")
-  joinNormalBtn = document.getElementById("join-normal-btn")
-  joinTournamentBtn = document.getElementById("join-tournament-btn")
-  queueButtons = document.getElementById("queue-buttons")
-  leaveQueueBtn = document.getElementById("leave-queue-btn")
-  disconnectOverlay = document.getElementById("disconnect-overlay")
-  disconnectLeft = document.getElementById("disconnect-left")
-  disconnectRight = document.getElementById("disconnect-right")
-  gameStatus = document.getElementById("game-status")
-  tournamentResultOverlay = document.getElementById("tournament-result-overlay")
-  tournamentRankings = document.getElementById("tournament-rankings")
-  tournamentDoneBtn = document.getElementById("tournament-done-btn")
+  els = {
+    canvas: document.querySelector("#canvas")!,
+
+    menuOverlay: document.querySelector("#menu-overlay")!,
+    menuJoinNormalBtn: document.querySelector("#menu-join-normal-btn")!,
+    menuJoinTournamentBtn: document.querySelector("#menu-join-tournament-btn")!,
+
+    queueOverlay: document.querySelector("#queue-overlay")!,
+    queuePosition: document.querySelector("#queue-position")!,
+    queueLeaveBtn: document.querySelector("#queue-leave-btn")!,
+
+    countdownOverlay: document.querySelector("#countdown-overlay")!,
+    countdownNumber: document.querySelector("#countdown-number")!,
+
+    gameOverOverlay: document.querySelector("#game-over-overlay")!,
+    gameOverText: document.querySelector("#game-over-text")!,
+    gameOverScore: document.querySelector("#game-over-score")!,
+    gameOverPlayAgainBtn: document.querySelector("#game-over-play-again-btn")!,
+
+    tournamentResultOverlay: document.querySelector("#tournament-result-overlay")!,
+    tournamentResultRankings: document.querySelector("#tournament-result-rankings")!,
+    tournamentResultPlayAgainBtn: document.querySelector("#tournament-result-play-again-btn")!,
+
+    disconnectedOverlay: document.querySelector("#disconnected-overlay")!,
+
+    leftPlayerName: document.querySelector("#left-player-name")!,
+    rightPlayerName: document.querySelector("#right-player-name")!,
+    scoreLeft: document.querySelector("#score-left")!,
+    scoreRight: document.querySelector("#score-right")!,
+  }
+  checkEls(els)
+
+  ctx = els.canvas.getContext("2d")!
 
   // Event listeners
-  joinNormalBtn?.addEventListener("click", onJoinNormal)
-  joinTournamentBtn?.addEventListener("click", onJoinTournament)
-  leaveQueueBtn?.addEventListener("click", onLeaveQueue)
-  playAgainBtn?.addEventListener("click", onPlayAgain)
-  tournamentDoneBtn?.addEventListener("click", onTournamentDone)
+  els.menuJoinNormalBtn.addEventListener("click", joinNormal)
+  els.menuJoinTournamentBtn.addEventListener("click", joinTournament)
+  els.queueLeaveBtn.addEventListener("click", leaveQueue)
+  els.gameOverPlayAgainBtn.addEventListener("click", playAgain)
+  els.tournamentResultPlayAgainBtn.addEventListener("click", playAgain)
   document.addEventListener("keydown", onKeyDown)
   document.addEventListener("keyup", onKeyUp)
 
-  // Check user is authenticated
-  const user = getUser()
-  if (!user) {
-    setStatus("Please login to play")
-    return
-  }
-  myUsername = user.username
-
-  // Connect WebSocket
   connectWebSocket()
+  startTick()
 }
 
 // Clean
@@ -190,15 +157,8 @@ export function onDestroy(): void {
   document.removeEventListener("keydown", onKeyDown)
   document.removeEventListener("keyup", onKeyUp)
 
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId)
-    animationFrameId = null
-  }
-
-  if (ws) {
-    ws.close()
-    ws = null
-  }
+  disconnectWebSocket()
+  stopTick()
 }
 
 // ============================================
@@ -209,39 +169,25 @@ function connectWebSocket(): void {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
   const wsUrl = `${protocol}//${window.location.host}/api/game/ws`
 
+  shouldReconnect = true
   ws = new WebSocket(wsUrl)
 
-  ws.onopen = () => {
-    console.log("[WS] Connected")
-    setStatus("Ready to play!")
-    showElement(queueButtons)
-    if (disconnectOverlay)
-      hideElement(disconnectOverlay)
-  }
-
-  ws.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data) as ServerMessage
-      handleServerMessage(message)
-    } catch (err) {
-      console.error("[WS] Parse error:", err)
-    }
-  }
-
-  ws.onclose = () => {
-    console.log("[WS] Disconnected")
-    setStatus("Disconnected. Reconnecting...")
-    // if (gameState.isPlaying)
-    showElement(disconnectOverlay)
-    setTimeout(connectWebSocket, 2000)
-  }
-
-  ws.onerror = (err) => {
-    console.error("[WS] Error:", err)
-  }
+  ws.onopen = () => onWsOpen()
+  ws.onclose = () => onWsClose()
+  ws.onmessage = (e) => onWsMessage(e)
+  ws.onerror = (err) => console.error("[WS] Error:", err)
 }
 
-function send(message: object): void {
+function disconnectWebSocket(): void {
+  clearInterval(reconnectInterval)
+  reconnectInterval = undefined
+
+  shouldReconnect = false // prevent reconnect (ws.close triggers ws.onclose)
+  ws?.close()
+  ws = undefined
+}
+
+function send(message: ClientMessage): void {
   if (ws?.readyState === WebSocket.OPEN)
     ws.send(JSON.stringify(message))
 }
@@ -250,159 +196,97 @@ function send(message: object): void {
 // MESSAGE HANDLERS
 // ============================================
 
-function handleServerMessage(msg: ServerMessage): void {
+function onWsOpen(): void {
+  console.log("[WS] Connected")
+
+  clearInterval(reconnectInterval)
+  reconnectInterval = undefined
+
+  switchOverlay(els.menuOverlay)
+  hideElement(els.disconnectedOverlay)
+}
+
+function onWsClose(): void {
+  console.log("[WS] Disconnected")
+
+  if (shouldReconnect && !reconnectInterval) {
+    // @ts-ignore return type is number but we have @types/tsnode installed so it thinks it's NodeJS.Timeout
+    reconnectInterval = setInterval(connectWebSocket, 5000)
+    showElement(els.disconnectedOverlay)
+  }
+}
+
+function parseMessage(e: MessageEvent<any>): ServerMessage | undefined {
+  try {
+    return JSON.parse(e.data) as ServerMessage
+  } catch (err) {
+    console.error("[WS] Parse error:", err)
+    return
+  }
+}
+
+function onWsMessage(e: MessageEvent<any>): void {
+  const msg = parseMessage(e)
+  if (!msg)
+    return
+
   switch (msg.type) {
     case "queue_joined":
-      currentMode = msg.mode
-      setStatus(`In ${msg.mode} queue...`)
-      positionNumber!.textContent = String(msg.position)
-      showElement(queuePosition)
-      showElement(leaveQueueBtn)
-      hideElement(queueButtons)
+      els.queuePosition.textContent = `${msg.position}`
+      switchOverlay(els.queueOverlay)
       break
 
     case "queue_left":
-      currentMode = null
-      setStatus("Ready to play!")
-      hideElement(queuePosition)
-      hideElement(leaveQueueBtn)
-      showElement(queueButtons)
+      switchOverlay(els.menuOverlay)
       break
 
     case "game_found":
-      gameId = msg.gameId
-      mySide = msg.side
-      currentMode = msg.mode
-      resetGameState()
-      setStatus(msg.mode === "tournament" ? "Tournament match found!" : "Game found!")
-      hideElement(queuePosition)
-      hideElement(leaveQueueBtn)
-      hideElement(queueButtons)
-      hideElement(gameOverOverlay)
-      playerLeft!.textContent = mySide === "left" ? "You" : msg.opponentName
-      playerRight!.textContent = mySide === "right" ? "You" : msg.opponentName
+      state = defaultState()
+      state.side = msg.side
+      els.leftPlayerName.textContent = state.side === Side.LEFT ? getUser()!.username : msg.opponentName
+      els.rightPlayerName.textContent = state.side === Side.RIGHT ? getUser()!.username : msg.opponentName
       break
 
     case "countdown":
-      if (countdownNumber)
-        countdownNumber.textContent = String(msg.seconds)
-      if (msg.seconds === 0) {
-        if (countdownOverlay)
-          hideElement(countdownOverlay)
-      } else {
-        if (countdownOverlay)
-          showElement(countdownOverlay)
-        gameState.ballVelocity = { x: 0, y: 0 }
-        gameState.ball = { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 }
+      if (msg.seconds > 0) {
+        els.countdownNumber.textContent = `${msg.seconds}`
+        switchOverlay(els.countdownOverlay)
       }
-      showElement(gameContainer)
-      hideElement(gameStatus)
-      gameState.isPlaying = true
-      gameState.isCountdown = true
-      if (!animationFrameId)
-        startGameLoop()
       break
 
     case "game_start":
-      if (countdownOverlay)
-        hideElement(countdownOverlay)
-      gameState.isPlaying = true
-      gameState.isCountdown = false
-      startGameLoop()
+      hideOverlays()
       break
 
-    case "game_state":
-      applyGameState(msg.state)
-      break
-
-    case "ball_sync":
-      syncBall(msg.ball)
+    case "game_sync":
+      state.game = msg.state
+      // Note: no need to update state.clientBallPrediction because it's based on pos/velocity since last bounce
       break
 
     case "paddle_update":
-      gameState.paddles[msg.side].y = msg.y
-      gameState.paddles[msg.side].direction = msg.direction
+      state.game.paddles[msg.side] = msg.paddle
       break
 
     case "score_update":
-      gameState.score = { left: msg.left, right: msg.right }
-      updateScoreDisplay()
+      state.game.score = msg.score
+      els.scoreLeft.textContent = `${msg.score.left}`
+      els.scoreRight.textContent = `${msg.score.right}`
       break
 
     case "game_over":
-      gameState.isPlaying = false
-      showGameOver(msg.finalScore, msg.mode)
-      break
-
-    case "tournament_waiting":
-      setStatus(msg.message)
+      updateGameOverOverlay()
+      switchOverlay(els.gameOverOverlay)
       break
 
     case "tournament_result":
-      showTournamentResult(msg.rankings)
-      break
-
-    case "opponent_disconnected":
-      const opponentSide = mySide === "left" ? "right" : "left"
-      if (opponentSide === "left")
-        showElement(disconnectLeft)
-      else
-        showElement(disconnectRight)
-      break
-
-    case "opponent_reconnected":
-      const reconnectedSide = mySide === "left" ? "right" : "left"
-      if (reconnectedSide === "left")
-        hideElement(disconnectLeft)
-      else
-        hideElement(disconnectRight)
+      updateTournamentOverlay(msg.rankings)
+      switchOverlay(els.tournamentResultOverlay)
       break
 
     case "error":
       console.error("[Game] Server error:", msg.message)
-      setStatus(`Error: ${msg.message}`)
-      break
-
-    case "pong":
       break
   }
-}
-
-// ============================================
-// GAME STATE
-// ============================================
-
-function resetGameState(): void {
-  gameState.ball = { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 }
-  gameState.ballVelocity = { x: 0, y: 0 }
-  gameState.paddles.left.y = CONFIG.HEIGHT / 2
-  gameState.paddles.left.direction = 0
-  gameState.paddles.right.y = CONFIG.HEIGHT / 2
-  gameState.paddles.right.direction = 0
-  gameState.score = { left: 0, right: 0 }
-  gameState.isCountdown = false
-  updateScoreDisplay()
-}
-
-function applyGameState(state: GameStateSnapshot): void {
-  syncBall(state.ball)
-  gameState.paddles.left.y = state.paddles.left.y
-  gameState.paddles.left.direction = state.paddles.left.direction
-  gameState.paddles.right.y = state.paddles.right.y
-  gameState.paddles.right.direction = state.paddles.right.direction
-  gameState.score = state.score
-  updateScoreDisplay()
-}
-
-function syncBall(ball: BallSync): void {
-  // Interpolate ball position based on time since sync
-  const now = Date.now()
-  const elapsed = (now - ball.timestamp) / 1000
-
-  gameState.ball.x = ball.position.x + ball.velocity.x * elapsed
-  gameState.ball.y = ball.position.y + ball.velocity.y * elapsed
-  gameState.ballVelocity = { ...ball.velocity }
-  gameState.ballLastSync = now
 }
 
 // ============================================
@@ -410,41 +294,35 @@ function syncBall(ball: BallSync): void {
 // ============================================
 
 function onKeyDown(e: KeyboardEvent): void {
-  if (!gameState.isPlaying)
-    return
-
   if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
-    if (!keysPressed.up) {
-      keysPressed.up = true
-      send({ type: "input", key: "up", action: "press" })
-    }
+    state.game.paddles[state.side].direction = -1
+    send({ type: "move", direction: -1 })
     e.preventDefault()
   }
 
   if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
-    if (!keysPressed.down) {
-      keysPressed.down = true
-      send({ type: "input", key: "down", action: "press" })
-    }
+    state.game.paddles[state.side].direction = 1
+    send({ type: "move", direction: 1 })
     e.preventDefault()
   }
 }
 
 function onKeyUp(e: KeyboardEvent): void {
-  if (!gameState.isPlaying)
-    return
-
   if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
-    if (keysPressed.up) {
-      keysPressed.up = false
-      send({ type: "input", key: "up", action: "release" })
+    // Prevent stop movement if opposite key is still pressed
+    if (state.game.paddles[state.side].direction === -1) {
+      state.game.paddles[state.side].direction = 0
+      send({ type: "move", direction: 0 })
+      e.preventDefault()
     }
   }
 
   if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
-    if (keysPressed.down) {
-      keysPressed.down = false
-      send({ type: "input", key: "down", action: "release" })
+    // Prevent stop movement if opposite key is still pressed
+    if (state.game.paddles[state.side].direction === 1) {
+      state.game.paddles[state.side].direction = 0
+      send({ type: "move", direction: 0 })
+      e.preventDefault()
     }
   }
 }
@@ -453,16 +331,24 @@ function onKeyUp(e: KeyboardEvent): void {
 // GAME LOOP & RENDERING
 // ============================================
 
-function startGameLoop(): void {
+function startTick(): void {
   if (animationFrameId)
     return
-  lastFrameTime = performance.now()
-  gameLoop()
+  tick()
 }
 
-function gameLoop(): void {
-  if (!gameState.isPlaying) {
-    animationFrameId = null // Reset so startGameLoop can restart it
+function stopTick(): void {
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = undefined
+  }
+}
+
+function tick(): void {
+  animationFrameId = requestAnimationFrame(tick) // Recall this function next frame
+
+  if (lastFrameTime <= 0) {
+    lastFrameTime = performance.now()
     return
   }
 
@@ -470,125 +356,157 @@ function gameLoop(): void {
   const deltaTime = (now - lastFrameTime) / 1000
   lastFrameTime = now
 
-  update(deltaTime)
+  updateBall()
+  updatePaddles(deltaTime)
   render()
-
-  animationFrameId = requestAnimationFrame(gameLoop)
-}
-
-function update(deltaTime: number): void {
-  if (!gameState.isCountdown)
-    updateBallWithBounces(deltaTime)
-
-  for (const side of ["left", "right"] as const) {
-    const paddle = gameState.paddles[side]
-    if (paddle.direction !== 0) {
-      paddle.y += paddle.direction * CONFIG.PADDLE_SPEED * deltaTime
-      paddle.y = clamp(paddle.y, CONFIG.PADDLE_HEIGHT / 2, CONFIG.HEIGHT - CONFIG.PADDLE_HEIGHT / 2)
-    }
-  }
 }
 
 /**
- * Update ball position with wall and paddle bounce handling
+ * Update ball position with wall and paddle bounce handling based on
+ * position/velocity since last bounce
  */
-function updateBallWithBounces(deltaTime: number): void {
-  // Update X position
-  gameState.ball.x += gameState.ballVelocity.x * deltaTime
+function updateBall(): void {
+  // TODO interpolation
 
-  // Update Y position
-  gameState.ball.y += gameState.ballVelocity.y * deltaTime
+  // Wall bounce simulation
+  const elapsed = (Date.now() - state.game.ball.time) / 1000
+  state.clientBallPrediction.x = calculateXAfterDuration(elapsed)
+  state.clientBallPrediction.y = calculateYAfterDuration(elapsed)
 
-  // Simple wall bounce
+  // Paddle bounce simulation
+  state.clientBallPrediction.x = simulatePaddleBounce(state.clientBallPrediction)
+}
+
+/**
+ * @param duration Duration in seconds since last bounce/launch
+ */
+function calculateXAfterDuration(duration: number): number {
+  return state.game.ball.pos.x + state.game.ball.velocity.x * duration
+}
+
+/**
+ * Same function as backend to predict Y position after duration
+ *
+ * Calculate Y position after duration from last bounce/launch
+ * using mathematical formula (no loop)
+ *
+ * Uses triangle wave / ping-pong formula to handle reflections
+ *
+ * Principle: unfold the reflections into a straight line, then fold back
+ * with modulo and absolute value to simulate bounces
+ *
+ * @param duration Duration in seconds since last bounce/launch
+ */
+function calculateYAfterDuration(duration: number): number {
   const minY = CONFIG.BALL_RADIUS
   const maxY = CONFIG.HEIGHT - CONFIG.BALL_RADIUS
+  const playableHeight = maxY - minY // zone where ball center can travel
 
-  if (gameState.ball.y <= minY) {
-    gameState.ball.y = minY
-    gameState.ballVelocity.y = Math.abs(gameState.ballVelocity.y)
-  }
-  if (gameState.ball.y >= maxY) {
-    gameState.ball.y = maxY
-    gameState.ballVelocity.y = -Math.abs(gameState.ballVelocity.y)
-  }
-  checkClientPaddleCollision()
+  // Total displacement in Y
+  const deltaY = state.game.ball.velocity.y * duration
+
+  // Position relative to minY (normalize to 0-based)
+  const relativeY = state.game.ball.pos.y - minY + deltaY
+
+  // Use triangle wave formula: ping-pong between 0 and playableHeight
+  // First, get position modulo (2 * playableHeight) for full bounce cycle
+  const cycleLength = 2 * playableHeight
+  let normalized = relativeY % cycleLength
+
+  // Handle negative modulo (JS behavior)
+  if (normalized < 0)
+    normalized += cycleLength
+
+  // Triangle wave: if in second half of cycle, reflect back
+  const finalRelativeY = normalized <= playableHeight
+    ? normalized
+    : cycleLength - normalized
+
+  return minY + finalRelativeY
 }
 
 /**
  * Client paddle collision, waiting for server to bounce
+ * @return new ball X position after paddle bounce
  */
-function checkClientPaddleCollision(): void {
-  const ballX = gameState.ball.x
-  const ballY = gameState.ball.y
-  const ballRadius = CONFIG.BALL_RADIUS
+function simulatePaddleBounce(ballPos: Vector2D): number {
+  const isWithinPaddleYRange = (y: number, padY: number) =>
+    Math.abs(y - padY) <= CONFIG.PADDLE_HEIGHT / 2 + CONFIG.BALL_RADIUS
 
-  const leftPaddleX = CONFIG.PADDLE_MARGIN + CONFIG.PADDLE_WIDTH
-  const leftPaddleY = gameState.paddles.left.y
+  const ballLeft = ballPos.x - CONFIG.BALL_RADIUS
+  const lPadSurfX = CONFIG.PADDLE_MARGIN + CONFIG.PADDLE_WIDTH
+  const lPadY = state.game.paddles.left.y
+  const lDelta = ballLeft - lPadSurfX
+  if (lDelta <= 0 && isWithinPaddleYRange(ballPos.y, lPadY))
+    return lPadSurfX - lDelta
 
-  if (
-    ballX - ballRadius <= leftPaddleX
-    && ballX > CONFIG.PADDLE_MARGIN
-    && Math.abs(ballY - leftPaddleY) <= CONFIG.PADDLE_HEIGHT / 2 + ballRadius
-  ) {
-    gameState.ball.x = leftPaddleX + ballRadius
-  }
+  const ballRight = ballPos.x + CONFIG.BALL_RADIUS
+  const rPadSurfX = CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH
+  const rPadY = state.game.paddles.right.y
+  const rDelta = ballRight - rPadSurfX
+  if (rDelta >= 0 && isWithinPaddleYRange(ballPos.y, rPadY))
+    return rPadSurfX - rDelta
 
-  const rightPaddleX = CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH
-  const rightPaddleY = gameState.paddles.right.y
+  return ballPos.x
+}
 
-  if (
-    ballX + ballRadius >= rightPaddleX
-    && ballX < CONFIG.WIDTH - CONFIG.PADDLE_MARGIN
-    && Math.abs(ballY - rightPaddleY) <= CONFIG.PADDLE_HEIGHT / 2 + ballRadius
-  ) {
-    gameState.ball.x = rightPaddleX - ballRadius
+function updatePaddles(deltaTime: number): void {
+  // TODO interpolation
+
+  for (const side of [Side.LEFT, Side.RIGHT] as const) {
+    const paddle = state.game.paddles[side]
+    paddle.y += paddle.direction * CONFIG.PADDLE_SPEED * deltaTime
+    paddle.y = clamp(paddle.y, CONFIG.PADDLE_HEIGHT / 2, CONFIG.HEIGHT - CONFIG.PADDLE_HEIGHT / 2)
   }
 }
 
 function render(): void {
-  if (!ctx || !canvas)
-    return
+  let styles = getComputedStyle(document.documentElement)
 
   // Clear canvas
-  ctx.fillStyle = "#111827"
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = styles.getPropertyValue("--color-game-background")
+  ctx.fillRect(0, 0, els.canvas.width, els.canvas.height)
 
   // Draw center line
   ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"
   ctx.lineWidth = 2
   ctx.setLineDash([10, 10])
   ctx.beginPath()
-  ctx.moveTo(canvas.width / 2, 0)
-  ctx.lineTo(canvas.width / 2, canvas.height)
+  ctx.moveTo(els.canvas.width / 2, 0)
+  ctx.lineTo(els.canvas.width / 2, els.canvas.height)
   ctx.stroke()
   ctx.setLineDash([])
 
-  // Draw paddles
-  const leftPaddleX = CONFIG.PADDLE_MARGIN
-  const rightPaddleX = CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH
-
   // Left paddle (cyan)
-  ctx.fillStyle = "#22d3ee"
+  const lPadTLCorner = {
+    x: CONFIG.PADDLE_MARGIN,
+    y: state.game.paddles.left.y - CONFIG.PADDLE_HEIGHT / 2,
+  }
+  ctx.fillStyle = styles.getPropertyValue("--color-game-player1")
   ctx.fillRect(
-    leftPaddleX,
-    gameState.paddles.left.y - CONFIG.PADDLE_HEIGHT / 2,
+    lPadTLCorner.x,
+    lPadTLCorner.y,
     CONFIG.PADDLE_WIDTH,
     CONFIG.PADDLE_HEIGHT,
   )
 
   // Right paddle (fuchsia)
-  ctx.fillStyle = "#d946ef"
+  const rPadTLCorner = {
+    x: CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH,
+    y: state.game.paddles.right.y - CONFIG.PADDLE_HEIGHT / 2,
+  }
+  ctx.fillStyle = styles.getPropertyValue("--color-game-player2")
   ctx.fillRect(
-    rightPaddleX,
-    gameState.paddles.right.y - CONFIG.PADDLE_HEIGHT / 2,
+    rPadTLCorner.x,
+    rPadTLCorner.y,
     CONFIG.PADDLE_WIDTH,
     CONFIG.PADDLE_HEIGHT,
   )
 
   // Draw ball
-  ctx.fillStyle = "#ffffff"
+  ctx.fillStyle = "#dedede"
   ctx.beginPath()
-  ctx.arc(gameState.ball.x, gameState.ball.y, CONFIG.BALL_RADIUS, 0, Math.PI * 2)
+  ctx.arc(state.clientBallPrediction.x, state.clientBallPrediction.y, CONFIG.BALL_RADIUS, 0, Math.PI * 2)
   ctx.fill()
 }
 
@@ -596,125 +514,73 @@ function render(): void {
 // UI HELPERS
 // ============================================
 
-function setStatus(text: string): void {
-  if (statusText)
-    statusText.textContent = text
+/**
+ * Return all overlays except disconnected overlay
+ */
+function getOverlays(): HTMLElement[] {
+  return [
+    els.menuOverlay,
+    els.queueOverlay,
+    els.countdownOverlay,
+    els.gameOverOverlay,
+    els.tournamentResultOverlay,
+  ]
 }
 
-function showElement(el: HTMLElement | null): void {
-  el?.classList.remove("hidden")
+function switchOverlay(overlay: HTMLElement): void {
+  showElement(overlay)
+  getOverlays().forEach((el) => el !== overlay && hideElement(el))
 }
 
-function hideElement(el: HTMLElement | null): void {
-  el?.classList.add("hidden")
+/**
+ * Hide all overlays except the ones provided and the disconnected overlay
+ */
+function hideOverlays(): void {
+  getOverlays().forEach((el) => hideElement(el))
 }
 
-function updateScoreDisplay(): void {
-  if (scoreLeft)
-    scoreLeft.textContent = String(gameState.score.left)
-  if (scoreRight)
-    scoreRight.textContent = String(gameState.score.right)
+function showElement(el: HTMLElement): void {
+  el.classList.remove("hidden")
 }
 
-function showGameOver(score: { left: number; right: number }, mode: GameMode): void {
-  hideElement(gameContainer)
-  // Determine if we won based on score and our side
-  const iWon = mySide === "left" ? score.left > score.right : score.right > score.left
-  if (winnerText)
-    winnerText.textContent = iWon ? "You Win!" : "You Lose"
-  if (finalScore)
-    finalScore.textContent = `${score.left} - ${score.right}`
-
-  // In tournament mode, hide play again button until tournament is fully over
-  if (mode === "tournament")
-    hideElement(playAgainBtn)
-  else
-    showElement(playAgainBtn)
-
-  showElement(gameOverOverlay)
+function hideElement(el: HTMLElement): void {
+  el.classList.add("hidden")
 }
 
-function showTournamentResult(rankings: TournamentRanking[]): void {
-  hideElement(gameOverOverlay)
-  hideElement(gameContainer)
-
-  if (tournamentRankings) {
-    const medals: Record<number, string> = {
-      1: "🥇",
-      2: "🥈",
-      3: "🥉",
-      4: "💩",
-    }
-    const medalColors: Record<number, string> = {
-      1: "text-yellow-400", // Gold
-      2: "text-gray-300", // Silver
-      3: "text-amber-600", // Bronze
-      4: "text-gray-500", // 4th
-    }
-    tournamentRankings.innerHTML = rankings.map((r) => {
-      const isMe = r.username === myUsername
-      const medal = medals[r.rank] || ""
-      const color = medalColors[r.rank] || "text-white"
-      const meTag = isMe ? " (You)" : ""
-      const highlight = isMe ? "bg-fuchsia-900/50 rounded px-2" : ""
-      return `<div class="${color} ${isMe ? "font-bold" : ""} ${highlight} py-1">${medal} ${r.username}${meTag}</div>`
-    }).join("")
-  }
-
-  showElement(tournamentResultOverlay)
+function updateGameOverOverlay(): void {
+  const won = state.side === Side.LEFT
+    ? state.game.score.left > state.game.score.right
+    : state.game.score.right > state.game.score.left
+  els.gameOverText.textContent = won ? "You Win!" : "You Lose"
+  els.gameOverScore.textContent = `${state.game.score.left} - ${state.game.score.right}`
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
+function updateTournamentOverlay(rankings: string[]): void {
+  const medals = ["🥇", "🥈", "🥉", "💩"]
+  const colors = ["#ffd700", "#c0c0c0", "#cd7f32", "#8b4513"]
+  const myUsername = getUser()!.username
+  els.tournamentResultRankings.innerHTML = rankings.map((username, i) => {
+    const isMe = username === myUsername
+    const colorClass = `text-[${colors[i]}]`
+    const boldClass = isMe ? "font-bold" : ""
+    const meTag = isMe ? " (You)" : ""
+    return `<div class="${colorClass} ${boldClass}">${medals[i]} ${username}${meTag}</div>`
+  }).join("")
 }
 
 // ============================================
 // BUTTON HANDLERS
 // ============================================
 
-function onJoinNormal(): void {
-  send({ type: "join_normal" })
-}
+const joinNormal = () => send({ type: "join_normal" })
+const joinTournament = () => send({ type: "join_tournament" })
+const leaveQueue = () => send({ type: "leave_queue" })
+const playAgain = () => switchOverlay(els.menuOverlay)
 
-function onJoinTournament(): void {
-  send({ type: "join_tournament" })
-}
+// ============================================
+// UTILS
+// ============================================
 
-function onLeaveQueue(): void {
-  send({ type: "leave_queue" })
-}
-
-function onPlayAgain(): void {
-  resetToMainMenu()
-}
-
-function onTournamentDone(): void {
-  resetToMainMenu()
-}
-
-function resetToMainMenu(): void {
-  // Reset game state
-  resetGameState()
-  gameState.isPlaying = false
-  currentMode = null
-
-  // Cancel any running animation frame
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId)
-    animationFrameId = null
-  }
-
-  // Reset UI
-  hideElement(gameOverOverlay)
-  hideElement(tournamentResultOverlay)
-  hideElement(gameContainer)
-  hideElement(disconnectLeft)
-  hideElement(disconnectRight)
-  showElement(gameStatus)
-  showElement(queueButtons)
-  setStatus("Ready to play!")
-
-  // Reset game session
-  gameId = null
-  mySide = null
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
 }

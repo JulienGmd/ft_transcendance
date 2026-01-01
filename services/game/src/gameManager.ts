@@ -15,7 +15,8 @@ import {
 import { Engine } from "./engine"
 import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig"
 import { sendMatchResult } from "./nats"
-import { InputAction, InputKey, Player, Side } from "./types"
+import { Side } from "./sharedTypes"
+import { Player } from "./types"
 
 export enum GameMode {
   NORMAL = "normal",
@@ -207,7 +208,7 @@ export class GameManager {
 
   // ====== PLAYER INTERACTIONS ===============
 
-  handleInput(player: Player, key: InputKey, action: InputAction): void {
+  handleInput(player: Player, direction: -1 | 0 | 1): void {
     const game = this.getPlayerGame(player)
     if (!game)
       return
@@ -217,7 +218,7 @@ export class GameManager {
       return
 
     const side = player.id === game.p1.id ? Side.LEFT : Side.RIGHT
-    const paddle = game.engine.handleInput(side, key, action)
+    const paddle = game.engine.setPaddleDirection(side, direction)
 
     const sockets = [game.p1.socket, game.p2.socket]
     broadcastPaddleUpdate(sockets, side, paddle)
