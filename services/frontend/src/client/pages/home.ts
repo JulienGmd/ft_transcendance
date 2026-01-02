@@ -1,4 +1,4 @@
-import { checkEls } from "../utils.js"
+import { checkEls, getUser } from "../utils.js"
 
 const CONFIG = {
   WIDTH: 800,
@@ -10,7 +10,11 @@ const CONFIG = {
   BALL_SPEED: 200,
 } as const
 
-let els: { canvas: HTMLCanvasElement }
+let els: {
+  canvas: HTMLCanvasElement
+  login: HTMLElement
+  play: HTMLElement
+}
 let ctx: CanvasRenderingContext2D
 let animationFrameId: number | undefined
 let lastTimestamp: number | undefined
@@ -30,11 +34,18 @@ let scaledConfig = {
 
 export function onMount(): void {
   els = {
-    canvas: document.querySelector("#background-animation-canvas")!,
+    canvas: document.querySelector("#home-canvas")!,
+    login: document.querySelector("#home-login")!,
+    play: document.querySelector("#home-play")!,
   }
   checkEls(els)
 
   ctx = els.canvas.getContext("2d")!
+
+  if (getUser())
+    els.login.classList.add("hidden")
+  else
+    els.play.classList.add("hidden")
 
   window.addEventListener("resize", onResize)
   onResize()

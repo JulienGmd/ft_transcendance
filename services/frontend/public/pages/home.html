@@ -3,8 +3,20 @@
 <div class="flex flex-1 flex-col items-center justify-center">
   <!-- Navigation menu -->
   <nav class="font-orbitron gap-4">
+    <a class="group block items-center justify-center p-12" href="/login">
+      <!-- Shown when not logged in: -->
+      <p
+        id="home-login"
+        class="group-hover:text-primary animate-slide-right origin-bottom-left text-4xl font-bold transition group-hover:-skew-x-12"
+      >
+        LOGIN
+      </p>
+    </a>
+
+    <!-- Shown when logged in: -->
     <a class="group block items-center justify-center p-12" href="/game">
       <p
+        id="home-play"
         class="group-hover:text-primary animate-slide-right origin-bottom-left text-4xl font-bold transition group-hover:-skew-x-12"
       >
         PLAY
@@ -14,9 +26,6 @@
 
   <!-- Background animation -->
   <div class="animate-fade-in absolute inset-0 -z-10 grid place-items-center">
-    <canvas
-      id="background-animation-canvas"
-      class="border-surface bg-game-background max-h-full max-w-full rounded-lg border-2"
-    ></canvas>
+    <canvas id="home-canvas" class="bg-game-background max-h-full max-w-full rounded-lg"></canvas>
   </div>
 </div>
