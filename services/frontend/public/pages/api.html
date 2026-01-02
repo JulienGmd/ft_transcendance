@@ -19,25 +19,23 @@
     <ul class="space-y-4">
       <li class="space-y-2">
         <p><b class="font-orbitron">join_normal</b>: join the normal queue</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "join_normal" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "join_normal" }</pre>
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">join_tournament</b>: join the tournament queue</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "join_tournament" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "join_tournament" }</pre>
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">leave_queue</b>: leave the queue</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "leave_queue" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "leave_queue" }</pre>
       </li>
       <li class="space-y-2">
-        <p><b class="font-orbitron">input</b>: send a paddle action</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
-{ "type": "input", "key": "up"|"down", "action": "press"|"release" }</pre
-        >
+        <p><b class="font-orbitron">move</b>: send a paddle move action</p>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "move", "direction": -1 | 0 | 1 }</pre>
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">ping</b>: ping the server</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">{ "type": "ping" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "ping" }</pre>
       </li>
     </ul>
   </div>
@@ -47,8 +45,8 @@
 
     <div class="space-y-2">
       <p>Possible message types:</p>
-      <pre class="bg-surface rounded px-2 py-1 text-sm whitespace-normal">
-        queue_joined, queue_left, game_found, countdown, game_start, game_state, ball_sync, paddle_update, score_update, game_over, tournament_waiting, tournament_result, opponent_disconnected, opponent_reconnected, error, pong    </pre
+      <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
+queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update, score_update, game_over, tournament_result, error, pong</pre
       >
     </div>
 
@@ -60,7 +58,7 @@
     <ul class="space-y-4">
       <li class="space-y-2">
         <p><b class="font-orbitron">queue_joined</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "queue_joined",
   "position": number, // your position in the queue
@@ -71,7 +69,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">queue_left</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "queue_left"
 }</pre
@@ -80,7 +78,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">game_found</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "game_found",
   "gameId": string,
@@ -93,7 +91,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">countdown</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "countdown",
   "seconds": number
@@ -103,7 +101,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">game_state</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "game_state",
   "state": {
@@ -127,7 +125,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">game_over</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "game_over",
   "finalScore": { "left": number, "right": number },
@@ -140,7 +138,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">error</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "error",
   "message": string
@@ -150,7 +148,7 @@
 
       <li class="space-y-2">
         <p><b class="font-orbitron">pong</b>:</p>
-        <pre class="bg-surface rounded px-2 py-1 text-sm">
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "pong"
 }</pre
