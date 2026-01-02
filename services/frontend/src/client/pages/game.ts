@@ -10,7 +10,7 @@ import { checkEls, getUser } from "../utils.js"
 // ============================================
 
 let els: {
-  canvas: HTMLCanvasElement
+  gameCanvas: HTMLCanvasElement
 
   menuOverlay: HTMLElement
   menuJoinNormalBtn: HTMLElement
@@ -115,7 +115,7 @@ export function onGuard(route: string): boolean {
 export function onMount(): void {
   // Get DOM elements
   els = {
-    canvas: document.querySelector("#canvas")!,
+    gameCanvas: document.querySelector("#game-canvas")!,
 
     menuOverlay: document.querySelector("#menu-overlay")!,
     menuJoinNormalBtn: document.querySelector("#menu-join-normal-btn")!,
@@ -147,7 +147,7 @@ export function onMount(): void {
   }
   checkEls(els)
 
-  ctx = els.canvas.getContext("2d")!
+  ctx = els.gameCanvas.getContext("2d")!
 
   // Event listeners
   els.menuJoinNormalBtn.addEventListener("click", joinNormal)
@@ -485,15 +485,15 @@ function render(): void {
 
   // Clear canvas
   ctx.fillStyle = styles.getPropertyValue("--color-game-background")
-  ctx.fillRect(0, 0, els.canvas.width, els.canvas.height)
+  ctx.fillRect(0, 0, els.gameCanvas.width, els.gameCanvas.height)
 
   // Draw center line
   ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"
   ctx.lineWidth = 2
   ctx.setLineDash([10, 10])
   ctx.beginPath()
-  ctx.moveTo(els.canvas.width / 2, 0)
-  ctx.lineTo(els.canvas.width / 2, els.canvas.height)
+  ctx.moveTo(els.gameCanvas.width / 2, 0)
+  ctx.lineTo(els.gameCanvas.width / 2, els.gameCanvas.height)
   ctx.stroke()
   ctx.setLineDash([])
 

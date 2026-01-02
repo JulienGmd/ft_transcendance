@@ -14,8 +14,8 @@
   --color-text: #d4d5d7; /* Main text color */
   --color-text-muted: #747983; /* Secondary text */
 
-  --color-background: #15161c; /* Main background */
-  --color-surface: #22272d; /* Cards, modals */
+  --color-background: #1b1d22; /* Main background */
+  --color-surface: #2a2c33; /* Surface elements like cards, modals */
 
   --color-game-background: #1b1d22; /* Game area background */
   --color-game-player1: #3b82f6; /* Player 1 color - blue */
@@ -68,10 +68,6 @@
 
   .link {
     @apply text-primary hover:text-primary-dark transition;
-  }
-
-  .hover-skew {
-    @apply origin-bottom-left transition hover:-skew-x-12;
   }
 
   .anim-typewriter {
