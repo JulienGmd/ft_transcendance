@@ -2,7 +2,7 @@
 // GAME PAGE - Pong Client
 // ============================================
 
-// TODO tournament waiting
+// TODO tournament waiting (ca affiche game over a la fin dun match de tournoi)
 
 import { ClientMessage, SerializedEngine, ServerMessage, Side, Vector2D } from "../gameSharedTypes.js"
 import { checkEls, getUser } from "../utils.js"
@@ -74,7 +74,8 @@ let state = defaultState()
 function defaultState(): {
   game: SerializedEngine
   side: Side
-  clientBallPrediction: Vector2D
+  interpolatedBallPos: Vector2D
+  interpolatedPaddlesY: { left: number; right: number }
 } {
   return {
     game: {
@@ -90,8 +91,11 @@ function defaultState(): {
       score: { left: 0, right: 0 },
     },
     side: Side.LEFT,
-    // Ball position simulated by the client based on last bounce pos/velocity
-    clientBallPrediction: { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 },
+    interpolatedBallPos: { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 },
+    interpolatedPaddlesY: {
+      left: CONFIG.HEIGHT / 2,
+      right: CONFIG.HEIGHT / 2,
+    },
   }
 }
 
@@ -356,7 +360,7 @@ function tick(): void {
   const deltaTime = (now - lastFrameTime) / 1000
   lastFrameTime = now
 
-  updateBall()
+  updateBall(deltaTime)
   updatePaddles(deltaTime)
   render()
 }
@@ -365,16 +369,18 @@ function tick(): void {
  * Update ball position with wall and paddle bounce handling based on
  * position/velocity since last bounce
  */
-function updateBall(): void {
-  // TODO interpolation
-
+function updateBall(deltaTime: number): void {
   // Wall bounce simulation
   const elapsed = (Date.now() - state.game.ball.time) / 1000
-  state.clientBallPrediction.x = calculateXAfterDuration(elapsed)
-  state.clientBallPrediction.y = calculateYAfterDuration(elapsed)
+  const desiredLocation: Vector2D = {
+    x: calculateXAfterDuration(elapsed),
+    y: calculateYAfterDuration(elapsed),
+  }
 
   // Paddle bounce simulation
-  state.clientBallPrediction.x = simulatePaddleBounce(state.clientBallPrediction)
+  desiredLocation.x = simulatePaddleBounce(desiredLocation)
+
+  state.interpolatedBallPos = interpolateV2(state.interpolatedBallPos, desiredLocation, deltaTime * 50)
 }
 
 /**
@@ -451,12 +457,12 @@ function simulatePaddleBounce(ballPos: Vector2D): number {
 }
 
 function updatePaddles(deltaTime: number): void {
-  // TODO interpolation
-
   for (const side of [Side.LEFT, Side.RIGHT] as const) {
     const paddle = state.game.paddles[side]
     paddle.y += paddle.direction * CONFIG.PADDLE_SPEED * deltaTime
     paddle.y = clamp(paddle.y, CONFIG.PADDLE_HEIGHT / 2, CONFIG.HEIGHT - CONFIG.PADDLE_HEIGHT / 2)
+
+    state.interpolatedPaddlesY[side] = interpolate(state.interpolatedPaddlesY[side], paddle.y, deltaTime * 50)
   }
 }
 
@@ -480,7 +486,7 @@ function render(): void {
   // Left paddle (cyan)
   const lPadTLCorner = {
     x: CONFIG.PADDLE_MARGIN,
-    y: state.game.paddles.left.y - CONFIG.PADDLE_HEIGHT / 2,
+    y: state.interpolatedPaddlesY.left - CONFIG.PADDLE_HEIGHT / 2,
   }
   ctx.fillStyle = styles.getPropertyValue("--color-game-player1")
   ctx.fillRect(
@@ -493,7 +499,7 @@ function render(): void {
   // Right paddle (fuchsia)
   const rPadTLCorner = {
     x: CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH,
-    y: state.game.paddles.right.y - CONFIG.PADDLE_HEIGHT / 2,
+    y: state.interpolatedPaddlesY.right - CONFIG.PADDLE_HEIGHT / 2,
   }
   ctx.fillStyle = styles.getPropertyValue("--color-game-player2")
   ctx.fillRect(
@@ -506,7 +512,7 @@ function render(): void {
   // Draw ball
   ctx.fillStyle = "#dedede"
   ctx.beginPath()
-  ctx.arc(state.clientBallPrediction.x, state.clientBallPrediction.y, CONFIG.BALL_RADIUS, 0, Math.PI * 2)
+  ctx.arc(state.interpolatedBallPos.x, state.interpolatedBallPos.y, CONFIG.BALL_RADIUS, 0, Math.PI * 2)
   ctx.fill()
 }
 
@@ -583,4 +589,15 @@ const playAgain = () => switchOverlay(els.menuOverlay)
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value))
+}
+
+function interpolate(current: number, target: number, factor: number): number {
+  return current + (target - current) * clamp(factor, 0, 1)
+}
+
+function interpolateV2(current: Vector2D, target: Vector2D, factor: number): Vector2D {
+  return {
+    x: interpolate(current.x, target.x, factor),
+    y: interpolate(current.y, target.y, factor),
+  }
 }
