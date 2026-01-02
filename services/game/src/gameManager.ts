@@ -15,13 +15,8 @@ import {
 import { Engine } from "./engine"
 import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig"
 import { sendMatchResult } from "./nats"
-import { Side } from "./sharedTypes"
+import { GameMode, Side } from "./sharedTypes"
 import { Player } from "./types"
-
-export enum GameMode {
-  NORMAL = "normal",
-  TOURNAMENT = "tournament",
-}
 
 export enum GameState {
   WAITING = "waiting",
@@ -33,7 +28,8 @@ export enum GameState {
 export interface Game {
   readonly p1: Player
   readonly p2: Player
-  engine: Engine
+  readonly mode: GameMode
+  readonly engine: Engine
   state: GameState
   countdownInterval?: NodeJS.Timeout
   onEndCallback: (result: GameEndResult) => void
@@ -66,7 +62,7 @@ export class GameManager {
 
   // ===== GAMES MANAGEMENT ===================
 
-  addGame(p1: Player, p2: Player): Promise<GameEndResult> {
+  addGame(p1: Player, p2: Player, mode: GameMode): Promise<GameEndResult> {
     return new Promise((resolve) => {
       if (this.getPlayerGame(p1) || this.getPlayerGame(p2))
         return
@@ -74,6 +70,7 @@ export class GameManager {
       const game: Game = {
         p1,
         p2,
+        mode,
         engine: new Engine(),
         state: GameState.WAITING,
         onEndCallback: (result) => resolve(result), // Resolve promise on game end
@@ -243,7 +240,7 @@ export class GameManager {
     else
       game.p2.socket = player.socket
 
-    sendGameFound(player.socket, side, opponent.username)
+    sendGameFound(player.socket, side, opponent.username, game.mode)
     this.syncGame(game)
 
     console.log(`[GameManager] Player ${player.username} reconnected to game`)

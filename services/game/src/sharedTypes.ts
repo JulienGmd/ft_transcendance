@@ -3,6 +3,11 @@
 // Shared between server and client
 // ============================================
 
+export enum GameMode {
+  NORMAL = "normal",
+  TOURNAMENT = "tournament",
+}
+
 export interface Vector2D {
   x: number
   y: number
@@ -54,9 +59,9 @@ export type ClientMessage =
 
 // Server -> Client
 export type ServerMessage =
-  | { type: "queue_joined"; position: number }
+  | { type: "queue_joined"; position: number; mode: GameMode }
   | { type: "queue_left" }
-  | { type: "game_found"; side: Side; opponentName: string }
+  | { type: "game_found"; side: Side; opponentName: string; mode: GameMode }
   | { type: "countdown"; seconds: number }
   | { type: "game_start" }
   | { type: "game_sync"; state: SerializedEngine }

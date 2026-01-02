@@ -9,6 +9,7 @@
 
   <!-- Queue overlay -->
   <div id="queue-overlay" class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6">
+    <p class="text-2xl">Waiting for players to join in <span id="queue-mode">-</span> queue...</p>
     <p class="text-xl font-bold">Position: <span id="queue-position">-</span></p>
     <button id="queue-leave-btn" class="button-tertiary text-2xl">LEAVE QUEUE</button>
   </div>
@@ -29,7 +30,9 @@
     <p class="text-center text-4xl font-bold">GAME OVER</p>
     <p id="game-over-text" class="text-2xl">Winner: -</p>
     <p id="game-over-score" class="text-xl">0 - 0</p>
+    <!-- One or the other is shown depending on game mode: -->
     <button id="game-over-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
+    <p id="game-over-tournament-waiting" class="text-text-muted">Waiting for other matches to finish...</p>
   </div>
 
   <!-- Tournament result overlay -->

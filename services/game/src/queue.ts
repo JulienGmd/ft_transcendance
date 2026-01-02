@@ -4,21 +4,21 @@
 // ============================================
 
 import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft } from "./communication"
-import { GameEndResult, GameManager, GameMode } from "./gameManager"
-import { Side } from "./sharedTypes"
+import { GameEndResult, GameManager } from "./gameManager"
+import { GameMode, Side } from "./sharedTypes"
 import { Player } from "./types"
 
 class Queue {
   private readonly gameManager: GameManager
-  private readonly gameMode: GameMode
+  private readonly mode: GameMode
 
   private readonly queue: Player[] = []
 
   matchPlayers?: () => void
 
-  constructor(gameManager: GameManager, gameMode: GameMode) {
+  constructor(gameManager: GameManager, mode: GameMode) {
     this.gameManager = gameManager
-    this.gameMode = gameMode
+    this.mode = mode
   }
 
   join(player: Player): boolean {
@@ -26,8 +26,8 @@ class Queue {
       return false
 
     this.queue.push(player)
-    sendQueueJoined(player.socket, this.length)
-    console.log(`[Queue:${this.gameMode}] Player ${player.username} joined at position: ${this.queue.length}`)
+    sendQueueJoined(player.socket, this.length, this.mode)
+    console.log(`[Queue:${this.mode}] Player ${player.username} joined at position: ${this.queue.length}`)
 
     this.matchPlayers?.()
     return true
@@ -40,7 +40,7 @@ class Queue {
 
     this.queue.splice(idx, 1)
     sendQueueLeft(player.socket)
-    console.log(`[Queue:${this.gameMode}] Player ${player.username} left`)
+    console.log(`[Queue:${this.mode}] Player ${player.username} left`)
 
     return true
   }
@@ -62,10 +62,11 @@ async function createGame(
   gameManager: GameManager,
   p1: Player,
   p2: Player,
+  mode: GameMode,
 ): Promise<GameEndResult> {
-  sendGameFound(p1.socket, Side.LEFT, p2.username)
-  sendGameFound(p2.socket, Side.RIGHT, p1.username)
-  return gameManager.addGame(p1, p2)
+  sendGameFound(p1.socket, Side.LEFT, p2.username, mode)
+  sendGameFound(p2.socket, Side.RIGHT, p1.username, mode)
+  return gameManager.addGame(p1, p2, mode)
 }
 
 export class NormalMatchmaking {
@@ -97,7 +98,7 @@ export class NormalMatchmaking {
     const p1 = this.queue.shift()!
     const p2 = this.queue.shift()!
     console.log(`[NormalMatchmaking] Creating game: ${p1.username} vs ${p2.username}`)
-    createGame(this.gameManager, p1, p2)
+    createGame(this.gameManager, p1, p2, GameMode.NORMAL)
   }
 }
 
@@ -133,13 +134,13 @@ export class TournamentMatchmaking {
     // Note: since objects are passed by reference, even if a player reconnect to his game
     // during the tournament, their socket will be updated and reflected here.
 
-    const semi1Promise = createGame(this.gameManager, players[0], players[1])
-    const semi2Promise = createGame(this.gameManager, players[2], players[3])
+    const semi1Promise = createGame(this.gameManager, players[0], players[1], GameMode.TOURNAMENT)
+    const semi2Promise = createGame(this.gameManager, players[2], players[3], GameMode.TOURNAMENT)
     const [semi1, semi2] = await Promise.all([semi1Promise, semi2Promise])
     console.log(`[TournamentMatchmaking] Semifinals winners: ${semi1.winner.username}, ${semi2.winner.username}`)
 
-    const finalPromise = createGame(this.gameManager, semi1.winner, semi2.winner)
-    const thirdPromise = createGame(this.gameManager, semi1.loser, semi2.loser)
+    const finalPromise = createGame(this.gameManager, semi1.winner, semi2.winner, GameMode.TOURNAMENT)
+    const thirdPromise = createGame(this.gameManager, semi1.loser, semi2.loser, GameMode.TOURNAMENT)
     const [final, third] = await Promise.all([finalPromise, thirdPromise])
     console.log(`[TournamentMatchmaking] Finals winners: ${final.winner.username}, 3rd place: ${third.winner.username}`)
 

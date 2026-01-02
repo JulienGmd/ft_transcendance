@@ -4,7 +4,7 @@
 // ============================================
 
 import type { WebSocket } from "ws"
-import { SerializedEngine, SerializedPaddle, ServerMessage, Side } from "./sharedTypes"
+import { GameMode, SerializedEngine, SerializedPaddle, ServerMessage, Side } from "./sharedTypes"
 
 // ============================================
 // SOCKET INTERFACE
@@ -70,10 +70,11 @@ export function broadcastRaw(sockets: Iterable<WebSocket>, message: ServerMessag
 /**
  * Notify player they joined the queue
  */
-export function sendQueueJoined(socket: WebSocket, position: number): boolean {
+export function sendQueueJoined(socket: WebSocket, position: number, mode: GameMode): boolean {
   return sendRaw(socket, {
     type: "queue_joined",
     position,
+    mode,
   })
 }
 
@@ -97,11 +98,13 @@ export function sendGameFound(
   socket: WebSocket,
   side: Side,
   opponentName: string,
+  mode: GameMode,
 ): boolean {
   return sendRaw(socket, {
     type: "game_found",
     side,
     opponentName,
+    mode,
   })
 }
 

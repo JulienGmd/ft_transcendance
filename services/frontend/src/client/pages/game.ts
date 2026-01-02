@@ -4,7 +4,7 @@
 
 // TODO tournament waiting (ca affiche game over a la fin dun match de tournoi)
 
-import { ClientMessage, SerializedEngine, ServerMessage, Side, Vector2D } from "../gameSharedTypes.js"
+import { ClientMessage, GameMode, SerializedEngine, ServerMessage, Side, Vector2D } from "../gameSharedTypes.js"
 import { checkEls, getUser } from "../utils.js"
 
 // ============================================
@@ -19,6 +19,7 @@ let els: {
   menuJoinTournamentBtn: HTMLElement
 
   queueOverlay: HTMLElement
+  queueMode: HTMLElement
   queuePosition: HTMLElement
   queueLeaveBtn: HTMLElement
 
@@ -29,6 +30,7 @@ let els: {
   gameOverText: HTMLElement
   gameOverScore: HTMLElement
   gameOverPlayAgainBtn: HTMLElement
+  gameOverTournamentWaiting: HTMLElement
 
   tournamentResultOverlay: HTMLElement
   tournamentResultRankings: HTMLElement
@@ -73,6 +75,7 @@ let state = defaultState()
 
 function defaultState(): {
   game: SerializedEngine
+  mode: GameMode
   side: Side
   interpolatedBallPos: Vector2D
   interpolatedPaddlesY: { left: number; right: number }
@@ -90,6 +93,7 @@ function defaultState(): {
       },
       score: { left: 0, right: 0 },
     },
+    mode: GameMode.NORMAL,
     side: Side.LEFT,
     interpolatedBallPos: { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 },
     interpolatedPaddlesY: {
@@ -117,6 +121,7 @@ export function onMount(): void {
     menuJoinTournamentBtn: document.querySelector("#menu-join-tournament-btn")!,
 
     queueOverlay: document.querySelector("#queue-overlay")!,
+    queueMode: document.querySelector("#queue-mode")!,
     queuePosition: document.querySelector("#queue-position")!,
     queueLeaveBtn: document.querySelector("#queue-leave-btn")!,
 
@@ -127,6 +132,7 @@ export function onMount(): void {
     gameOverText: document.querySelector("#game-over-text")!,
     gameOverScore: document.querySelector("#game-over-score")!,
     gameOverPlayAgainBtn: document.querySelector("#game-over-play-again-btn")!,
+    gameOverTournamentWaiting: document.querySelector("#game-over-tournament-waiting")!,
 
     tournamentResultOverlay: document.querySelector("#tournament-result-overlay")!,
     tournamentResultRankings: document.querySelector("#tournament-result-rankings")!,
@@ -236,7 +242,9 @@ function onWsMessage(e: MessageEvent<any>): void {
 
   switch (msg.type) {
     case "queue_joined":
+      state.mode = msg.mode
       els.queuePosition.textContent = `${msg.position}`
+      els.queueMode.textContent = capitalize(msg.mode)
       switchOverlay(els.queueOverlay)
       break
 
@@ -246,6 +254,7 @@ function onWsMessage(e: MessageEvent<any>): void {
 
     case "game_found":
       state = defaultState()
+      state.mode = msg.mode
       state.side = msg.side
       els.leftPlayerName.textContent = state.side === Side.LEFT ? getUser()!.username : msg.opponentName
       els.rightPlayerName.textContent = state.side === Side.RIGHT ? getUser()!.username : msg.opponentName
@@ -559,6 +568,13 @@ function updateGameOverOverlay(): void {
     : state.game.score.right > state.game.score.left
   els.gameOverText.textContent = won ? "You Win!" : "You Lose"
   els.gameOverScore.textContent = `${state.game.score.left} - ${state.game.score.right}`
+  if (state.mode === GameMode.NORMAL) {
+    hideElement(els.gameOverTournamentWaiting)
+    showElement(els.gameOverPlayAgainBtn)
+  } else {
+    hideElement(els.gameOverPlayAgainBtn)
+    showElement(els.gameOverTournamentWaiting)
+  }
 }
 
 function updateTournamentOverlay(rankings: string[]): void {
@@ -600,4 +616,8 @@ function interpolateV2(current: Vector2D, target: Vector2D, factor: number): Vec
     x: interpolate(current.x, target.x, factor),
     y: interpolate(current.y, target.y, factor),
   }
+}
+
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1)
 }
