@@ -17,7 +17,6 @@ let els: {
   menuJoinTournamentBtn: HTMLElement
 
   queueOverlay: HTMLElement
-  queueMode: HTMLElement
   queuePosition: HTMLElement
   queueLeaveBtn: HTMLElement
 
@@ -119,7 +118,6 @@ export function onMount(): void {
     menuJoinTournamentBtn: document.querySelector("#menu-join-tournament-btn")!,
 
     queueOverlay: document.querySelector("#queue-overlay")!,
-    queueMode: document.querySelector("#queue-mode")!,
     queuePosition: document.querySelector("#queue-position")!,
     queueLeaveBtn: document.querySelector("#queue-leave-btn")!,
 
@@ -242,7 +240,6 @@ function onWsMessage(e: MessageEvent<any>): void {
     case "queue_joined":
       state.mode = msg.mode
       els.queuePosition.textContent = `${msg.position}`
-      els.queueMode.textContent = capitalize(msg.mode)
       switchOverlay(els.queueOverlay)
       break
 
@@ -614,8 +611,4 @@ function interpolateV2(current: Vector2D, target: Vector2D, factor: number): Vec
     x: interpolate(current.x, target.x, factor),
     y: interpolate(current.y, target.y, factor),
   }
-}
-
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1)
 }

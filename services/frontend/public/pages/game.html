@@ -3,14 +3,15 @@
 <div class="font-orbitron relative flex flex-1 flex-col items-center justify-center">
   <!-- Menu overlay -->
   <div id="menu-overlay" class="bg-background absolute inset-0 flex flex-col items-center justify-center">
-    <button id="menu-join-normal-btn" class="button-tertiary text-2xl">NORMAL</button>
+    <p class="text-2xl font-bold">SELECT A GAME MODE:</p>
+    <button id="menu-join-normal-btn" class="button-tertiary mt-4 text-2xl">NORMAL</button>
     <button id="menu-join-tournament-btn" class="button-tertiary text-2xl">TOURNAMENT</button>
   </div>
 
   <!-- Queue overlay -->
   <div id="queue-overlay" class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6">
-    <p class="text-2xl">Waiting for players to join in <span id="queue-mode">-</span> queue...</p>
-    <p class="text-xl font-bold">Position: <span id="queue-position">-</span></p>
+    <p class="text-2xl font-bold">Waiting for players...</p>
+    <p class="text-text-muted text-xl font-bold">Position: <span id="queue-position">-</span></p>
     <button id="queue-leave-btn" class="button-tertiary text-2xl">LEAVE QUEUE</button>
   </div>
 
@@ -27,9 +28,9 @@
     id="game-over-overlay"
     class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6"
   >
-    <p class="text-center text-4xl font-bold">GAME OVER</p>
-    <p id="game-over-text" class="text-2xl">Winner: -</p>
-    <p id="game-over-score" class="text-xl">0 - 0</p>
+    <p class="text-center text-2xl font-bold">GAME OVER</p>
+    <p id="game-over-text" class="text-xl">-</p>
+    <p id="game-over-score" class="">0 - 0</p>
     <!-- One or the other is shown depending on game mode: -->
     <button id="game-over-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
     <p id="game-over-tournament-waiting" class="text-text-muted">Waiting for other matches to finish...</p>
@@ -40,7 +41,7 @@
     id="tournament-result-overlay"
     class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6"
   >
-    <h2 class="text-center text-4xl font-bold">TOURNAMENT RESULTS</h2>
+    <h2 class="text-center text-2xl font-bold">TOURNAMENT RESULTS</h2>
     <div id="tournament-result-rankings" class="flex flex-col gap-2 text-lg">
       <!-- Rankings will replace this content -->
       <div class="font-bold text-[#ffd700]">🥇 Player1 (you)</div>
@@ -56,7 +57,7 @@
     id="disconnected-overlay"
     class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6"
   >
-    <p class="text-4xl font-bold">Disconnected</p>
+    <p class="text-2xl font-bold">Disconnected</p>
     <p class="text-text-muted">Trying to reconnect...</p>
   </div>
 
