@@ -57,6 +57,29 @@ fastify.addHook("onRequest", async (req, res) => {
 fastify.get("/health", async () => ({ status: "ok" }))
 
 // ============================================
+// WEBSOCKET ENDPOINT
+// ============================================
+
+fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, request) => {
+  // Extract JWT token from cookie
+  const user = await getJWT(request)
+  if (!user) {
+    console.log("[WS] Refusing connection: Unauthorized")
+    socket.close(1008, "Unauthorized")
+    return
+  }
+  const player: Player = { ...user, socket }
+  console.log(`[WS] Connected: ${player.username}`)
+
+  // Check if player is in an existing game and reconnect them
+  gameManager.handleReconnect(player)
+
+  socket.on("message", (data) => handleMessage(player, data))
+  socket.on("close", () => handleDisconnect(player))
+  socket.on("error", (err) => console.error(`[WS] Socket error for player ${player.username}:`, err))
+})
+
+// ============================================
 // WEBSOCKET MESSAGE HANDLERS
 // ============================================
 
@@ -103,29 +126,6 @@ function handleDisconnect(player: Player): void {
   gameManager.handleDisconnect(player)
   console.log(`[WS] Disconnected: ${player.username}`)
 }
-
-// ============================================
-// WEBSOCKET ENDPOINT
-// ============================================
-
-fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, request) => {
-  // Extract JWT token from cookie
-  const user = await getJWT(request)
-  if (!user) {
-    console.log("[WS] Refusing connection: Unauthorized")
-    socket.close(1008, "Unauthorized")
-    return
-  }
-  const player: Player = { ...user, socket }
-  console.log(`[WS] Connected: ${player.username}`)
-
-  // Check if player is in an existing game and reconnect them
-  gameManager.handleReconnect(player)
-
-  socket.on("message", (data) => handleMessage(player, data))
-  socket.on("close", () => handleDisconnect(player))
-  socket.on("error", (err) => console.error(`[WS] Socket error for player ${player.username}:`, err))
-})
 
 // ============================================
 // CLEAN EXIT
