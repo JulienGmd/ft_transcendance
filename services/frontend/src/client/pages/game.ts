@@ -251,6 +251,8 @@ function onWsMessage(e: MessageEvent<any>): void {
       state = defaultState()
       state.mode = msg.mode
       state.side = msg.side
+      els.scoreLeft.textContent = "0"
+      els.scoreRight.textContent = "0"
       els.leftPlayerName.textContent = state.side === Side.LEFT ? getUser()!.username : msg.opponentName
       els.rightPlayerName.textContent = state.side === Side.RIGHT ? getUser()!.username : msg.opponentName
       break
