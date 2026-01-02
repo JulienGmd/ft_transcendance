@@ -47,6 +47,7 @@ export interface GameEndResult {
 export class GameManager {
   private games: Game[] = []
   private playerIdToGame: Map<number, Game> = new Map()
+  private gamesToRemove: Game[] = []
   private tickInterval: NodeJS.Timeout
   private syncInterval: NodeJS.Timeout
 
@@ -161,8 +162,6 @@ export class GameManager {
   }
 
   private tick(): void {
-    const gamesToRemove: Game[] = []
-
     this.games.forEach(async (game) => {
       // Only process game tick during COUNTDOWN and PLAYING
       // gameTick handles paddle updates and (during PLAYING) ball physics
@@ -185,7 +184,7 @@ export class GameManager {
 
         if (result.gameOver) {
           this.endGame(game)
-          gamesToRemove.push(game)
+          this.gamesToRemove.push(game)
           return
         }
 
@@ -196,7 +195,8 @@ export class GameManager {
     })
 
     // Remove games after to not interfere with iteration
-    gamesToRemove.forEach((game) => this.removeGame(game))
+    this.gamesToRemove.forEach((game) => this.removeGame(game))
+    this.gamesToRemove = []
   }
 
   private sync(): void {
