@@ -29,9 +29,8 @@ class AppHeader extends HTMLElement implements AppHeaderElement {
             <!-- Dropdown menu -->
             <div class="absolute top-full right-0 hidden pt-2 group-hover:block z-10">
               <div class="bg-surface size-full w-32 rounded-md shadow-lg *:first:pt-4 *:last:pb-4">
-                <button id="header-logout-btn" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">
-                  Logout
-                </button>
+                <a href="/api" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">API</a>
+                <button id="header-logout-btn" class="hover:bg-background/30 block w-full px-4 py-2 text-left text-sm">Logout</button>
               </div>
             </div>
           </div>
