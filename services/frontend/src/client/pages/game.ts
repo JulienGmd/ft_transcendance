@@ -2,8 +2,6 @@
 // GAME PAGE - Pong Client
 // ============================================
 
-// TODO tournament waiting (ca affiche game over a la fin dun match de tournoi)
-
 import { ClientMessage, GameMode, SerializedEngine, ServerMessage, Side, Vector2D } from "../gameSharedTypes.js"
 import { checkEls, getUser } from "../utils.js"
 
@@ -386,8 +384,8 @@ function updateBall(deltaTime: number): void {
     y: calculateYAfterDuration(elapsed),
   }
 
-  // Paddle bounce simulation
-  desiredLocation.x = simulatePaddleBounce(desiredLocation)
+  // // Paddle bounce simulation
+  // desiredLocation.x = simulatePaddleBounce(desiredLocation)
 
   state.interpolatedBallPos = interpolateV2(state.interpolatedBallPos, desiredLocation, deltaTime * 50)
 }
@@ -440,30 +438,30 @@ function calculateYAfterDuration(duration: number): number {
   return minY + finalRelativeY
 }
 
-/**
- * Client paddle collision, waiting for server to bounce
- * @return new ball X position after paddle bounce
- */
-function simulatePaddleBounce(ballPos: Vector2D): number {
-  const isWithinPaddleYRange = (y: number, padY: number) =>
-    Math.abs(y - padY) <= CONFIG.PADDLE_HEIGHT / 2 + CONFIG.BALL_RADIUS
+// /**
+//  * Client paddle collision, waiting for server to bounce
+//  * @return new ball X position after paddle bounce
+//  */
+// function simulatePaddleBounce(ballPos: Vector2D): number {
+//   const isWithinPaddleYRange = (y: number, padY: number) =>
+//     Math.abs(y - padY) <= CONFIG.PADDLE_HEIGHT / 2 + CONFIG.BALL_RADIUS
 
-  const ballLeft = ballPos.x - CONFIG.BALL_RADIUS
-  const lPadSurfX = CONFIG.PADDLE_MARGIN + CONFIG.PADDLE_WIDTH
-  const lPadY = state.game.paddles.left.y
-  const lDelta = ballLeft - lPadSurfX
-  if (lDelta <= 0 && isWithinPaddleYRange(ballPos.y, lPadY))
-    return lPadSurfX - lDelta
+//   const ballLeft = ballPos.x - CONFIG.BALL_RADIUS
+//   const lPadSurfX = CONFIG.PADDLE_MARGIN + CONFIG.PADDLE_WIDTH
+//   const lPadY = state.game.paddles.left.y
+//   const lDelta = ballLeft - lPadSurfX
+//   if (lDelta <= 0 && isWithinPaddleYRange(ballPos.y, lPadY))
+//     return lPadSurfX - lDelta
 
-  const ballRight = ballPos.x + CONFIG.BALL_RADIUS
-  const rPadSurfX = CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH
-  const rPadY = state.game.paddles.right.y
-  const rDelta = ballRight - rPadSurfX
-  if (rDelta >= 0 && isWithinPaddleYRange(ballPos.y, rPadY))
-    return rPadSurfX - rDelta
+//   const ballRight = ballPos.x + CONFIG.BALL_RADIUS
+//   const rPadSurfX = CONFIG.WIDTH - CONFIG.PADDLE_MARGIN - CONFIG.PADDLE_WIDTH
+//   const rPadY = state.game.paddles.right.y
+//   const rDelta = ballRight - rPadSurfX
+//   if (rDelta >= 0 && isWithinPaddleYRange(ballPos.y, rPadY))
+//     return rPadSurfX - rDelta
 
-  return ballPos.x
-}
+//   return ballPos.x
+// }
 
 function updatePaddles(deltaTime: number): void {
   for (const side of [Side.LEFT, Side.RIGHT] as const) {

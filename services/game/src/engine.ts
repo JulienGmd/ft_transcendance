@@ -24,6 +24,7 @@ import { SerializedBall, SerializedEngine, SerializedPaddle, Side, Vector2D } fr
 interface GameTickResult {
   scorer?: Side // If gameOver is true, this is also the winner
   gameOver?: boolean
+  launched?: boolean
   paddleBounce?: boolean // True if ball bounced off a paddle this tick
 }
 
@@ -314,8 +315,10 @@ export class Engine {
     this.paddles.right.updatePosition(deltaTime)
 
     if (updateBall) {
-      if (!this.ball.isMoving())
+      if (!this.ball.isMoving()) {
         this.ball.launch()
+        result.launched = true
+      }
 
       const paddle = this.getPaddleInBallDirection()
 

@@ -162,7 +162,7 @@ export class GameManager {
   private tick(): void {
     const gamesToRemove: Game[] = []
 
-    this.games.forEach((game) => {
+    this.games.forEach(async (game) => {
       // Only process game tick during COUNTDOWN and PLAYING
       // gameTick handles paddle updates and (during PLAYING) ball physics
       if (game.state !== GameState.COUNTDOWN && game.state !== GameState.PLAYING)
@@ -170,13 +170,17 @@ export class GameManager {
 
       const result = game.engine.tick(game.state === GameState.PLAYING)
 
-      // Send immediate sync if ball bounced on paddle (for responsive feel)
-      if (result.paddleBounce)
+      // Send immediate sync if ball launched or bounced on paddle (for responsive feel)
+      if (result.launched || result.paddleBounce)
         this.syncGame(game)
 
       if (result.scorer) {
         const sockets = [game.p1.socket, game.p2.socket]
         broadcastScoreUpdate(sockets, game.engine.getScore())
+
+        // Brief pause to let the ball goes out of screen client side
+        game.state = GameState.WAITING
+        await this.sleep(500)
 
         if (result.gameOver) {
           this.endGame(game)
@@ -245,5 +249,11 @@ export class GameManager {
 
     console.log(`[GameManager] Player ${player.username} reconnected to game`)
     return true
+  }
+
+  // ===== UTILS ==============================
+
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }
