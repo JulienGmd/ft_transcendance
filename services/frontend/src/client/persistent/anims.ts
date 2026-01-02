@@ -9,12 +9,21 @@ function onPageLoaded(): void {
   if (isFirstPageLoad) {
     isFirstPageLoad = false
 
-    // ... increase all animation delays by 3s to let time for the header typewriter animation to finish
+    // ... increase all animation delays by 3s to let time for the header typewriter animation to finish ...
     // *= is substring match operator
     const animEls = Array.from(document.querySelectorAll<HTMLElement>("[class*='animate-']"))
-    animEls.forEach((el) => {
-      const delay = window.getComputedStyle(el).animationDelay
-      el.style.animationDelay = `${parseFloat(delay) + 3}s`
+    const animElsInitialDelays = animEls.map((el) => parseFloat(window.getComputedStyle(el).animationDelay))
+    animEls.forEach((el, i) => {
+      el.style.animationDelay = `${animElsInitialDelays[i] + 3}s`
+    })
+
+    // ... then remove the delay increase after animations are done (in case we are retriggering animations later)
+    animEls.forEach((el, i) => {
+      const delay = parseFloat(window.getComputedStyle(el).animationDelay)
+      const duration = parseFloat(window.getComputedStyle(el).animationDuration)
+      setTimeout(() => {
+        el.style.animationDelay = `${animElsInitialDelays[i]}s`
+      }, (delay + duration) * 1000 + 10)
     })
   }
 

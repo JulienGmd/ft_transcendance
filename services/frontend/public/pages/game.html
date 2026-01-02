@@ -2,72 +2,70 @@
 
 <div class="font-orbitron relative flex flex-1 flex-col items-center justify-center">
   <!-- Menu overlay -->
-  <div id="menu-overlay" class="bg-background absolute inset-0 flex flex-col items-center justify-center">
-    <p class="text-2xl font-bold">SELECT A GAME MODE:</p>
-    <button id="menu-join-normal-btn" class="button-tertiary mt-4 text-2xl">NORMAL</button>
-    <button id="menu-join-tournament-btn" class="button-tertiary text-2xl">TOURNAMENT</button>
+  <div id="menu-overlay" class="bg-background absolute inset-0 grid place-items-center">
+    <div class="animate-slide-up flex flex-col items-center justify-center">
+      <p class="text-2xl font-bold">SELECT A GAME MODE:</p>
+      <button id="menu-join-normal-btn" class="button-tertiary mt-4 text-2xl">NORMAL</button>
+      <button id="menu-join-tournament-btn" class="button-tertiary text-2xl">TOURNAMENT</button>
+    </div>
   </div>
 
   <!-- Queue overlay -->
-  <div id="queue-overlay" class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6">
-    <p class="text-2xl font-bold">Waiting for players...</p>
-    <p class="text-text-muted text-xl font-bold">Position: <span id="queue-position">-</span></p>
-    <button id="queue-leave-btn" class="button-tertiary text-2xl">LEAVE QUEUE</button>
+  <div id="queue-overlay" class="bg-background absolute inset-0 grid hidden place-items-center">
+    <div class="animate-slide-up flex flex-col items-center justify-center gap-6">
+      <p class="text-2xl font-bold">Waiting for players...</p>
+      <p class="text-text-muted text-xl font-bold">Position: <span id="queue-position">-</span></p>
+      <button id="queue-leave-btn" class="button-tertiary text-2xl">LEAVE QUEUE</button>
+    </div>
   </div>
 
   <!-- Countdown overlay -->
-  <div
-    id="countdown-overlay"
-    class="absolute top-1/6 left-1/2 flex hidden -translate-x-1/2 items-center justify-center"
-  >
-    <span id="countdown-number" class="text-9xl font-bold">3</span>
+  <div id="countdown-overlay" class="animate-slide-up absolute top-1/2 left-1/2 hidden -translate-1/2">
+    <p id="countdown-number" class="text-text/50 text-9xl font-bold">3</p>
   </div>
 
   <!-- Game Over overlay -->
-  <div
-    id="game-over-overlay"
-    class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6"
-  >
-    <p class="text-center text-2xl font-bold">GAME OVER</p>
-    <p id="game-over-text" class="text-xl">-</p>
-    <p id="game-over-score" class="">0 - 0</p>
-    <!-- One or the other is shown depending on game mode: -->
-    <button id="game-over-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
-    <p id="game-over-tournament-waiting" class="text-text-muted">Waiting for other matches to finish...</p>
+  <div id="game-over-overlay" class="bg-background absolute inset-0 grid hidden place-items-center">
+    <div class="animate-slide-up flex flex-col items-center justify-center gap-6">
+      <p class="text-center text-2xl font-bold">GAME OVER</p>
+      <p id="game-over-text" class="text-xl">-</p>
+      <p id="game-over-score" class="">0 - 0</p>
+      <!-- One or the other is shown depending on game mode: -->
+      <button id="game-over-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
+      <p id="game-over-tournament-waiting" class="text-text-muted">Waiting for other matches to finish...</p>
+    </div>
   </div>
 
   <!-- Tournament result overlay -->
-  <div
-    id="tournament-result-overlay"
-    class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6"
-  >
-    <h2 class="text-center text-2xl font-bold">TOURNAMENT RESULTS</h2>
-    <div id="tournament-result-rankings" class="flex flex-col gap-2 text-lg">
-      <!-- Rankings will replace this content -->
-      <div class="font-bold text-[#ffd700]">🥇 Player1 (you)</div>
-      <div class="text-[#c0c0c0]">🥈 Player2</div>
-      <div class="text-[#cd7f32]">🥉 Player3</div>
-      <div class="text-[#8b4513]">💩 Player4</div>
+  <div id="tournament-result-overlay" class="bg-background absolute inset-0 grid hidden place-items-center">
+    <div class="animate-slide-up flex flex-col items-center justify-center gap-6">
+      <h2 class="text-center text-2xl font-bold">TOURNAMENT RESULTS</h2>
+      <div id="tournament-result-rankings" class="flex flex-col gap-2 text-lg">
+        <!-- Rankings will replace this content -->
+        <div class="font-bold text-[#ffd700]">🥇 Player1 (you)</div>
+        <div class="text-[#c0c0c0]">🥈 Player2</div>
+        <div class="text-[#cd7f32]">🥉 Player3</div>
+        <div class="text-[#8b4513]">💩 Player4</div>
+      </div>
+      <button id="tournament-result-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
     </div>
-    <button id="tournament-result-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
   </div>
 
   <!-- Disconnected overlay -->
-  <div
-    id="disconnected-overlay"
-    class="bg-background absolute inset-0 flex hidden flex-col items-center justify-center gap-6"
-  >
-    <p class="text-2xl font-bold">Disconnected</p>
-    <p class="text-text-muted">Trying to reconnect...</p>
+  <div id="disconnected-overlay" class="bg-background absolute inset-0 grid hidden place-items-center">
+    <div class="animate-slide-up flex flex-col items-center justify-center gap-6">
+      <p class="text-2xl font-bold">Disconnected</p>
+      <p class="text-text-muted">Trying to reconnect...</p>
+    </div>
   </div>
 
   <!-- Game container -->
   <div class="flex flex-1 flex-col items-center justify-center gap-6">
     <!-- Score -->
     <div class="flex justify-center gap-16 text-4xl font-bold">
-      <span id="score-left" class="text-game-player1">0</span>
+      <span id="game-score-left" class="text-game-player1">0</span>
       <span class="text-text-muted">-</span>
-      <span id="score-right" class="text-game-player2">0</span>
+      <span id="game-score-right" class="text-game-player2">0</span>
     </div>
 
     <!-- Canvas -->
@@ -80,9 +78,9 @@
 
     <!-- Player Names -->
     <div class="flex justify-center gap-16 text-2xl font-bold">
-      <span id="left-player-name" class="text-game-player1">Player1</span>
+      <span id="game-left-player-name" class="text-game-player1">Player1</span>
       <span class="text-text-muted">vs</span>
-      <span id="right-player-name" class="text-game-player2">Player2</span>
+      <span id="game-right-player-name" class="text-game-player2">Player2</span>
     </div>
   </div>
 </div>

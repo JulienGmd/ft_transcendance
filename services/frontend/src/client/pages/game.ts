@@ -35,10 +35,10 @@ let els: {
 
   disconnectedOverlay: HTMLElement
 
-  leftPlayerName: HTMLElement
-  rightPlayerName: HTMLElement
-  scoreLeft: HTMLElement
-  scoreRight: HTMLElement
+  gameLeftPlayerName: HTMLElement
+  gameRightPlayerName: HTMLElement
+  gameScoreLeft: HTMLElement
+  gameScoreRight: HTMLElement
 }
 
 let ctx: CanvasRenderingContext2D
@@ -140,10 +140,10 @@ export function onMount(): void {
 
     disconnectedOverlay: document.querySelector("#disconnected-overlay")!,
 
-    leftPlayerName: document.querySelector("#left-player-name")!,
-    rightPlayerName: document.querySelector("#right-player-name")!,
-    scoreLeft: document.querySelector("#score-left")!,
-    scoreRight: document.querySelector("#score-right")!,
+    gameLeftPlayerName: document.querySelector("#game-left-player-name")!,
+    gameRightPlayerName: document.querySelector("#game-right-player-name")!,
+    gameScoreLeft: document.querySelector("#game-score-left")!,
+    gameScoreRight: document.querySelector("#game-score-right")!,
   }
   checkEls(els)
 
@@ -255,10 +255,10 @@ function onWsMessage(e: MessageEvent<any>): void {
       state = defaultState()
       state.mode = msg.mode
       state.side = msg.side
-      els.scoreLeft.textContent = "0"
-      els.scoreRight.textContent = "0"
-      els.leftPlayerName.textContent = state.side === Side.LEFT ? getUser()!.username : msg.opponentName
-      els.rightPlayerName.textContent = state.side === Side.RIGHT ? getUser()!.username : msg.opponentName
+      els.gameScoreLeft.textContent = "0"
+      els.gameScoreRight.textContent = "0"
+      els.gameLeftPlayerName.textContent = state.side === Side.LEFT ? getUser()!.username : msg.opponentName
+      els.gameRightPlayerName.textContent = state.side === Side.RIGHT ? getUser()!.username : msg.opponentName
       break
 
     case "countdown":
@@ -285,8 +285,8 @@ function onWsMessage(e: MessageEvent<any>): void {
 
     case "score_update":
       state.game.score = msg.score
-      els.scoreLeft.textContent = `${msg.score.left}`
-      els.scoreRight.textContent = `${msg.score.right}`
+      els.gameScoreLeft.textContent = `${msg.score.left}`
+      els.gameScoreRight.textContent = `${msg.score.right}`
       break
 
     case "game_over":

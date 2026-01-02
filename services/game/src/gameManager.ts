@@ -12,6 +12,7 @@ import {
   broadcastScoreUpdate,
   sendGameFound,
   sendGameStart,
+  sendScoreUpdate,
 } from "./communication"
 import { Engine } from "./engine"
 import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig"
@@ -244,6 +245,7 @@ export class GameManager {
 
     sendGameFound(player.socket, side, opponent.username, game.mode)
     sendGameStart(player.socket)
+    sendScoreUpdate(player.socket, game.engine.getScore())
     this.syncGame(game)
 
     console.log(`[GameManager] Player ${player.username} reconnected to game`)
