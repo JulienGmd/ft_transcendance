@@ -84,39 +84,39 @@ fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, reque
 // ============================================
 
 function handleMessage(player: Player, data: RawData): void {
-  try {
-    const message = parseClientMessage(data.toString()) as ClientMessage
-
-    switch (message.type) {
-      case "join_normal":
-        if (!tournamentMatchmaking.isInQueue(player))
-          normalMatchmaking.join(player)
-        break
-
-      case "join_tournament":
-        if (!normalMatchmaking.isInQueue(player))
-          tournamentMatchmaking.join(player)
-        break
-
-      case "leave_queue":
-        normalMatchmaking.leave(player)
-        tournamentMatchmaking.leave(player)
-        break
-
-      case "move":
-        gameManager.handleInput(player, message.direction)
-        break
-
-      case "ping":
-        sendPong(player.socket)
-        break
-
-      default:
-        break
-    }
-  } catch (err) {
+  const message = parseClientMessage(data)
+  if (!message) {
     console.error("[WS] Invalid message")
     sendError(player.socket, "Invalid message format")
+    return
+  }
+
+  switch (message.type) {
+    case "join_normal":
+      if (!tournamentMatchmaking.isInQueue(player))
+        normalMatchmaking.join(player)
+      break
+
+    case "join_tournament":
+      if (!normalMatchmaking.isInQueue(player))
+        tournamentMatchmaking.join(player)
+      break
+
+    case "leave_queue":
+      normalMatchmaking.leave(player)
+      tournamentMatchmaking.leave(player)
+      break
+
+    case "move":
+      gameManager.handleInput(player, message.direction)
+      break
+
+    case "ping":
+      sendPong(player.socket)
+      break
+
+    default:
+      break
   }
 }
 

@@ -3,8 +3,8 @@
 // Abstracts WebSocket/transport to allow easy changes
 // ============================================
 
-import type { WebSocket } from "ws"
-import { GameMode, SerializedEngine, SerializedPaddle, ServerMessage, Side } from "./sharedTypes"
+import type { RawData, WebSocket } from "ws"
+import { ClientMessage, GameMode, SerializedEngine, SerializedPaddle, ServerMessage, Side } from "./sharedTypes"
 
 // ============================================
 // SOCKET INTERFACE
@@ -34,8 +34,12 @@ export function serializeMessage(message: ServerMessage): string {
 /**
  * Parse incoming message from client
  */
-export function parseClientMessage(data: string): unknown {
-  return JSON.parse(data)
+export function parseClientMessage(data: RawData): ClientMessage | undefined {
+  try {
+    return JSON.parse(data.toString()) as ClientMessage
+  } catch (err) {
+    return undefined
+  }
 }
 
 // ============================================
