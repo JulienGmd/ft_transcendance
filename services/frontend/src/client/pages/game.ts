@@ -257,6 +257,8 @@ function onWsMessage(e: MessageEvent<any>): void {
 
     case "countdown":
       if (msg.seconds > 0) {
+        // Teleport the ball (don't let tick interpolate from last pos)
+        state.interpolatedBallPos = { x: CONFIG.WIDTH / 2, y: CONFIG.HEIGHT / 2 }
         els.countdownNumber.textContent = `${msg.seconds}`
         switchOverlay(els.countdownOverlay)
       }
