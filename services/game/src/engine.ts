@@ -298,9 +298,6 @@ export class Engine {
   tick(updateBall: boolean): GameTickResult {
     const result: GameTickResult = {}
 
-    if (this.needReset)
-      return result
-
     if (this.lastUpdateTime === -1) {
       this.lastUpdateTime = Date.now()
       return result
@@ -313,6 +310,9 @@ export class Engine {
     // Always update paddle positions
     this.paddles.left.updatePosition(deltaTime)
     this.paddles.right.updatePosition(deltaTime)
+
+    if (this.needReset)
+      return result
 
     if (updateBall) {
       if (!this.ball.isMoving()) {

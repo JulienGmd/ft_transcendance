@@ -69,6 +69,10 @@ let animationFrameId: number | undefined
 let lastFrameTime = 0
 
 let state = defaultState()
+let inputs = {
+  upPressed: false,
+  downPressed: false,
+}
 
 function defaultState(): {
   game: SerializedEngine
@@ -307,35 +311,37 @@ function onWsMessage(e: MessageEvent<any>): void {
 
 function onKeyDown(e: KeyboardEvent): void {
   if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
-    state.game.paddles[state.side].direction = -1
-    send({ type: "move", direction: -1 })
     e.preventDefault()
+    inputs.upPressed = true
+    const direction = inputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
+    state.game.paddles[state.side].direction = direction
+    send({ type: "move", direction })
   }
 
   if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
-    state.game.paddles[state.side].direction = 1
-    send({ type: "move", direction: 1 })
     e.preventDefault()
+    inputs.downPressed = true
+    const direction = inputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
+    state.game.paddles[state.side].direction = direction
+    send({ type: "move", direction })
   }
 }
 
 function onKeyUp(e: KeyboardEvent): void {
   if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
-    // Prevent stop movement if opposite key is still pressed
-    if (state.game.paddles[state.side].direction === -1) {
-      state.game.paddles[state.side].direction = 0
-      send({ type: "move", direction: 0 })
-      e.preventDefault()
-    }
+    e.preventDefault()
+    inputs.upPressed = false
+    const direction = inputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
+    state.game.paddles[state.side].direction = direction
+    send({ type: "move", direction: direction })
   }
 
   if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
-    // Prevent stop movement if opposite key is still pressed
-    if (state.game.paddles[state.side].direction === 1) {
-      state.game.paddles[state.side].direction = 0
-      send({ type: "move", direction: 0 })
-      e.preventDefault()
-    }
+    e.preventDefault()
+    inputs.downPressed = false
+    const direction = inputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
+    state.game.paddles[state.side].direction = direction
+    send({ type: "move", direction: direction })
   }
 }
 

@@ -163,9 +163,7 @@ export class GameManager {
 
   private tick(): void {
     this.games.forEach(async (game) => {
-      // Only process game tick during COUNTDOWN and PLAYING
-      // gameTick handles paddle updates and (during PLAYING) ball physics
-      if (game.state !== GameState.COUNTDOWN && game.state !== GameState.PLAYING)
+      if (game.state === GameState.FINISHED)
         return
 
       const result = game.engine.tick(game.state === GameState.PLAYING)
@@ -215,8 +213,7 @@ export class GameManager {
     if (!game)
       return
 
-    // Allow inputs during COUNTDOWN and PLAYING states
-    if (game.state !== GameState.COUNTDOWN && game.state !== GameState.PLAYING)
+    if (game.state === GameState.FINISHED)
       return
 
     const side = player.id === game.p1.id ? Side.LEFT : Side.RIGHT
