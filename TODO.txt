@@ -1,23 +1,27 @@
 TODO
 
+checks:
+- ! (ts assertion)
+backend:
+- process.env.VAR -> config.VAR
+frontend:
+- location.href = "/" -> navigate("/")
+- alert("msg) -> utils.showNotify("msg")
+- window.addEventListener and document.addEventListener in pages scripts -> onDestroy: removeEventListener
+
 global:
-- rename le repo en ft_transcendence puis find all transcendance -> transcendence
-- remove precision
 - ? eslint
 - ? noImplicitAny and functions return types in tsconfig.json / eslint
+- ? Send precision after game (pas demande ds le sujet)
+- ? rename le repo en ft_transcendence puis find all transcendance -> transcendence
 
 shared:
 
 front:
 
 user-management:
+- ? forgot password (pas demande ds le sujet)
 
 game:
-- ? remove playerId or username in game service, use only username or only playerId
 
-checks:
-- process.env.VAR -> config.VAR
-- location.href = "/" -> navigate("/")
-- alert("msg) -> utils.showNotify("msg")
-- window.addEventListener and document.addEventListener in pages scripts -> onDestroy: removeEventListener
-- ! (ts assertion)
+monitoring:
