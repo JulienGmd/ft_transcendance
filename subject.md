@@ -56,8 +56,8 @@ image with root as unique UID.
 Total of selected:
 base: 30 points
 major: 8 * 10 = 80 points
-minor: 10 * 5 = 50 points
-total: 30 + 80 + 50 = 160 points
+minor: 5 * 5 = 25 points
+total: 30 + 80 + 25 = 135 points
 
 - Web
   - 🔷 Use a framework to build the backend.
