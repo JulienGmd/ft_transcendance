@@ -47,7 +47,6 @@ let ctx: CanvasRenderingContext2D
 // CONSTANTS (same as backend)
 // ============================================
 
-// TODO GET request to retrieve
 const CONFIG = {
   WIDTH: 800,
   HEIGHT: 600,

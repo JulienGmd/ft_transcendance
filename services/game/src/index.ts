@@ -7,13 +7,12 @@ import fastifyCookie from "@fastify/cookie"
 import fastifyWebsocket from "@fastify/websocket"
 import Fastify from "fastify"
 import { readFileSync } from "fs"
-import type { RawData, WebSocket } from "ws"
+import type { RawData } from "ws"
 import { parseClientMessage, sendError, sendPong } from "./communication"
 import { GameManager } from "./gameManager"
 import { getJWT } from "./jwt"
 import { connectNats, disconnectNats } from "./nats"
 import { NormalMatchmaking, TournamentMatchmaking } from "./queue"
-import { ClientMessage } from "./sharedTypes"
 import { Player } from "./types"
 
 // ============================================
@@ -60,9 +59,9 @@ fastify.get("/health", async () => ({ status: "ok" }))
 // WEBSOCKET ENDPOINT
 // ============================================
 
-fastify.get("/api/game/ws", { websocket: true }, async (socket: WebSocket, request) => {
+fastify.get("/api/game/ws", { websocket: true }, async (socket, req) => {
   // Extract JWT token from cookie
-  const user = await getJWT(request)
+  const user = await getJWT(req)
   if (!user) {
     console.log("[WS] Refusing connection: Unauthorized")
     socket.close(1008, "Unauthorized")
