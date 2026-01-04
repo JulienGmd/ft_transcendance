@@ -30,23 +30,45 @@
       <p class="text-center text-2xl font-bold">GAME OVER</p>
       <p id="game-over-text" class="text-xl">-</p>
       <p id="game-over-score" class="">0 - 0</p>
-      <!-- One or the other is shown depending on game mode: -->
       <button id="game-over-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
-      <p id="game-over-tournament-waiting" class="text-text-muted">Waiting for other matches to finish...</p>
     </div>
   </div>
 
   <!-- Tournament result overlay -->
   <div id="tournament-result-overlay" class="bg-background absolute inset-0 grid hidden place-items-center">
-    <div class="animate-slide-up flex flex-col items-center justify-center gap-6">
+    <div class="animate-slide-up flex w-full flex-col items-center justify-center gap-6">
       <h2 class="text-center text-2xl font-bold">TOURNAMENT RESULTS</h2>
-      <div id="tournament-result-rankings" class="flex flex-col gap-2 text-lg">
-        <!-- Rankings will replace this content -->
-        <div class="font-bold text-[#ffd700]">🥇 Player1 (you)</div>
-        <div class="text-[#c0c0c0]">🥈 Player2</div>
-        <div class="text-[#cd7f32]">🥉 Player3</div>
-        <div class="text-[#8b4513]">💩 Player4</div>
-      </div>
+      <svg viewBox="0 0 260 228" class="fill-text-muted max-w-sm text-[10px] font-semibold">
+        <text x="0" y="13" font-weight="normal">SEMI 1</text>
+        <rect id="semi1-p1-rect" x="0" y="17" width="100" height="24" fill="var(--color-surface)" />
+        <text id="semi1-p1" x="4" y="32">Player 1</text>
+        <rect id="semi1-p2-rect" x="0" y="43" width="100" height="24" fill="var(--color-surface)" />
+        <text id="semi1-p2" x="4" y="58">Player 2</text>
+
+        <text x="0" y="119" font-weight="normal">SEMI 2</text>
+        <rect id="semi2-p1-rect" x="0" y="123" width="100" height="24" fill="var(--color-surface)" />
+        <text id="semi2-p1" x="4" y="138">Player 3</text>
+        <rect id="semi2-p2-rect" x="0" y="149" width="100" height="24" fill="var(--color-surface)" />
+        <text id="semi2-p2" x="4" y="164">Player 4</text>
+
+        <text x="160" y="66" font-weight="normal">FINAL</text>
+        <rect id="final-p1-rect" x="160" y="70" width="100" height="24" fill="var(--color-surface)" />
+        <text id="final-p1" x="164" y="85">Player 1</text>
+        <rect id="final-p2-rect" x="160" y="96" width="100" height="24" fill="var(--color-surface)" />
+        <text id="final-p2" x="164" y="111">Player 4</text>
+
+        <text x="160" y="172" font-weight="normal">THIRD</text>
+        <rect id="third-p1-rect" x="160" y="176" width="100" height="24" fill="var(--color-surface)" />
+        <text id="third-p1" x="164" y="191">Player 2</text>
+        <rect id="third-p2-rect" x="160" y="202" width="100" height="24" fill="var(--color-surface)" />
+        <text id="third-p2" x="164" y="217">Player 3</text>
+
+        <path d="M100 42H129V148H100" fill="none" stroke="var(--color-surface)" stroke-width="2" />
+        <line x1="160" y1="95" x2="130" y2="95" stroke="var(--color-surface)" stroke-width="2" />
+      </svg>
+
+      <!-- One or the other is shown based on if the tournament is over -->
+      <p id="tournament-result-waiting" class="text-text-muted">Waiting for other matches to finish...</p>
       <button id="tournament-result-play-again-btn" class="button-tertiary text-2xl">PLAY AGAIN</button>
     </div>
   </div>

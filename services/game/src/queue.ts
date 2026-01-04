@@ -5,8 +5,9 @@
 
 import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft } from "./communication"
 import { GameEndResult, GameManager } from "./gameManager"
-import { GameMode, Side } from "./sharedTypes"
+import { GameMode, Side, TournamentResult } from "./sharedTypes"
 import { Player } from "./types"
+import { sleep } from "./utils"
 
 class Queue {
   private readonly gameManager: GameManager
@@ -102,6 +103,13 @@ export class NormalMatchmaking {
   }
 }
 
+interface Tournament {
+  semi1: { p1: Player; p2: Player; winner?: Player; loser?: Player }
+  semi2: { p1: Player; p2: Player; winner?: Player; loser?: Player }
+  final?: { p1: Player; p2: Player; winner?: Player }
+  third?: { p1: Player; p2: Player; winner?: Player }
+}
+
 export class TournamentMatchmaking {
   private readonly gameManager: GameManager
   private readonly queue: Queue
@@ -129,27 +137,88 @@ export class TournamentMatchmaking {
       return
 
     const players = [this.queue.shift()!, this.queue.shift()!, this.queue.shift()!, this.queue.shift()!]
+    const sockets = players.map((p) => p.socket)
     console.log(`[TournamentMatchmaking] Starting: ${players.map((p) => p.username).join(", ")}`)
 
     // Note: since objects are passed by reference, even if a player reconnect to his game
     // during the tournament, their socket will be updated and reflected here.
 
-    const semi1Promise = createGame(this.gameManager, players[0], players[1], GameMode.TOURNAMENT)
-    const semi2Promise = createGame(this.gameManager, players[2], players[3], GameMode.TOURNAMENT)
-    const [semi1, semi2] = await Promise.all([semi1Promise, semi2Promise])
-    console.log(`[TournamentMatchmaking] Semifinals winners: ${semi1.winner.username}, ${semi2.winner.username}`)
+    const tournament: Tournament = {
+      semi1: { p1: players[0], p2: players[1] },
+      semi2: { p1: players[2], p2: players[3] },
+    }
 
-    const finalPromise = createGame(this.gameManager, semi1.winner, semi2.winner, GameMode.TOURNAMENT)
-    const thirdPromise = createGame(this.gameManager, semi1.loser, semi2.loser, GameMode.TOURNAMENT)
-    const [final, third] = await Promise.all([finalPromise, thirdPromise])
-    console.log(`[TournamentMatchmaking] Finals winners: ${final.winner.username}, 3rd place: ${third.winner.username}`)
+    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    await sleep(5000)
 
-    const rankings = [final.winner, final.loser, third.winner, third.loser]
-    console.log(`[TournamentMatchmaking] Complete! Rankings:`)
-    rankings.forEach((r, i) => console.log(`  ${i + 1}. ${r.username}`))
+    // Play semis
+    const semi1Promise = createGame(this.gameManager, tournament.semi1.p1, tournament.semi1.p2, GameMode.TOURNAMENT)
+    const semi2Promise = createGame(this.gameManager, tournament.semi2.p1, tournament.semi2.p2, GameMode.TOURNAMENT)
 
-    const sockets = rankings.map((r) => r.socket)
-    const rankingsUsernames = rankings.map((r) => r.username)
-    broadcastTournamentResult(sockets, rankingsUsernames)
+    // Update tournament and send results as games finish
+    semi1Promise.then((gameResult) => {
+      tournament.semi1.winner = gameResult.winner
+      tournament.semi1.loser = gameResult.loser
+      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    })
+    semi2Promise.then((gameResult) => {
+      tournament.semi2.winner = gameResult.winner
+      tournament.semi2.loser = gameResult.loser
+      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    })
+
+    // Wait for both semis to finish to determine finals matchups
+    await Promise.all([semi1Promise, semi2Promise])
+    tournament.final = { p1: tournament.semi1.winner!, p2: tournament.semi2.winner! }
+    tournament.third = { p1: tournament.semi1.loser!, p2: tournament.semi2.loser! }
+    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    await sleep(5000)
+
+    // Play finals
+    const finalPromise = createGame(this.gameManager, tournament.final.p1!, tournament.final.p2!, GameMode.TOURNAMENT)
+    const thirdPromise = createGame(this.gameManager, tournament.third.p1!, tournament.third.p2!, GameMode.TOURNAMENT)
+
+    // Send results as games finish
+    finalPromise.then((gameResult) => {
+      tournament.final!.winner = gameResult.winner
+      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    })
+    thirdPromise.then((gameResult) => {
+      tournament.third!.winner = gameResult.winner
+      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    })
+  }
+
+  private tournamentToTournamentResult(tournament: Tournament): TournamentResult {
+    const result: TournamentResult = {
+      semi1: {
+        p1: tournament.semi1.p1.username,
+        p2: tournament.semi1.p2.username,
+        winner: tournament.semi1.winner?.username,
+      },
+      semi2: {
+        p1: tournament.semi2.p1.username,
+        p2: tournament.semi2.p2.username,
+        winner: tournament.semi2.winner?.username,
+      },
+    }
+
+    if (tournament.final) {
+      result.final = {
+        p1: tournament.final.p1.username,
+        p2: tournament.final.p2.username,
+        winner: tournament.final.winner?.username,
+      }
+    }
+
+    if (tournament.third) {
+      result.third = {
+        p1: tournament.third.p1.username,
+        p2: tournament.third.p2.username,
+        winner: tournament.third.winner?.username,
+      }
+    }
+
+    return result
   }
 }

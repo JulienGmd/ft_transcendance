@@ -2,7 +2,15 @@
 // GAME PAGE - Pong Client
 // ============================================
 
-import { ClientMessage, GameMode, SerializedEngine, ServerMessage, Side, Vector2D } from "../gameSharedTypes.js"
+import {
+  ClientMessage,
+  GameMode,
+  SerializedEngine,
+  ServerMessage,
+  Side,
+  TournamentResult,
+  Vector2D,
+} from "../gameSharedTypes.js"
 import { checkEls, getUser } from "../utils.js"
 
 // ============================================
@@ -27,10 +35,9 @@ let els: {
   gameOverText: HTMLElement
   gameOverScore: HTMLElement
   gameOverPlayAgainBtn: HTMLElement
-  gameOverTournamentWaiting: HTMLElement
 
   tournamentResultOverlay: HTMLElement
-  tournamentResultRankings: HTMLElement
+  tournamentResultWaiting: HTMLElement
   tournamentResultPlayAgainBtn: HTMLElement
 
   disconnectedOverlay: HTMLElement
@@ -131,10 +138,9 @@ export function onMount(): void {
     gameOverText: document.querySelector("#game-over-text")!,
     gameOverScore: document.querySelector("#game-over-score")!,
     gameOverPlayAgainBtn: document.querySelector("#game-over-play-again-btn")!,
-    gameOverTournamentWaiting: document.querySelector("#game-over-tournament-waiting")!,
 
     tournamentResultOverlay: document.querySelector("#tournament-result-overlay")!,
-    tournamentResultRankings: document.querySelector("#tournament-result-rankings")!,
+    tournamentResultWaiting: document.querySelector("#tournament-result-waiting")!,
     tournamentResultPlayAgainBtn: document.querySelector("#tournament-result-play-again-btn")!,
 
     disconnectedOverlay: document.querySelector("#disconnected-overlay")!,
@@ -294,7 +300,7 @@ function onWsMessage(e: MessageEvent<any>): void {
       break
 
     case "tournament_result":
-      updateTournamentOverlay(msg.rankings)
+      updateTournamentOverlay(msg.result)
       switchOverlay(els.tournamentResultOverlay)
       break
 
@@ -572,26 +578,44 @@ function updateGameOverOverlay(): void {
     : state.game.score.right > state.game.score.left
   els.gameOverText.textContent = won ? "You Win!" : "You Lose"
   els.gameOverScore.textContent = `${state.game.score.left} - ${state.game.score.right}`
-  if (state.mode === GameMode.NORMAL) {
-    hideElement(els.gameOverTournamentWaiting)
-    showElement(els.gameOverPlayAgainBtn)
-  } else {
-    hideElement(els.gameOverPlayAgainBtn)
-    showElement(els.gameOverTournamentWaiting)
-  }
 }
 
-function updateTournamentOverlay(rankings: string[]): void {
-  const medals = ["🥇", "🥈", "🥉", "💩"]
-  const colors = ["#ffd700", "#c0c0c0", "#cd7f32", "#8b4513"]
-  const myUsername = getUser()!.username
-  els.tournamentResultRankings.innerHTML = rankings.map((username, i) => {
-    const isMe = username === myUsername
-    const colorClass = `text-[${colors[i]}]`
-    const boldClass = isMe ? "font-bold" : ""
-    const meTag = isMe ? " (You)" : ""
-    return `<div class="${colorClass} ${boldClass}">${medals[i]} ${username}${meTag}</div>`
-  }).join("")
+function updateTournamentOverlay(result: TournamentResult): void {
+  type K = keyof TournamentResult
+  type P = "p1" | "p2"
+
+  const color = "var(--color-surface)"
+  const textColor = "var(--color-text-muted)"
+  const winColor = "var(--color-success)"
+  const winTextColor = "var(--color-surface)"
+
+  const updatePlayer = (k: K, p: P) => {
+    const rect = document.querySelector<HTMLElement>(`#${k}-${p}-rect`)!
+    const text = document.querySelector<HTMLElement>(`#${k}-${p}`)!
+    rect.style.fill = (result[k] && result[k]?.winner === result[k]?.[p]) ? winColor : color
+    text.style.fill = (result[k] && result[k]?.winner === result[k]?.[p]) ? winTextColor : textColor
+    text.textContent = result[k]?.[p] ?? ""
+  }
+
+  updatePlayer("semi1", "p1")
+  updatePlayer("semi1", "p2")
+
+  updatePlayer("semi2", "p1")
+  updatePlayer("semi2", "p2")
+
+  updatePlayer("final", "p1")
+  updatePlayer("final", "p2")
+
+  updatePlayer("third", "p1")
+  updatePlayer("third", "p2")
+
+  if (result.final?.winner && result.third?.winner) {
+    showElement(els.tournamentResultPlayAgainBtn)
+    hideElement(els.tournamentResultWaiting)
+  } else {
+    showElement(els.tournamentResultWaiting)
+    hideElement(els.tournamentResultPlayAgainBtn)
+  }
 }
 
 // ============================================

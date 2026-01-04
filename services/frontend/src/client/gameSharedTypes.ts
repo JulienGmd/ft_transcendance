@@ -39,6 +39,13 @@ export interface SerializedEngine {
   }
 }
 
+export interface TournamentResult {
+  semi1: { p1: string; p2: string; winner?: string }
+  semi2: { p1: string; p2: string; winner?: string }
+  final?: { p1: string; p2: string; winner?: string }
+  third?: { p1: string; p2: string; winner?: string }
+}
+
 // --- Enums ---
 
 export enum Side {
@@ -68,6 +75,6 @@ export type ServerMessage =
   | { type: "paddle_update"; side: Side; paddle: SerializedPaddle }
   | { type: "score_update"; score: { left: number; right: number } }
   | { type: "game_over" }
-  | { type: "tournament_result"; rankings: string[] }
+  | { type: "tournament_result"; result: TournamentResult }
   | { type: "error"; message: string }
   | { type: "pong" }

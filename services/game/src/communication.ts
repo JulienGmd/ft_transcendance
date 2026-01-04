@@ -4,7 +4,15 @@
 // ============================================
 
 import type { RawData, WebSocket } from "ws"
-import { ClientMessage, GameMode, SerializedEngine, SerializedPaddle, ServerMessage, Side } from "./sharedTypes"
+import {
+  ClientMessage,
+  GameMode,
+  SerializedEngine,
+  SerializedPaddle,
+  ServerMessage,
+  Side,
+  TournamentResult,
+} from "./sharedTypes"
 
 // ============================================
 // SOCKET INTERFACE
@@ -264,20 +272,20 @@ export function broadcastGameOver(
 /**
  * Send tournament final result
  */
-export function sendTournamentResult(socket: WebSocket, rankings: string[]): boolean {
+export function sendTournamentResult(socket: WebSocket, result: TournamentResult): boolean {
   return sendRaw(socket, {
     type: "tournament_result",
-    rankings,
+    result,
   })
 }
 
 /**
  * Broadcast tournament result
  */
-export function broadcastTournamentResult(sockets: Iterable<WebSocket>, rankings: string[]): void {
+export function broadcastTournamentResult(sockets: Iterable<WebSocket>, result: TournamentResult): void {
   broadcastRaw(sockets, {
     type: "tournament_result",
-    rankings,
+    result,
   })
 }
 

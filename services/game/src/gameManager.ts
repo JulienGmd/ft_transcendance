@@ -19,6 +19,7 @@ import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig"
 import { sendMatchResult } from "./nats"
 import { GameMode, Side } from "./sharedTypes"
 import { Player } from "./types"
+import { sleep } from "./utils"
 
 export enum GameState {
   WAITING = "waiting",
@@ -179,7 +180,7 @@ export class GameManager {
 
         // Brief pause to let the ball goes out of screen client side
         game.state = GameState.WAITING
-        await this.sleep(500)
+        await sleep(500)
 
         if (result.gameOver) {
           this.endGame(game)
@@ -250,11 +251,5 @@ export class GameManager {
 
     console.log(`[GameManager] Player ${player.username} reconnected to game`)
     return true
-  }
-
-  // ===== UTILS ==============================
-
-  private async sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }
