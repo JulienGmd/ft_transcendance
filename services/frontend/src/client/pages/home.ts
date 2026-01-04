@@ -119,8 +119,8 @@ function tick(): void {
   const notPlayingPaddle = playingPaddle === "left" ? "right" : "left"
 
   const { height } = scaledConfig
-  state.paddles[playingPaddle] = interpConstantPaddle(state.paddles[playingPaddle], state.ball.pos.y)
-  state.paddles[notPlayingPaddle] = interpConstantPaddle(state.paddles[notPlayingPaddle], height / 2)
+  state.paddles[playingPaddle] = interpConstantPaddle(state.paddles[playingPaddle], state.ball.pos.y, deltaTime)
+  state.paddles[notPlayingPaddle] = interpConstantPaddle(state.paddles[notPlayingPaddle], height / 2, deltaTime)
 
   render()
 }
@@ -168,8 +168,9 @@ function collideX(): void {
   }
 }
 
-function interpConstantPaddle(paddleY: number, y: number): number {
-  const { height, ballSpeed } = scaledConfig
+function interpConstantPaddle(paddleY: number, y: number, deltaTime: number): number {
+  const { ballSpeed } = scaledConfig
+
   return interpConstant(
     paddleY,
     clamp(
@@ -177,7 +178,7 @@ function interpConstantPaddle(paddleY: number, y: number): number {
       scaledConfig.paddleHeight / 2,
       scaledConfig.height - scaledConfig.paddleHeight / 2,
     ),
-    0.000008 * ballSpeed * height,
+    1.2 * ballSpeed * (deltaTime / 1000),
   )
 }
 
