@@ -45,7 +45,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     if (user.twofa_secret) {
       user.twofa_verify_time = new Date().toISOString()
-      updateUser(user.email, user)
+      updateUser(user)
       return res.status(202).send({ needsTwoFA: true, email: user.email })
     }
 
@@ -111,7 +111,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     if (user.twofa_secret) {
       user.twofa_verify_time = new Date().toISOString()
-      updateUser(user.email, user)
+      updateUser(user)
       return res.status(202).send({ needsTwoFA: true, email: user.email })
     }
 
@@ -226,7 +226,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
       const user = getUser(jwt.email)!
       user.username = req.body.username
-      updateUser(user.email, user)
+      updateUser(user)
       setJWT(res, user)
 
       res.send({ user: userToPublicUser(user) })
@@ -253,7 +253,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const user = getUser(jwt.email)!
     user.avatar = req.body.avatar
-    updateUser(user.email, user)
+    updateUser(user)
 
     res.send({ user: userToPublicUser(user) })
   })
@@ -297,7 +297,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const user = getUser(jwt.email)!
     user.twofa_secret = req.body.secret
-    updateUser(user.email, user)
+    updateUser(user)
 
     res.send({ user: userToPublicUser(user) })
   })
@@ -326,7 +326,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       return res.status(403).send({ message: "Invalid verification code" })
 
     user.twofa_secret = null
-    updateUser(user.email, user)
+    updateUser(user)
 
     res.send({ user: userToPublicUser(user) })
   })
