@@ -11,7 +11,7 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
 
   connectedCallback() {
     this.innerHTML = `
-      <div class="bg-primary grid place-items-center overflow-hidden rounded-full size-full">
+      <div class="bg-primary grid place-items-center overflow-hidden rounded-full size-full shadow-lg">
         <img alt="User Avatar" class="hidden size-full object-cover" />
         <span class="hidden text-2xl font-bold">?</span>
       </div>

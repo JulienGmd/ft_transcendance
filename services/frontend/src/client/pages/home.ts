@@ -110,8 +110,6 @@ function tick(): void {
   state.ball.pos.x += state.ball.velocity.x * (deltaTime / 1000)
   state.ball.pos.y += state.ball.velocity.y * (deltaTime / 1000)
 
-  console.log(state.ball.pos.x, state.ball.pos.y)
-
   collideX()
   collideY()
 
