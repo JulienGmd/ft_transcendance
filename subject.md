@@ -14,7 +14,7 @@ The use of libraries or tools that provide an immediate and complete solution fo
   - No unhandled errors or warnings when browsing the website.
 - Must use Docker. Everything must be launched with a single command.
 
-TODO:
+TODO ?
 Several container technologies exist: Docker, containerd, podman,
 etc. On the computers of your campus, you may access the container
 software in rootless mode for security reasons. This could lead to
@@ -31,7 +31,7 @@ image with root as unique UID.
 ## Game
 
 - TODO Two players can play using the same keyboard.
-- TODO(show the tournament tree at the beginning, and update it after each round) A tournament system should also be available. It must clearly display who is playing against whom and the order of the play.
+- A tournament system should also be available. It must clearly display who is playing against whom and the order of the play.
   - When starting, each player enter their alias, which are reset when a new tournament begins or Standard User Management module.
   - The tournament system should handle the matchmaking, and announce the next match.
 - All players/AI follows the same rules (same paddle speed).
@@ -121,7 +121,7 @@ Use SQLite.
 - Users can upload an avatar, with a default if none is provided.
 - TODO Users can add others as friends and view their online status.
 - User profiles display stats, such as wins and losses.
-- TODO(any logged in user can see others history?) Each user has a Match History including 1v1 games, dates, and relevant details, accessible to logged-in users.
+- Each user has a Match History including 1v1 games, dates, and relevant details, accessible to logged-in users.
 
 Manage duplicate usernames/emails.
 
@@ -147,7 +147,7 @@ You must offer the best user experience possible.
 #### Major module: Implement Two-Factor Authentication (2FA) and JWT.
 
 - Implement 2FA as an additional layer of security for user accounts, requiring users to provide a secondary verification method, such as a one-time code, in addition to their password.
-- TODO(il faut les 3?) Provide a user-friendly setup process for enabling 2FA, with options for SMS codes, authenticator apps, or email-based verification.
+- Provide a user-friendly setup process for enabling 2FA, with options for SMS codes, authenticator apps, or email-based verification.
 - Utilize JWT as a secure method for authentication, authorization and user session access.
 - Ensure that JWT tokens are issued and validated securely to prevent unauthorized access to user accounts and sensitive data.
 
@@ -156,7 +156,7 @@ You must offer the best user experience possible.
 #### Major module: Infrastructure Setup with ELK (Elasticsearch, Logstash, Kibana) for Log Management.
 
 - TODO Deploy Elasticsearch to efficiently store and index log data, ensuring it is easily searchable and accessible.
-- Configure Logstash to collect, process, and transform log data from various sources, sending it to Elasticsearch.
+- TODO Configure Logstash to collect, process, and transform log data from various sources, sending it to Elasticsearch.
 - TODO Set up Kibana for visualizing log data, creating dashboards, and generating insights from log events.
 - TODO Define data retention and archiving policies to manage log data storage effectively.
 - TODO Implement security measures to protect log data and access to the ELK stack components.
