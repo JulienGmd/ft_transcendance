@@ -8,3 +8,4 @@ type Extract200Response<Path extends keyof paths, Method extends keyof paths[Pat
 export type User = Extract200Response<"/api/user/me", "get">["user"]
 export type Stats = Extract200Response<"/api/user/stats/me", "get">["stats"]
 export type Match = Extract200Response<"/api/user/matches/me", "get">["matches"][0]
+export type Friend = Extract200Response<"/api/user/friends/me", "get">["friends"][0]

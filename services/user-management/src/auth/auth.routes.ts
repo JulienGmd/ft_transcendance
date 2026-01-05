@@ -145,6 +145,63 @@ export async function authRoutes(fastify: FastifyInstance) {
     res.send({ user: userToPublicUser(user) })
   })
 
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/friends/me", {
+    schema: {
+      response: {
+        200: z.object({ friends: z.array(z.object({ username: z.string(), online: z.boolean() })) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)!
+
+    res.send({ friends: [] }) // TODO friends: user.friends
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/friends/add", {
+    schema: {
+      body: z.object({ username: z.string() }),
+      response: {
+        200: z.object({ friends: z.array(z.object({ username: z.string(), online: z.boolean() })) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)!
+    // TODO add to user.friends
+    updateUser(user)
+
+    res.send({ friends: [] }) // TODO friends: user.friends
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/friends/remove", {
+    schema: {
+      body: z.object({ username: z.string() }),
+      response: {
+        200: z.object({ friends: z.array(z.object({ username: z.string(), online: z.boolean() })) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)!
+    // TODO remove from user.friends
+    updateUser(user)
+
+    res.send({ friends: [] }) // TODO friends: user.friends
+  })
+
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-username", {
     schema: {
       body: z.object({
