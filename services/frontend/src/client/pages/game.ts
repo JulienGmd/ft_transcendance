@@ -594,7 +594,8 @@ function updateTournamentOverlay(result: TournamentResult): void {
     const text = document.querySelector<HTMLElement>(`#${k}-${p}`)!
     rect.style.fill = (result[k] && result[k]?.winner === result[k]?.[p]) ? winColor : color
     text.style.fill = (result[k] && result[k]?.winner === result[k]?.[p]) ? winTextColor : textColor
-    text.textContent = result[k]?.[p] ?? ""
+    const playerName = result[k]?.[p] ?? ""
+    text.textContent = playerName.length > 10 ? playerName.substring(0, 10) + "..." : playerName
   }
 
   updatePlayer("semi1", "p1")
