@@ -8,11 +8,12 @@ import fastifyWebsocket from "@fastify/websocket"
 import Fastify from "fastify"
 import { readFileSync } from "fs"
 import type { RawData } from "ws"
-import { parseClientMessage, sendError, sendPong } from "./communication"
+import { parseClientMessage, sendError, sendGameFound, sendPong } from "./communication"
 import { GameManager } from "./gameManager"
 import { getJWT } from "./jwt"
 import { connectNats, disconnectNats } from "./nats"
 import { NormalMatchmaking, TournamentMatchmaking } from "./queue"
+import { GameMode, Side } from "./sharedTypes"
 import { Player } from "./types"
 
 // ============================================
@@ -91,6 +92,11 @@ function handleMessage(player: Player, data: RawData): void {
   }
 
   switch (message.type) {
+    case "join_local":
+      sendGameFound(player.socket, GameMode.LOCAL, Side.LEFT)
+      gameManager.addGame(GameMode.LOCAL, player)
+      break
+
     case "join_normal":
       if (!tournamentMatchmaking.isInQueue(player))
         normalMatchmaking.join(player)
@@ -107,7 +113,7 @@ function handleMessage(player: Player, data: RawData): void {
       break
 
     case "move":
-      gameManager.handleInput(player, message.direction)
+      gameManager.handleInput(player, message.direction, message.isGuest)
       break
 
     case "ping":

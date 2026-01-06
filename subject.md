@@ -30,7 +30,7 @@ image with root as unique UID.
 
 ## Game
 
-- TODO Two players can play using the same keyboard.
+- Two players can play using the same keyboard.
 - A tournament system should also be available. It must clearly display who is playing against whom and the order of the play.
   - When starting, each player enter their alias, which are reset when a new tournament begins or Standard User Management module.
   - The tournament system should handle the matchmaking, and announce the next match.

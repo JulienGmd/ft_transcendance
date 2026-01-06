@@ -4,6 +4,7 @@
 // ============================================
 
 export enum GameMode {
+  LOCAL = "local",
   NORMAL = "normal",
   TOURNAMENT = "tournament",
 }
@@ -58,17 +59,18 @@ export enum Side {
 // Client -> Server
 // Note: playerId is determined server-side from the authenticated token
 export type ClientMessage =
+  | { type: "join_local" }
   | { type: "join_normal" }
   | { type: "join_tournament" }
   | { type: "leave_queue" }
-  | { type: "move"; direction: -1 | 0 | 1 }
+  | { type: "move"; direction: -1 | 0 | 1; isGuest?: boolean }
   | { type: "ping" }
 
 // Server -> Client
 export type ServerMessage =
-  | { type: "queue_joined"; position: number; mode: GameMode }
+  | { type: "queue_joined"; mode: GameMode; position: number }
   | { type: "queue_left" }
-  | { type: "game_found"; side: Side; opponentName: string; mode: GameMode }
+  | { type: "game_found"; mode: GameMode; side: Side; opponentName?: string }
   | { type: "countdown"; seconds: number }
   | { type: "game_start" }
   | { type: "game_sync"; state: SerializedEngine }

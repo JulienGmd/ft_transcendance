@@ -21,6 +21,7 @@ let els: {
   gameCanvas: HTMLCanvasElement
 
   menuOverlay: HTMLElement
+  menuJoinLocalBtn: HTMLElement
   menuJoinNormalBtn: HTMLElement
   menuJoinTournamentBtn: HTMLElement
 
@@ -79,6 +80,10 @@ let inputs = {
   upPressed: false,
   downPressed: false,
 }
+let guestInputs = {
+  upPressed: false,
+  downPressed: false,
+}
 
 function defaultState(): {
   game: SerializedEngine
@@ -124,6 +129,7 @@ export function onMount(): void {
     gameCanvas: document.querySelector("#game-canvas")!,
 
     menuOverlay: document.querySelector("#menu-overlay")!,
+    menuJoinLocalBtn: document.querySelector("#menu-join-local-btn")!,
     menuJoinNormalBtn: document.querySelector("#menu-join-normal-btn")!,
     menuJoinTournamentBtn: document.querySelector("#menu-join-tournament-btn")!,
 
@@ -155,6 +161,7 @@ export function onMount(): void {
   ctx = els.gameCanvas.getContext("2d")!
 
   // Event listeners
+  els.menuJoinLocalBtn.addEventListener("click", joinLocal)
   els.menuJoinNormalBtn.addEventListener("click", joinNormal)
   els.menuJoinTournamentBtn.addEventListener("click", joinTournament)
   els.queueLeaveBtn.addEventListener("click", leaveQueue)
@@ -262,8 +269,12 @@ function onWsMessage(e: MessageEvent<any>): void {
       state.side = msg.side
       els.gameScoreLeft.textContent = "0"
       els.gameScoreRight.textContent = "0"
-      els.gameLeftPlayerName.textContent = state.side === Side.LEFT ? getUser()!.username : msg.opponentName
-      els.gameRightPlayerName.textContent = state.side === Side.RIGHT ? getUser()!.username : msg.opponentName
+      els.gameLeftPlayerName.textContent = state.side === Side.LEFT
+        ? getUser()!.username
+        : msg.opponentName || "Guest"
+      els.gameRightPlayerName.textContent = state.side === Side.RIGHT
+        ? getUser()!.username
+        : msg.opponentName || "Guest"
       break
 
     case "countdown":
@@ -315,7 +326,7 @@ function onWsMessage(e: MessageEvent<any>): void {
 // ============================================
 
 function onKeyDown(e: KeyboardEvent): void {
-  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+  if (e.key === "w" || e.key === "W") {
     e.preventDefault()
     inputs.upPressed = true
     const direction = inputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
@@ -323,17 +334,35 @@ function onKeyDown(e: KeyboardEvent): void {
     send({ type: "move", direction })
   }
 
-  if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+  if (e.key === "s" || e.key === "S") {
     e.preventDefault()
     inputs.downPressed = true
     const direction = inputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
     state.game.paddles[state.side].direction = direction
     send({ type: "move", direction })
   }
+
+  if (state.mode === GameMode.LOCAL) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault()
+      guestInputs.upPressed = true
+      const direction = guestInputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
+      state.game.paddles.right.direction = direction
+      send({ type: "move", direction, isGuest: true })
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      guestInputs.downPressed = true
+      const direction = guestInputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
+      state.game.paddles.right.direction = direction
+      send({ type: "move", direction, isGuest: true })
+    }
+  }
 }
 
 function onKeyUp(e: KeyboardEvent): void {
-  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+  if (e.key === "w" || e.key === "W") {
     e.preventDefault()
     inputs.upPressed = false
     const direction = inputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
@@ -341,12 +370,30 @@ function onKeyUp(e: KeyboardEvent): void {
     send({ type: "move", direction: direction })
   }
 
-  if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+  if (e.key === "s" || e.key === "S") {
     e.preventDefault()
     inputs.downPressed = false
     const direction = inputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
     state.game.paddles[state.side].direction = direction
     send({ type: "move", direction: direction })
+  }
+
+  if (state.mode === GameMode.LOCAL) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault()
+      guestInputs.upPressed = false
+      const direction = guestInputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
+      state.game.paddles.right.direction = direction
+      send({ type: "move", direction: direction, isGuest: true })
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      guestInputs.downPressed = false
+      const direction = guestInputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
+      state.game.paddles.right.direction = direction
+      send({ type: "move", direction: direction, isGuest: true })
+    }
   }
 }
 
@@ -573,10 +620,19 @@ function hideElement(el: HTMLElement): void {
 }
 
 function updateGameOverOverlay(): void {
-  const won = state.side === Side.LEFT
-    ? state.game.score.left > state.game.score.right
-    : state.game.score.right > state.game.score.left
-  els.gameOverText.textContent = won ? "You Win!" : "You Lose"
+  let winText = ""
+  if (state.mode === GameMode.LOCAL) {
+    const winner = state.game.score.left > state.game.score.right
+      ? els.gameLeftPlayerName.textContent
+      : els.gameRightPlayerName.textContent
+    winText = `${winner} Wins!`
+  } else {
+    const won = state.side === Side.LEFT
+      ? state.game.score.left > state.game.score.right
+      : state.game.score.right > state.game.score.left
+    winText = won ? "You Win!" : "You Lose"
+  }
+  els.gameOverText.textContent = winText
   els.gameOverScore.textContent = `${state.game.score.left} - ${state.game.score.right}`
 }
 
@@ -623,6 +679,7 @@ function updateTournamentOverlay(result: TournamentResult): void {
 // BUTTON HANDLERS
 // ============================================
 
+const joinLocal = () => send({ type: "join_local" })
 const joinNormal = () => send({ type: "join_normal" })
 const joinTournament = () => send({ type: "join_tournament" })
 const leaveQueue = () => send({ type: "leave_queue" })

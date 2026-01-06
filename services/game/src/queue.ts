@@ -27,7 +27,7 @@ class Queue {
       return false
 
     this.queue.push(player)
-    sendQueueJoined(player.socket, this.length, this.mode)
+    sendQueueJoined(player.socket, this.mode, this.length)
     console.log(`[Queue:${this.mode}] Player ${player.username} joined at position: ${this.queue.length}`)
 
     this.matchPlayers?.()
@@ -65,9 +65,9 @@ async function createGame(
   p2: Player,
   mode: GameMode,
 ): Promise<GameEndResult> {
-  sendGameFound(p1.socket, Side.LEFT, p2.username, mode)
-  sendGameFound(p2.socket, Side.RIGHT, p1.username, mode)
-  return gameManager.addGame(p1, p2, mode)
+  sendGameFound(p1.socket, mode, Side.LEFT, p2.username)
+  sendGameFound(p2.socket, mode, Side.RIGHT, p1.username)
+  return gameManager.addGame(mode, p1, p2)
 }
 
 export class NormalMatchmaking {

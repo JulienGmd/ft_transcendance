@@ -1,3 +1,5 @@
+<!-- TODO update (void sharedTypes.ts) -->
+
 <div class="animate-slide-up w-full space-y-8">
   <div class="space-y-4">
     <h1 class="font-orbitron text-3xl font-bold">WebSocket Game API</h1>
@@ -18,24 +20,30 @@
 
     <ul class="space-y-4">
       <li class="space-y-2">
+        <p><b class="font-orbitron">join_local</b>: create local game</p>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ type: "join_local" }</pre>
+      </li>
+      <li class="space-y-2">
         <p><b class="font-orbitron">join_normal</b>: join the normal queue</p>
-        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "join_normal" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ type: "join_normal" }</pre>
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">join_tournament</b>: join the tournament queue</p>
-        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "join_tournament" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ type: "join_tournament" }</pre>
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">leave_queue</b>: leave the queue</p>
-        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "leave_queue" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ type: "leave_queue" }</pre>
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">move</b>: send a paddle move action</p>
-        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "move", "direction": -1 | 0 | 1 }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
+{ type: "move", direction: -1 | 0 | 1, isGuest?: boolean }</pre
+        >
       </li>
       <li class="space-y-2">
         <p><b class="font-orbitron">ping</b>: ping the server</p>
-        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ "type": "ping" }</pre>
+        <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">{ type: "ping" }</pre>
       </li>
     </ul>
   </div>
@@ -46,7 +54,7 @@
     <div class="space-y-2">
       <p>Possible message types:</p>
       <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
-queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update, score_update, game_over, tournament_result, error, pong</pre
+queue_joined, queue_left, game_found, countdown, game_start, game_sync, paddle_update, score_update, game_over, tournament_result, error, pong</pre
       >
     </div>
 
@@ -60,9 +68,9 @@ queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update
         <p><b class="font-orbitron">queue_joined</b>:</p>
         <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
-  "type": "queue_joined",
-  "position": number, // your position in the queue
-  "mode": "normal" | "tournament"
+  type: "queue_joined",
+  mode: "normal" | "tournament"
+  position: number, // your position in the queue
 }</pre
         >
       </li>
@@ -71,7 +79,7 @@ queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update
         <p><b class="font-orbitron">queue_left</b>:</p>
         <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
-  "type": "queue_left"
+  type: "queue_left"
 }</pre
         >
       </li>
@@ -80,11 +88,10 @@ queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update
         <p><b class="font-orbitron">game_found</b>:</p>
         <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
-  "type": "game_found",
-  "gameId": string,
-  "side": "left" | "right",
-  "opponentName": string,
-  "mode": "normal" | "tournament"
+  type: "game_found",
+  mode: "normal" | "tournament"
+  side: "left" | "right",
+  opponentName?: string,
 }</pre
         >
       </li>
@@ -93,32 +100,38 @@ queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update
         <p><b class="font-orbitron">countdown</b>:</p>
         <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
-  "type": "countdown",
-  "seconds": number
+  type: "countdown",
+  seconds: number
 }</pre
         >
       </li>
 
       <li class="space-y-2">
-        <p><b class="font-orbitron">game_state</b>:</p>
+        <p><b class="font-orbitron">game_sync</b>:</p>
         <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
-  "type": "game_state",
-  "state": {
-    "gameId": string,
-    "state": "waiting" | "playing" | "paused" | "over",
-    "ball": {
-      "position": { "x": number, "y": number },
-      "velocity": { "x": number, "y": number },
-      "timestamp": number
-    },
-    "paddles": {
-      "left": { "y": number, "direction": -1 | 0 | 1 },
-      "right": { "y": number, "direction": -1 | 0 | 1 }
-    },
-    "score": { "left": number, "right": number },
-    "timestamp": number
+  type: "game_sync",
+  state: {
+  ball: {
+    time: number // Time since last bounce/launch
+    pos: Vector2D // Position at last bounce/launch
+    velocity: Vector2D // Velocity at last bounce/launch
   }
+  paddles: {
+    left: {
+      y: number
+      direction: -1 | 0 | 1
+    }
+    right: {
+      y: number
+      direction: -1 | 0 | 1
+    }
+  }
+  score: {
+    left: number
+    right: number
+  }
+}
 }</pre
         >
       </li>
@@ -128,10 +141,6 @@ queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update
         <pre class="bg-surface overflow-x-scroll rounded p-2 text-sm">
 {
   "type": "game_over",
-  "finalScore": { "left": number, "right": number },
-  "mode": "normal" | "tournament",
-  "leftPrecision": number, // 0..1
-  "rightPrecision": number // 0..1
 }</pre
         >
       </li>
@@ -162,9 +171,9 @@ queue_joined, queue_left, game_found, countdown, game_start, sync, paddle_update
 
     <ol class="list-inside list-decimal">
       <li>Connect to the WebSocket</li>
-      <li>Send <code>{ "type": "join_normal" }</code></li>
+      <li>Send <code>{ type: "join_normal" }</code></li>
       <li>Receive <code>queue_joined</code>, then <code>game_found</code>, then <code>countdown</code>, etc.</li>
-      <li>During the game, send <code>{ "type": "input", ... }</code> to move the paddle</li>
+      <li>During the game, send <code>{ type: "move", ... }</code> to move the paddle</li>
     </ol>
 
     <h2 class="font-orbitron text-xl font-bold">Notes</h2>

@@ -3,6 +3,7 @@
 // Uses communication layer for messaging
 // ============================================
 
+import WebSocket from "ws"
 import {
   broadcastCountdown,
   broadcastGameOver,
@@ -30,7 +31,7 @@ export enum GameState {
 
 export interface Game {
   readonly p1: Player
-  readonly p2: Player
+  readonly p2?: Player // Undefined if local
   readonly mode: GameMode
   readonly engine: Engine
   state: GameState
@@ -40,10 +41,10 @@ export interface Game {
 
 export interface GameEndResult {
   readonly p1: Player
-  readonly p2: Player
+  readonly p2?: Player // Undefined if local
   score: { left: number; right: number }
-  winner: Player
-  loser: Player
+  winner?: Player // Undefined if local right player
+  loser?: Player // Undefined if local right player
 }
 
 export class GameManager {
@@ -66,9 +67,9 @@ export class GameManager {
 
   // ===== GAMES MANAGEMENT ===================
 
-  addGame(p1: Player, p2: Player, mode: GameMode): Promise<GameEndResult> {
+  addGame(mode: GameMode, p1: Player, p2?: Player): Promise<GameEndResult> {
     return new Promise((resolve) => {
-      if (this.getPlayerGame(p1) || this.getPlayerGame(p2))
+      if (this.getPlayerGame(p1) || (p2 && this.getPlayerGame(p2)))
         return
 
       const game: Game = {
@@ -81,7 +82,8 @@ export class GameManager {
       }
       this.games.push(game)
       this.playerIdToGame.set(p1.id, game)
-      this.playerIdToGame.set(p2.id, game)
+      if (p2)
+        this.playerIdToGame.set(p2.id, game)
       console.log("[GameManager] Game added")
 
       this.syncGame(game)
@@ -96,13 +98,10 @@ export class GameManager {
     if (index !== -1) {
       this.games.splice(index, 1)
       this.playerIdToGame.delete(game.p1.id)
-      this.playerIdToGame.delete(game.p2.id)
+      if (game.p2)
+        this.playerIdToGame.delete(game.p2.id)
       console.log("[GameManager] Game removed")
     }
-  }
-
-  getPlayerGame(player: Player): Game | undefined {
-    return this.playerIdToGame.get(player.id)
   }
 
   // ===== GAMES LIFECYCLE ====================
@@ -111,13 +110,12 @@ export class GameManager {
     game.state = GameState.COUNTDOWN
 
     let countdown = COUNTDOWN_SECONDS
-    const sockets = [game.p1.socket, game.p2.socket]
-    broadcastCountdown(sockets, countdown)
+    broadcastCountdown(this.getSockets(game), countdown)
 
     clearInterval(game.countdownInterval)
     game.countdownInterval = setInterval(() => {
       countdown--
-      broadcastCountdown(sockets, countdown) // Send even when 0 to hide overlay
+      broadcastCountdown(this.getSockets(game), countdown) // Send even when 0 to hide overlay
 
       if (countdown <= 0 && game.countdownInterval) {
         clearInterval(game.countdownInterval)
@@ -130,29 +128,30 @@ export class GameManager {
   private startGame(game: Game): void {
     game.state = GameState.PLAYING
 
-    const sockets = [game.p1.socket, game.p2.socket]
-    broadcastGameStart(sockets)
+    broadcastGameStart(this.getSockets(game))
     console.log("[GameManager] Game started")
   }
 
   private endGame(game: Game): void {
     game.state = GameState.FINISHED
 
-    const sockets = [game.p1.socket, game.p2.socket]
-    broadcastGameOver(sockets)
+    broadcastGameOver(this.getSockets(game))
     console.log("[GameManager] Game ended")
 
     const score = game.engine.getScore()
 
     // Send match result to user-management via NATS
-    sendMatchResult({
-      p1_id: game.p1.id,
-      p2_id: game.p2.id,
-      p1_score: score.left,
-      p2_score: score.right,
-      p1_precision: 0,
-      p2_precision: 0,
-    })
+
+    if (game.p2) {
+      sendMatchResult({
+        p1_id: game.p1.id,
+        p2_id: game.p2.id,
+        p1_score: score.left,
+        p2_score: score.right,
+        p1_precision: 0,
+        p2_precision: 0,
+      })
+    }
 
     game.onEndCallback({
       p1: game.p1,
@@ -175,8 +174,7 @@ export class GameManager {
         this.syncGame(game)
 
       if (result.scorer) {
-        const sockets = [game.p1.socket, game.p2.socket]
-        broadcastScoreUpdate(sockets, game.engine.getScore())
+        broadcastScoreUpdate(this.getSockets(game), game.engine.getScore())
 
         // Brief pause to let the ball goes out of screen client side
         game.state = GameState.WAITING
@@ -204,13 +202,12 @@ export class GameManager {
   }
 
   private syncGame(game: Game): void {
-    const sockets = [game.p1.socket, game.p2.socket]
-    broadcastGameSync(sockets, game.engine.serialize())
+    broadcastGameSync(this.getSockets(game), game.engine.serialize())
   }
 
   // ====== PLAYER INTERACTIONS ===============
 
-  handleInput(player: Player, direction: -1 | 0 | 1): void {
+  handleInput(player: Player, direction: -1 | 0 | 1, isGuest = false): void {
     const game = this.getPlayerGame(player)
     if (!game)
       return
@@ -218,11 +215,10 @@ export class GameManager {
     if (game.state === GameState.FINISHED)
       return
 
-    const side = player.id === game.p1.id ? Side.LEFT : Side.RIGHT
+    const side = isGuest ? Side.RIGHT : (player.id === game.p1.id ? Side.LEFT : Side.RIGHT)
     const paddle = game.engine.setPaddleDirection(side, direction)
 
-    const sockets = [game.p1.socket, game.p2.socket]
-    broadcastPaddleUpdate(sockets, side, paddle)
+    broadcastPaddleUpdate(this.getSockets(game), side, paddle)
   }
 
   handleDisconnect(player: Player): void {
@@ -241,15 +237,28 @@ export class GameManager {
     // Update socket reference
     if (side === Side.LEFT)
       game.p1.socket = player.socket
-    else
+    else if (game.p2)
       game.p2.socket = player.socket
 
-    sendGameFound(player.socket, side, opponent.username, game.mode)
+    sendGameFound(player.socket, game.mode, side, opponent?.username)
     sendGameStart(player.socket)
     sendScoreUpdate(player.socket, game.engine.getScore())
     this.syncGame(game)
 
     console.log(`[GameManager] Player ${player.username} reconnected to game`)
     return true
+  }
+
+  // ===== UTILS ==============================
+
+  getPlayerGame(player: Player): Game | undefined {
+    return this.playerIdToGame.get(player.id)
+  }
+
+  getSockets(game: Game): WebSocket[] {
+    const sockets = [game.p1.socket]
+    if (game.p2)
+      sockets.push(game.p2.socket)
+    return sockets
   }
 }

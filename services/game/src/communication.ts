@@ -82,11 +82,11 @@ export function broadcastRaw(sockets: Iterable<WebSocket>, message: ServerMessag
 /**
  * Notify player they joined the queue
  */
-export function sendQueueJoined(socket: WebSocket, position: number, mode: GameMode): boolean {
+export function sendQueueJoined(socket: WebSocket, mode: GameMode, position: number): boolean {
   return sendRaw(socket, {
     type: "queue_joined",
-    position,
     mode,
+    position,
   })
 }
 
@@ -108,15 +108,15 @@ export function sendQueueLeft(socket: WebSocket): boolean {
  */
 export function sendGameFound(
   socket: WebSocket,
-  side: Side,
-  opponentName: string,
   mode: GameMode,
+  side: Side,
+  opponentName?: string,
 ): boolean {
   return sendRaw(socket, {
     type: "game_found",
+    mode,
     side,
     opponentName,
-    mode,
   })
 }
 
