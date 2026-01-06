@@ -2,11 +2,10 @@
 
 <div class="flex flex-1 flex-col items-center justify-center">
   <!-- Navigation menu -->
-  <nav class="font-orbitron gap-4">
-    <a class="group block items-center justify-center p-12" href="/login">
+  <nav class="font-orbitron flex flex-col gap-4">
+    <a id="home-login" class="group block items-center justify-center p-12" href="/login">
       <!-- Shown when not logged in: -->
       <p
-        id="home-login"
         class="group-hover:text-primary animate-slide-right origin-bottom-left text-4xl font-bold transition group-hover:-skew-x-12"
       >
         LOGIN
@@ -14,9 +13,8 @@
     </a>
 
     <!-- Shown when logged in: -->
-    <a class="group block items-center justify-center p-12" href="/game">
+    <a id="home-play" class="group block items-center justify-center p-12" href="/game">
       <p
-        id="home-play"
         class="group-hover:text-primary animate-slide-right origin-bottom-left text-4xl font-bold transition group-hover:-skew-x-12"
       >
         PLAY
