@@ -169,6 +169,8 @@ export function onMount(): void {
   els.tournamentResultPlayAgainBtn.addEventListener("click", playAgain)
   document.addEventListener("keydown", onKeyDown)
   document.addEventListener("keyup", onKeyUp)
+  document.addEventListener("touchstart", onTouchStart)
+  document.addEventListener("touchend", onTouchEnd)
 
   connectWebSocket()
   startTick()
@@ -326,75 +328,77 @@ function onWsMessage(e: MessageEvent<any>): void {
 // ============================================
 
 function onKeyDown(e: KeyboardEvent): void {
-  if (e.key === "w" || e.key === "W") {
-    e.preventDefault()
-    inputs.upPressed = true
-    const direction = inputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
-    state.game.paddles[state.side].direction = direction
-    send({ type: "move", direction })
-  }
+  if (e.key === "w" || e.key === "W")
+    onUpPressed(state.side)
+  if (e.key === "s" || e.key === "S")
+    onDownPressed(state.side)
 
-  if (e.key === "s" || e.key === "S") {
-    e.preventDefault()
-    inputs.downPressed = true
-    const direction = inputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
-    state.game.paddles[state.side].direction = direction
-    send({ type: "move", direction })
-  }
-
-  if (state.mode === GameMode.LOCAL) {
-    if (e.key === "ArrowUp") {
-      e.preventDefault()
-      guestInputs.upPressed = true
-      const direction = guestInputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
-      state.game.paddles.right.direction = direction
-      send({ type: "move", direction, isGuest: true })
-    }
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault()
-      guestInputs.downPressed = true
-      const direction = guestInputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
-      state.game.paddles.right.direction = direction
-      send({ type: "move", direction, isGuest: true })
-    }
-  }
+  if (e.key === "ArrowUp")
+    onUpPressed(state.mode === GameMode.LOCAL ? Side.RIGHT : state.side)
+  if (e.key === "ArrowDown")
+    onDownPressed(state.mode === GameMode.LOCAL ? Side.RIGHT : state.side)
 }
 
 function onKeyUp(e: KeyboardEvent): void {
-  if (e.key === "w" || e.key === "W") {
-    e.preventDefault()
-    inputs.upPressed = false
-    const direction = inputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
-    state.game.paddles[state.side].direction = direction
-    send({ type: "move", direction: direction })
-  }
+  if (e.key === "w" || e.key === "W")
+    onUpReleased(state.side)
+  if (e.key === "s" || e.key === "S")
+    onDownReleased(state.side)
 
-  if (e.key === "s" || e.key === "S") {
-    e.preventDefault()
-    inputs.downPressed = false
-    const direction = inputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
-    state.game.paddles[state.side].direction = direction
-    send({ type: "move", direction: direction })
-  }
+  if (e.key === "ArrowUp")
+    onUpReleased(state.mode === GameMode.LOCAL ? Side.RIGHT : state.side)
+  if (e.key === "ArrowDown")
+    onDownReleased(state.mode === GameMode.LOCAL ? Side.RIGHT : state.side)
+}
 
-  if (state.mode === GameMode.LOCAL) {
-    if (e.key === "ArrowUp") {
-      e.preventDefault()
-      guestInputs.upPressed = false
-      const direction = guestInputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
-      state.game.paddles.right.direction = direction
-      send({ type: "move", direction: direction, isGuest: true })
-    }
+function onTouchStart(e: TouchEvent): void {
+  if (e.touches[0].clientY < window.innerHeight / 2)
+    onUpPressed(state.side)
+  else
+    onDownPressed(state.side)
+}
 
-    if (e.key === "ArrowDown") {
-      e.preventDefault()
-      guestInputs.downPressed = false
-      const direction = guestInputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
-      state.game.paddles.right.direction = direction
-      send({ type: "move", direction: direction, isGuest: true })
-    }
-  }
+function onTouchEnd(e: TouchEvent): void {
+  if (e.changedTouches[0].clientY < window.innerHeight / 2)
+    onUpReleased(state.side)
+  else
+    onDownReleased(state.side)
+}
+
+function onUpPressed(side: Side): void {
+  const isGuest = side !== state.side
+  const _inputs = isGuest ? inputs : guestInputs
+  _inputs.upPressed = true
+  const direction = _inputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
+  state.game.paddles[side].direction = direction
+  send({ type: "move", direction, isGuest })
+}
+
+function onDownPressed(side: Side): void {
+  const isGuest = side !== state.side
+  const _inputs = isGuest ? inputs : guestInputs
+  _inputs.downPressed = true
+  const direction = _inputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
+  state.game.paddles[side].direction = direction
+  send({ type: "move", direction, isGuest })
+}
+
+function onUpReleased(side: Side): void {
+  const isGuest = side !== state.side
+  const _inputs = isGuest ? inputs : guestInputs
+  _inputs.upPressed = false
+  const direction = _inputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
+  state.game.paddles[side].direction = direction
+  send({ type: "move", direction, isGuest })
+}
+
+function onDownReleased(side: Side): void {
+  const isGuest = side !== state.side
+  const _inputs = isGuest ? inputs : guestInputs
+  _inputs.downPressed = false
+  const direction = _inputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
+  state.game.paddles[side].direction = direction
+  send({ type: "move", direction, isGuest })
 }
 
 // ============================================

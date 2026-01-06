@@ -182,7 +182,7 @@ You must offer the best user experience possible.
 #### Minor module: Support on all devices.
 
 - Ensure the website is responsive, adapting to different screen sizes and orientations, providing a consistent user experience on desktops, laptops, tablets, and smartphones.
-- TODO(touch to play) Ensure that users can easily navigate and interact with the website using different input methods, such as touchscreens, keyboards, and mice, depending on the device they are using.
+- Ensure that users can easily navigate and interact with the website using different input methods, such as touchscreens, keyboards, and mice, depending on the device they are using.
 
 #### Minor module: Expanding Browser Compatibility.
 
