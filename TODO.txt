@@ -20,7 +20,6 @@ shared:
 front:
 
 user-management:
-- ? forgot password (pas demande ds le sujet)
 
 game:
 
