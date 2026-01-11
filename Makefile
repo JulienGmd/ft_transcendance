@@ -1,4 +1,5 @@
 SERVICES = $(shell docker compose config --services | sed 's/^/DNS:/' | paste -sd ',' -)
+HOSTNAME = $(shell hostname | head -c6)
 
 all: start
 
@@ -8,7 +9,7 @@ setup: secrets/certs secrets/jwt
 # "DNS:servicename,..." ($(SERVICES)) is required for https communication between caddy and services.
 secrets/certs:
 	@mkdir -p secrets/certs
-	@openssl req -x509 -newkey rsa:2048 -nodes -keyout secrets/certs/key.pem -out secrets/certs/cert.pem -days 365 -subj "/CN=internal" -addext "subjectAltName=DNS:localhost,$(SERVICES)" 2>/dev/null
+	@openssl req -x509 -newkey rsa:2048 -nodes -keyout secrets/certs/key.pem -out secrets/certs/cert.pem -days 365 -subj "/CN=internal" -addext "subjectAltName=DNS:localhost,DNS:$(HOSTNAME),$(SERVICES)" 2>/dev/null
 	@echo "--> New certs has been generated"
 
 secrets/jwt:
@@ -22,11 +23,13 @@ node_modules:
 	npm i
 
 dev: node_modules setup
+# Note: HOSTNAME=$(hostname | head -c6) is only for 42 computers, head -c6 is because hostname of 42 pcs are z3r4p1.42lyon.fr and we only need z3r4p1
 # Use docker-compose.dev.yml on top of docker-compose.yml, which defines the Dockerfile stage to development and mount volumes for live code reloading.
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+	HOSTNAME=$(HOSTNAME) docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 start: setup
-	docker compose up --build
+# Note: HOSTNAME=$(hostname | head -c6) is only for 42 computers, head -c6 is because hostname of 42 pcs are z3r4p1.42lyon.fr and we only need z3r4p1
+	HOSTNAME=$(HOSTNAME) docker compose up --build
 
 clean:
 	docker compose down

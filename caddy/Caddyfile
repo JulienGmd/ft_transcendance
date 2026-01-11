@@ -17,7 +17,12 @@
 	}
 }
 
-https://localhost:8080 {
+# Note: https://{$HOSTNAME}:8080 is only for 42 computers
+https://localhost:8080,
+https://{$HOSTNAME}:8080 {
+	# Note: Work without but this allow to use our custom certs that defines z3r4p1 as allowed TLS
+	tls /certs/cert.pem /certs/key.pem
+
 	reverse_proxy /api/user/* https://user-management:3000 {
 		transport http {
 			tls

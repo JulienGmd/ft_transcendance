@@ -11,9 +11,11 @@ services:
     ports:
       - "8080:8080"
       - "8080:8080/udp"
+    environment:
+      - HOSTNAME=${HOSTNAME:-localhost}
     volumes:
       - ./caddy:/etc/caddy
-      - ./secrets/certs/cert.pem:/certs/cert.pem:ro # ro = read-only
+      - ./secrets/certs:/certs:ro # ro = read-only
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
