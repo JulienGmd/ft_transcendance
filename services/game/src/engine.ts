@@ -14,8 +14,8 @@ import {
   PADDLE_WIDTH,
   WIDTH,
   WINNING_SCORE,
-} from "./gameConfig"
-import { SerializedBall, SerializedEngine, SerializedPaddle, Side, Vector2D } from "./sharedTypes"
+} from "./gameConfig.js"
+import { SerializedBall, SerializedEngine, SerializedPaddle, Side, Vector2D } from "./sharedTypes.js"
 
 // ============================================
 // TYPES

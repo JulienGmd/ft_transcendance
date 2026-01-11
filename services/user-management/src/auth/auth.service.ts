@@ -1,5 +1,5 @@
-import { getDb, type User } from "../db"
-import { PublicUser } from "./schemas"
+import { getDb, type User } from "../db.js"
+import { PublicUser } from "./schemas.js"
 
 export function getUser(email: string): User | null {
   const db = getDb()

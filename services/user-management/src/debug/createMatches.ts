@@ -4,9 +4,9 @@
 // npx tsx src/debug/createMatches.ts
 
 import { MatchCreatePayload } from "@ft_transcendence/shared"
-import { createUser } from "../auth/auth.service"
-import { initDb, Match, User } from "../db"
-import { createMatch } from "../match/match.service"
+import { createUser } from "../auth/auth.service.js"
+import { initDb, Match, User } from "../db.js"
+import { createMatch } from "../match/match.service.js"
 
 const db = initDb()
 

@@ -1,7 +1,7 @@
-import { closeDb, initDb } from "./db"
-import { closeNatsClient, initNatsClient } from "./nats/connection"
-import { setupSubscribers } from "./nats/subscriber"
-import { startServer, stopServer } from "./server"
+import { closeDb, initDb } from "./db.js"
+import { closeNatsClient, initNatsClient } from "./nats/connection.js"
+import { setupSubscribers } from "./nats/subscriber.js"
+import { startServer, stopServer } from "./server.js"
 
 const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
 signals.forEach((signal) => {

@@ -1,8 +1,8 @@
 import type { MatchCreatePayload } from "@ft_transcendence/shared"
 import { Topics } from "@ft_transcendence/shared"
 import type { Codec, NatsConnection } from "nats"
-import { createMatch } from "../match/match.service"
-import { getCodec, getNatsClient } from "./connection"
+import { createMatch } from "../match/match.service.js"
+import { getCodec, getNatsClient } from "./connection.js"
 
 export function setupSubscribers(): void {
   const nc = getNatsClient()

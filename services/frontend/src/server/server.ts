@@ -1,8 +1,8 @@
 import Fastify, { type FastifyInstance } from "fastify"
 import { existsSync, readFileSync } from "fs"
-import config from "./config"
-import { enableLiveReload } from "./liveReload"
-import { getMimeType } from "./utils"
+import config from "./config.js"
+import { enableLiveReload } from "./liveReload.js"
+import { getMimeType } from "./utils.js"
 
 const DIST_PUBLIC_DIR = config.ROOT_DIR + "/dist/public"
 const PUBLIC_DIR = config.ROOT_DIR + "/public"

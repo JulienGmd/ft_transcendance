@@ -3,7 +3,7 @@
 // cd services/user-management
 // npx tsx src/debug/listUsers.ts
 
-import { initDb } from "../db"
+import { initDb } from "../db.js"
 
 const db = initDb()
 

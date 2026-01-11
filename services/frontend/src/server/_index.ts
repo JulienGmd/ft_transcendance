@@ -1,4 +1,4 @@
-import { startServer, stopServer } from "./server"
+import { startServer, stopServer } from "./server.js"
 
 const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
 signals.forEach((signal) => {

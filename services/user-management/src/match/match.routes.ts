@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify"
 import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
-import { getJWT } from "../auth/jwt"
-import { PUBLIC_MATCH_SCHEMA, PUBLIC_STATS_SCHEMA } from "../auth/schemas"
-import { getPlayerMatches, getPlayerStats, matchToPublicMatch } from "./match.service"
+import { getJWT } from "../auth/jwt.js"
+import { PUBLIC_MATCH_SCHEMA, PUBLIC_STATS_SCHEMA } from "../auth/schemas.js"
+import { getPlayerMatches, getPlayerStats, matchToPublicMatch } from "./match.service.js"
 
 export async function matchRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/matches/me", {

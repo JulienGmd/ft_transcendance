@@ -3,11 +3,11 @@
 // Normal (1v1) and Tournament (4 players) modes
 // ============================================
 
-import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft } from "./communication"
-import { GameEndResult, GameManager } from "./gameManager"
-import { GameMode, Side, TournamentResult } from "./sharedTypes"
-import { Player } from "./types"
-import { sleep } from "./utils"
+import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft } from "./communication.js"
+import { GameEndResult, GameManager } from "./gameManager.js"
+import { GameMode, Side, TournamentResult } from "./sharedTypes.js"
+import { Player } from "./types.js"
+import { sleep } from "./utils.js"
 
 class Queue {
   private readonly gameManager: GameManager

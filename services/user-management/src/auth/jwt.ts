@@ -1,8 +1,8 @@
 import { JWTUser } from "@ft_transcendence/shared"
 import { FastifyReply, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
-import config from "../config"
-import { User } from "../db"
+import config from "../config.js"
+import { User } from "../db.js"
 
 export function setJWT(res: FastifyReply, user: User): void {
   const content: JWTUser = {

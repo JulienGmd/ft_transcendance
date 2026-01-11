@@ -12,7 +12,7 @@ import {
   ServerMessage,
   Side,
   TournamentResult,
-} from "./sharedTypes"
+} from "./sharedTypes.js"
 
 // ============================================
 // SOCKET INTERFACE

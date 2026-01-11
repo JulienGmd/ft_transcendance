@@ -1,6 +1,6 @@
 import axios from "axios"
 import qs from "querystring"
-import config from "../config"
+import config from "../config.js"
 
 type GoogleProfile = {
   id: string

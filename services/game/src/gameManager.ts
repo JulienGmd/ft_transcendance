@@ -14,13 +14,13 @@ import {
   sendGameFound,
   sendGameStart,
   sendScoreUpdate,
-} from "./communication"
-import { Engine } from "./engine"
-import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig"
-import { sendMatchResult } from "./nats"
-import { GameMode, Side } from "./sharedTypes"
-import { Player } from "./types"
-import { sleep } from "./utils"
+} from "./communication.js"
+import { Engine } from "./engine.js"
+import { COUNTDOWN_SECONDS, SYNC_RATE_MS, TICK_RATE_MS } from "./gameConfig.js"
+import { sendMatchResult } from "./nats.js"
+import { GameMode, Side } from "./sharedTypes.js"
+import { Player } from "./types.js"
+import { sleep } from "./utils.js"
 
 export enum GameState {
   WAITING = "waiting",
