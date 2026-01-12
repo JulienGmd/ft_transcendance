@@ -23,8 +23,7 @@ export async function startServer(): Promise<void> {
 
   // Generic error handler (when a route throws an error)
   fastify.setErrorHandler((err, req, res) => {
-    console.log("Error not handled:", err)
-    res.status(500).send({ error: "Internal Server Error" })
+    res.status(400).send({ error: "Bad input" })
   })
 
   // In development, log all requests

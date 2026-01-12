@@ -57,8 +57,7 @@ export async function startServer(): Promise<void> {
       }))
       res.status(400).send({ message: "Request validation failed", details: validationErrors })
     } else {
-      console.log("Error not handled:", (err as Error).message)
-      res.status(500).send({ message: "An unexpected error occurred" })
+      res.status(400).send({ message: "Bad input" })
     }
   })
 

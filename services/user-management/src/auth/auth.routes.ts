@@ -3,10 +3,20 @@ import type { FastifyInstance } from "fastify"
 import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
-import { createGoogleUser, createUser, getUser, updateUser, userToPublicUser } from "./auth.service.js"
+import {
+  addFriend,
+  createGoogleUser,
+  createUser,
+  getFriends,
+  getUser,
+  getUserByUsername,
+  removeFriend,
+  updateUser,
+  userToPublicUser,
+} from "./auth.service.js"
 import { getGoogleAuthUrl, getGoogleProfile } from "./google.js"
 import { clearJWT, getJWT, setJWT } from "./jwt.js"
-import { PUBLIC_USER_SCHEMA, PUBLIC_VALIDATION_ERROR_SCHEMA } from "./schemas.js"
+import { PUBLIC_FRIENDSHIP_SCHEMA, PUBLIC_USER_SCHEMA, PUBLIC_VALIDATION_ERROR_SCHEMA } from "./schemas.js"
 
 export async function authRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google", {
@@ -148,7 +158,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/friends/me", {
     schema: {
       response: {
-        200: z.object({ friends: z.array(z.object({ username: z.string(), online: z.boolean() })) }),
+        200: z.object({ friends: z.array(PUBLIC_FRIENDSHIP_SCHEMA) }),
         401: z.object({ message: z.string() }),
       },
     },
@@ -159,15 +169,17 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const user = getUser(jwt.email)!
 
-    res.send({ friends: [] }) // TODO friends: user.friends
+    res.send({ friends: getFriends(user.id) })
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/friends/add", {
     schema: {
       body: z.object({ username: z.string() }),
       response: {
-        200: z.object({ friends: z.array(z.object({ username: z.string(), online: z.boolean() })) }),
+        200: z.object({ friends: z.array(PUBLIC_FRIENDSHIP_SCHEMA) }),
+        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
+        404: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -176,18 +188,23 @@ export async function authRoutes(fastify: FastifyInstance) {
       return res.status(401).send({ message: "Invalid token" })
 
     const user = getUser(jwt.email)!
-    // TODO add to user.friends
-    updateUser(user)
+    const friend = getUserByUsername(req.body.username)
+    if (!friend)
+      return res.status(404).send({ message: "User not found" })
 
-    res.send({ friends: [] }) // TODO friends: user.friends
+    addFriend(user.id, friend.id)
+
+    res.send({ friends: getFriends(user.id) })
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/friends/remove", {
     schema: {
       body: z.object({ username: z.string() }),
       response: {
-        200: z.object({ friends: z.array(z.object({ username: z.string(), online: z.boolean() })) }),
+        200: z.object({ friends: z.array(PUBLIC_FRIENDSHIP_SCHEMA) }),
+        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
+        404: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -196,10 +213,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       return res.status(401).send({ message: "Invalid token" })
 
     const user = getUser(jwt.email)!
-    // TODO remove from user.friends
-    updateUser(user)
+    const friend = getUserByUsername(req.body.username)
+    if (!friend)
+      return res.status(404).send({ message: "User not found" })
 
-    res.send({ friends: [] }) // TODO friends: user.friends
+    removeFriend(user.id, friend.id)
+
+    res.send({ friends: getFriends(user.id) })
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-username", {
@@ -361,5 +381,22 @@ export async function authRoutes(fastify: FastifyInstance) {
     user.twofa_verify_time = null
     setJWT(res, user)
     res.send({ user: userToPublicUser(user) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/active", {
+    schema: {
+      response: {
+        200: z.void(),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.send()
+
+    const user = getUser(jwt.email)!
+    updateUser(user)
+
+    res.send()
   })
 }

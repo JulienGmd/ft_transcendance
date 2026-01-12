@@ -119,7 +119,7 @@ Use SQLite.
 - Users can set their username.
 - Users can update their information.
 - Users can upload an avatar, with a default if none is provided.
-- TODO Users can add others as friends and view their online status.
+- Users can add others as friends and view their online status.
 - User profiles display stats, such as wins and losses.
 - Each user has a Match History including 1v1 games, dates, and relevant details, accessible to logged-in users.
 

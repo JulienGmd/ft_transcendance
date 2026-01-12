@@ -50,6 +50,11 @@ fastify.addHook("onRequest", async (req, res) => {
     console.log(`${req.method} ${req.url}`)
 })
 
+// Generic error handler (when a route throws an error)
+fastify.setErrorHandler((err, req, res) => {
+  res.status(400).send({ error: "Bad input" })
+})
+
 // ============================================
 // HEALTH CHECK
 // ============================================

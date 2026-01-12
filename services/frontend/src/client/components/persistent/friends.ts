@@ -1,5 +1,8 @@
 import { Friend } from "../../types.js"
-import { get, getUser, post } from "../../utils.js"
+import { get, getUser, post, showNotify } from "../../utils.js"
+
+const AWAY_THRESHOLD = 5 * 60 * 1000 // 5 minutes
+const OFFLINE_THRESHOLD = 15 * 60 * 1000 // 15 minutes
 
 export interface FriendsListElement extends HTMLElement {
 }
@@ -64,15 +67,15 @@ class FriendsList extends HTMLElement implements FriendsListElement {
 
     // Sort by online status first, then alphabetically
     const friends = data[200].friends.sort((a, b) => {
-      if (a.online === b.online)
+      if (this.getOnlineStatus(a) === this.getOnlineStatus(b))
         return a.username.localeCompare(b.username)
-      return a.online ? -1 : 1
+      return this.getOnlineStatus(a) ? -1 : 1
     })
 
     this.list.innerHTML = friends.map((friend: Friend) => `
       <div class="group flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <div class="size-2 rounded-full ${friend.online ? "bg-success" : "bg-error"}"></div>
+          <div class="size-2 rounded-full" style="background-color: ${this.getOnlineColor(friend)};"></div>
           <p>${friend.username}</p>
         </div>
         <button data-username="${friend.username}" class="text-text-muted hover:text-text opacity-0 group-hover:opacity-100">
@@ -85,10 +88,30 @@ class FriendsList extends HTMLElement implements FriendsListElement {
       this.list.innerHTML = `<p class="text-center text-sm text-text-muted">No friends added.</p>`
   }
 
+  private getOnlineStatus = (user: Friend): "online" | "away" | "offline" => {
+    const lastActiveDuration = Date.now() - new Date(user.last_active_time).getTime()
+    return lastActiveDuration > OFFLINE_THRESHOLD
+      ? "offline"
+      : lastActiveDuration > AWAY_THRESHOLD
+      ? "away"
+      : "online"
+  }
+
+  private getOnlineColor = (user: Friend): string => {
+    const status = this.getOnlineStatus(user)
+    if (status === "online")
+      return "var(--color-success)"
+    if (status === "away")
+      return "var(--color-warning)"
+    return "var(--color-error)"
+  }
+
   private addFriend = async (username: string): Promise<void> => {
     const data = await post(`/api/user/friends/add`, { username })
     if (data[200])
-      this.updateList()
+      return this.updateList()
+    if (data[404])
+      return showNotify("Can't add friend: No user have this username", "warning")
   }
 
   private removeFriend = async (username: string): Promise<void> => {

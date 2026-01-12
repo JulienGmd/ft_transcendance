@@ -29,8 +29,22 @@ export function initDb(): Database.Database {
             avatar TEXT,
             twofa_secret TEXT,
             twofa_verify_time DATETIME,
+            last_active_time DATETIME,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `).run()
+
+  // friendships table
+  // (ON DELETE CASCADE to remove friendships when a user is deleted)
+  db.prepare(`
+        CREATE TABLE IF NOT EXISTS friendships (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            friend_id INTEGER NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            FOREIGN KEY (friend_id) REFERENCES users (id) ON DELETE CASCADE,
+            UNIQUE (user_id, friend_id)
         )
     `).run()
 
@@ -70,8 +84,15 @@ export type User = {
   avatar: string | null
   twofa_secret: string | null
   twofa_verify_time: string | null
+  last_active_time: string | null
   created_at: string
-  updated_at: string
+}
+
+export type Friendship = {
+  id: number
+  user_id: number
+  friend_id: number
+  created_at: string
 }
 
 export type Match = {
