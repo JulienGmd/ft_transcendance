@@ -3,16 +3,21 @@ HOSTNAME = $(shell hostname | head -c6)
 
 all: start
 
-setup: secrets/certs secrets/jwt
+setup: secrets/certs/cert.pem secrets/jwt/private.pem
 
 # Generate self-signed SSL certificate, will then be copied to all services so they can communicate using HTTPS with caddy.
 # "DNS:servicename,..." ($(SERVICES)) is required for https communication between caddy and services.
-secrets/certs:
+secrets/certs/cert.pem:
 	@mkdir -p secrets/certs
+	@if [ -f secrets/certs/.hostname ] && [ "$$(cat secrets/certs/.hostname)" != "$(HOSTNAME)" ]; then \
+		echo "--> Hostname changed, regenerating certificates..."; \
+		rm -f secrets/certs/key.pem secrets/certs/cert.pem; \
+	fi
 	@openssl req -x509 -newkey rsa:2048 -nodes -keyout secrets/certs/key.pem -out secrets/certs/cert.pem -days 365 -subj "/CN=internal" -addext "subjectAltName=DNS:localhost,DNS:$(HOSTNAME),$(SERVICES)" 2>/dev/null
+	@echo "$(HOSTNAME)" > secrets/certs/.hostname
 	@echo "--> New certs has been generated"
 
-secrets/jwt:
+secrets/jwt/private.pem:
 	@mkdir -p secrets/jwt
 	@openssl genrsa -out secrets/jwt/private.pem 2048
 	@openssl rsa -in secrets/jwt/private.pem -pubout -out secrets/jwt/public.pem 2>/dev/null
@@ -26,6 +31,7 @@ dev: node_modules setup
 # Note: HOSTNAME=$(hostname | head -c6) is only for 42 computers, head -c6 is because hostname of 42 pcs are z3r4p1.42lyon.fr and we only need z3r4p1
 # Use docker-compose.dev.yml on top of docker-compose.yml, which defines the Dockerfile stage to development and mount volumes for live code reloading.
 	HOSTNAME=$(HOSTNAME) docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+	echo $(HOSTNAME)
 
 start: setup
 # Note: HOSTNAME=$(hostname | head -c6) is only for 42 computers, head -c6 is because hostname of 42 pcs are z3r4p1.42lyon.fr and we only need z3r4p1
@@ -40,4 +46,4 @@ fclean: clean
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans --rmi all
 	git clean -fdX
 
-.PHONY: setup dev start clean fclean
+.PHONY: all setup dev start clean fclean
