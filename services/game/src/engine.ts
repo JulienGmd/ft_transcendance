@@ -58,6 +58,8 @@ class Paddle {
   private readonly minY = PADDLE_HEIGHT / 2
   private readonly maxY = HEIGHT - PADDLE_HEIGHT / 2
 
+  public bounceCount = 0;
+
   getY(): number {
     return this.y
   }
@@ -230,7 +232,7 @@ class Ball {
   bounceOnPaddle(paddle: Paddle): void {
     if (!this.prediction)
       return
-
+    paddle.bounceCount += 1;
     const bounceAngle = this.calculateBounceAngle(paddle)
     const newSpeed = this.calculateNewSpeed()
     const direction = this.getDirection() === Side.LEFT ? 1 : -1
@@ -291,6 +293,13 @@ export class Engine {
 
   private getPaddleInBallDirection(): Paddle {
     return this.ball.getDirection() === Side.LEFT ? this.paddles.left : this.paddles.right
+  }
+
+  getPaddlesBounceCount(): { left: number; right: number } {
+    return {
+      left: this.paddles.left.bounceCount,
+      right: this.paddles.right.bounceCount,
+    }
   }
 
   // ===== TICK ==============================

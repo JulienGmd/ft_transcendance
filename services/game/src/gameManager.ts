@@ -148,8 +148,8 @@ export class GameManager {
         p2_id: game.p2.id,
         p1_score: score.left,
         p2_score: score.right,
-        p1_precision: 0,
-        p2_precision: 0,
+        p1_precision: 100 * game.engine.getPaddlesBounceCount().left / (game.engine.getPaddlesBounceCount().left + score.right),
+        p2_precision: 100 * game.engine.getPaddlesBounceCount().right / (game.engine.getPaddlesBounceCount().right + score.left),
       })
     }
 
