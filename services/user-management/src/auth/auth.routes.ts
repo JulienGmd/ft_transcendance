@@ -571,6 +571,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     schema: {
       response: {
         200: z.void(),
+        401: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
