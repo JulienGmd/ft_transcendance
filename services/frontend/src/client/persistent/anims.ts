@@ -39,6 +39,8 @@ async function animateTypeWriterEls(): Promise<void> {
       return
     data.push({ el, text: el.textContent })
     el.textContent = ""
+    el.classList.remove("anim-typewriter")
+    el.classList.add("anim-cursor")
   })
 
   data.forEach(({ el, text }) => {
@@ -55,7 +57,7 @@ async function animateTypeWriterEls(): Promise<void> {
       if (index >= text.length) {
         clearInterval(interval)
         await sleep(2000)
-        el.classList.remove("anim-typewriter")
+        el.classList.remove("anim-cursor")
       }
     }, 150)
   })

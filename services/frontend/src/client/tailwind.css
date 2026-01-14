@@ -71,6 +71,10 @@
   }
 
   .anim-typewriter {
+    @apply invisible;
+  }
+
+  .anim-cursor {
     /* The writing anim in done in anims.ts, this css handle the cursor */
     @apply border-text w-fit border-r-2;
     animation: blink-caret 1s step-end infinite;
