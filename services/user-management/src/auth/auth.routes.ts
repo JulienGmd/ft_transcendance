@@ -4,19 +4,28 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import z from "zod"
 import { generate2FAQrCode, generate2FASecret, verify2FACode } from "./2fa.js"
 import {
+  acceptFriendRequest,
   addFriend,
   createGoogleUser,
   createUser,
   getFriends,
+  getPendingFriendRequests,
+  getSentFriendRequests,
   getUser,
   getUserByUsername,
+  rejectFriendRequest,
   removeFriend,
   updateUser,
   userToPublicUser,
 } from "./auth.service.js"
 import { getGoogleAuthUrl, getGoogleProfile } from "./google.js"
 import { clearJWT, getJWT, setJWT } from "./jwt.js"
-import { PUBLIC_FRIENDSHIP_SCHEMA, PUBLIC_USER_SCHEMA, PUBLIC_VALIDATION_ERROR_SCHEMA } from "./schemas.js"
+import {
+  PUBLIC_FRIEND_REQUEST_SCHEMA,
+  PUBLIC_FRIENDSHIP_SCHEMA,
+  PUBLIC_USER_SCHEMA,
+  PUBLIC_VALIDATION_ERROR_SCHEMA,
+} from "./schemas.js"
 
 export async function authRoutes(fastify: FastifyInstance) {
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/google", {
@@ -256,6 +265,108 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
 
     res.send({ friends: getFriends(user.id) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/friends/pending", {
+    schema: {
+      response: {
+        200: z.object({ requests: z.array(PUBLIC_FRIEND_REQUEST_SCHEMA) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
+    res.send({ requests: getPendingFriendRequests(user.id) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/friends/sent", {
+    schema: {
+      response: {
+        200: z.object({ requests: z.array(PUBLIC_FRIEND_REQUEST_SCHEMA) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
+    res.send({ requests: getSentFriendRequests(user.id) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/friends/accept", {
+    schema: {
+      body: z.object({ username: z.string() }),
+      response: {
+        200: z.object({ friends: z.array(PUBLIC_FRIENDSHIP_SCHEMA) }),
+        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
+        401: z.object({ message: z.string() }),
+        404: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
+    const sender = getUserByUsername(req.body.username)
+    if (!sender)
+      return res.status(404).send({ message: "User not found" })
+
+    try {
+      acceptFriendRequest(sender.id, user.id)
+    } catch (error) {
+      return res.status(400).send({ message: (error as Error).message, details: [] })
+    }
+
+    res.send({ friends: getFriends(user.id) })
+  })
+
+  fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/friends/reject", {
+    schema: {
+      body: z.object({ username: z.string() }),
+      response: {
+        200: z.object({ requests: z.array(PUBLIC_FRIEND_REQUEST_SCHEMA) }),
+        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
+        401: z.object({ message: z.string() }),
+        404: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
+    const sender = getUserByUsername(req.body.username)
+    if (!sender)
+      return res.status(404).send({ message: "User not found" })
+
+    try {
+      rejectFriendRequest(sender.id, user.id)
+    } catch (error) {
+      return res.status(400).send({ message: (error as Error).message, details: [] })
+    }
+
+    res.send({ requests: getPendingFriendRequests(user.id) })
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-username", {

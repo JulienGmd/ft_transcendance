@@ -14,6 +14,12 @@ export const PUBLIC_FRIENDSHIP_SCHEMA = z.object({
 })
 export type PublicFriendship = z.infer<typeof PUBLIC_FRIENDSHIP_SCHEMA>
 
+export const PUBLIC_FRIEND_REQUEST_SCHEMA = z.object({
+  username: z.string(),
+  created_at: z.string(),
+})
+export type PublicFriendRequest = z.infer<typeof PUBLIC_FRIEND_REQUEST_SCHEMA>
+
 export const PUBLIC_MATCH_SCHEMA = z.object({
   p1_username: z.string(),
   p2_username: z.string(),
