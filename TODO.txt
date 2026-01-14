@@ -3,11 +3,12 @@ TODO
 checks:
 - ! (ts assertion)
 backend:
-- process.env.VAR -> config.VAR
+- ✅ process.env.VAR -> config.VAR (game service done)
 frontend:
-- location.href = "/" -> navigate("/")
-- alert("msg) -> utils.showNotify("msg")
+- location.href = "/" -> navigate("/") (Note: Google OAuth redirect is correct as external)
+- alert("msg) -> utils.showNotify("msg") (none found)
 - window.addEventListener and document.addEventListener in pages scripts -> onDestroy: removeEventListener
+  (Note: listeners on DOM elements are auto-cleaned when elements are removed. Only window/document need cleanup, already done in game.ts, home.ts, profile.ts)
 
 global:
 - rm console.log() ?
@@ -15,30 +16,13 @@ global:
 shared:
 
 front:
+- ✅ XSS fix in errorHandler.ts
+- ✅ Fix guest/player inputs logic inversion in game.ts
 
 user-management:
 
 game:
-- validate socket message fields from client
+- ✅ validate socket message fields from client (direction must be -1, 0, or 1)
+- ✅ Fix NaN precision on division by zero
 
 monitoring:
-
-
-
-
-Bug invalid payload (p1 devtools device S20, p2 pc, 3-0 for p1, p1 never hit ball -> div / 0 ?):
-
-game-1             | [GameManager] Game ended
-game-1             | 📤 Sending match result via NATS : {
-game-1             |   p1_id: 2,
-game-1             |   p2_id: 1,
-game-1             |   p1_score: 3,
-game-1             |   p2_score: 0,
-game-1             |   p1_precision: NaN,
-game-1             |   p2_precision: 0
-game-1             | }
-user-management-1  | 📥 Received message: match.create
-user-management-1  | ⚠️ Received invalid payload: match.create
-game-1             | [GameManager] Game removed
-game-1             | [GameManager] Player user2 disconnect from game (game continues)
-game-1             | [WS] Disconnected: user2
