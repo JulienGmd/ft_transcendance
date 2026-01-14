@@ -41,10 +41,23 @@ export function serializeMessage(message: ServerMessage): string {
 
 /**
  * Parse incoming message from client
+ * Validates message structure to prevent malicious input
  */
 export function parseClientMessage(data: RawData): ClientMessage | undefined {
   try {
-    return JSON.parse(data.toString()) as ClientMessage
+    const msg = JSON.parse(data.toString())
+    if (!msg || typeof msg.type !== "string")
+      return undefined
+
+    // Validate move message direction
+    if (msg.type === "move") {
+      if (msg.direction !== -1 && msg.direction !== 0 && msg.direction !== 1)
+        return undefined
+      if (msg.isGuest !== undefined && typeof msg.isGuest !== "boolean")
+        return undefined
+    }
+
+    return msg as ClientMessage
   } catch (err) {
     return undefined
   }
