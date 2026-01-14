@@ -50,13 +50,27 @@ export function userToPublicUser(user: User): PublicUser {
 }
 
 export function addFriend(userId: number, friendId: number): void {
+  if (userId === friendId)
+    throw new Error("Cannot add yourself as a friend")
   const db = getDb()
+
+  // Check if friendship already exists
+  const existing = db.prepare(`SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ?`).get(userId, friendId)
+  if (existing)
+    throw new Error("Friendship already exists")
+
   const stmt = db.prepare(`INSERT INTO friendships (user_id, friend_id) VALUES (?, ?)`)
   stmt.run(userId, friendId)
 }
 
 export function removeFriend(userId: number, friendId: number): void {
   const db = getDb()
+
+  // Check if friendship exists
+  const existing = db.prepare(`SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ?`).get(userId, friendId)
+  if (!existing)
+    throw new Error("Friendship does not exist")
+
   const stmt = db.prepare(`DELETE FROM friendships WHERE user_id = ? AND friend_id = ?`)
   stmt.run(userId, friendId)
 }

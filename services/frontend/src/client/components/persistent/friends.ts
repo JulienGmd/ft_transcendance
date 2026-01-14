@@ -110,6 +110,8 @@ class FriendsList extends HTMLElement implements FriendsListElement {
     const data = await post(`/api/user/friends/add`, { username })
     if (data[200])
       return this.updateList()
+    if (data[400])
+      return showNotify(data[400].message, "warning")
     if (data[404])
       return showNotify("Can't add friend: No user have this username", "warning")
   }

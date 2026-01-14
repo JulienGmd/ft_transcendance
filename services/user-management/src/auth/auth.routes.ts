@@ -192,7 +192,11 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!friend)
       return res.status(404).send({ message: "User not found" })
 
-    addFriend(user.id, friend.id)
+    try {
+      addFriend(user.id, friend.id)
+    } catch (error) {
+      return res.status(400).send({ message: (error as Error).message, details: [] })
+    }
 
     res.send({ friends: getFriends(user.id) })
   })
@@ -217,7 +221,11 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!friend)
       return res.status(404).send({ message: "User not found" })
 
-    removeFriend(user.id, friend.id)
+    try {
+      removeFriend(user.id, friend.id)
+    } catch (error) {
+      return res.status(400).send({ message: (error as Error).message, details: [] })
+    }
 
     res.send({ friends: getFriends(user.id) })
   })
