@@ -33,9 +33,6 @@ export function initDb(): Database.Database {
         )
     `).run()
 
-  // friendships table
-  // (ON DELETE CASCADE to remove friendships when a user is deleted)
-  // status: 'pending' = friend request sent, 'accepted' = mutual friendship
   db.prepare(`
         CREATE TABLE IF NOT EXISTS friendships (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +46,6 @@ export function initDb(): Database.Database {
         )
     `).run()
 
-  // Migration: add status column if it doesn't exist (for existing databases)
   const columns = db.prepare(`PRAGMA table_info(friendships)`).all() as { name: string }[]
   if (!columns.some(col => col.name === "status")) {
     db.prepare(`ALTER TABLE friendships ADD COLUMN status TEXT NOT NULL DEFAULT 'accepted'`).run()
