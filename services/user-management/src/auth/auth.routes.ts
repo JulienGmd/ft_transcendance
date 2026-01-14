@@ -28,6 +28,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/google/callback", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: z.object({ code: z.string() }),
       response: {
@@ -64,6 +70,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/register", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: z.object({
         email: z.email(),
@@ -102,6 +114,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/login", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: z.object({ email: z.email(), password: z.string() }),
       response: {
@@ -267,7 +285,11 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/set-avatar", {
     schema: {
-      body: z.object({ avatar: z.string() }),
+      body: z.object({
+        avatar: z.string()
+          .max(3 * 1024 * 1024, "Avatar image size must be less than 3MB")
+          .regex(/^data:image\/(png|jpeg|jpg|webp|gif);base64,/, "Avatar must be a valid base64-encoded image"),
+      }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
@@ -306,6 +328,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/enable", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: z.object({ secret: z.string(), totp: z.string() }),
       response: {
@@ -331,6 +359,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/disable", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: z.object({ totp: z.string() }),
       response: {
@@ -360,6 +394,12 @@ export async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.withTypeProvider<ZodTypeProvider>().post("/api/user/2fa/verify", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: z.object({ totp: z.string(), email: z.email() }),
       response: {

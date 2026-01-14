@@ -129,3 +129,12 @@ export function showNotify(msg: string, type: "success" | "warning" | "error" = 
   else
     banner?.showErrorMessage(msg)
 }
+
+export function escapeString(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}

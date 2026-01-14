@@ -52,7 +52,7 @@ fastify.addHook("onRequest", async (req, res) => {
 
 // Generic error handler (when a route throws an error)
 fastify.setErrorHandler((err, req, res) => {
-  res.status(400).send({ error: "Bad input" })
+  res.status(429).send({ message: "Too Many Requests" })
 })
 
 // ============================================

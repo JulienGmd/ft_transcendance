@@ -1,5 +1,5 @@
 import { Friend } from "../../types.js"
-import { get, getUser, post, showNotify } from "../../utils.js"
+import { escapeString, get, getUser, post, showNotify } from "../../utils.js"
 
 const AWAY_THRESHOLD = 5 * 60 * 1000 // 5 minutes
 const OFFLINE_THRESHOLD = 15 * 60 * 1000 // 15 minutes
@@ -76,9 +76,12 @@ class FriendsList extends HTMLElement implements FriendsListElement {
       <div class="group flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="size-2 rounded-full" style="background-color: ${this.getOnlineColor(friend)};"></div>
-          <p>${friend.username}</p>
+          <p>${escapeString(friend.username)}</p>
         </div>
-        <button data-username="${friend.username}" class="text-text-muted hover:text-text opacity-0 group-hover:opacity-100">
+        <button
+          data-username="${escapeString(friend.username)}"
+          class="text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
+        >
           <svg class="size-4 pointer-events-none" viewBox="0 0 24 24"><!-- Icon from Material Design Icons by Pictogrammers - https://github.com/Templarian/MaterialDesign/blob/master/LICENSE --><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/></svg>
         </button>
       </div>

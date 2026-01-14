@@ -10,7 +10,7 @@ frontend:
 - window.addEventListener and document.addEventListener in pages scripts -> onDestroy: removeEventListener
 
 global:
-- rm copilot-instructions ?
+- rm console.log() ?
 
 shared:
 

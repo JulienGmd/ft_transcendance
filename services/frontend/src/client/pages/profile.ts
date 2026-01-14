@@ -1,6 +1,6 @@
 import { navigate } from "../persistent/router.js"
 import { Stats } from "../types.js"
-import { checkEls, get, getUser, post, setUser, showNotify } from "../utils.js"
+import { checkEls, escapeString, get, getUser, post, setUser, showNotify } from "../utils.js"
 
 let els: {
   avatarInput: HTMLInputElement
@@ -96,7 +96,7 @@ async function displayMatchHistory(): Promise<void> {
             class="font-semibold text-lg"
             style="color: ${win ? "var(--color-success)" : "var(--color-error)"};"
           >
-            ${user.username} vs ${opponentUsername}
+            ${escapeString(user.username)} vs ${escapeString(opponentUsername)}
           </div>
           <div class="text-text-muted text-sm">${date}</div>
         </div>

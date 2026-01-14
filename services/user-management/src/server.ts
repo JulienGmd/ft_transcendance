@@ -1,4 +1,5 @@
 import fastifyCookie from "@fastify/cookie"
+import rateLimit from "@fastify/rate-limit"
 import fastifySwagger from "@fastify/swagger"
 import fastifySwaggerUI from "@fastify/swagger-ui"
 import Fastify, { type FastifyInstance } from "fastify"
@@ -27,6 +28,12 @@ export async function startServer(): Promise<void> {
 
   // Plugin to parse and set cookies
   await fastify.register(fastifyCookie)
+
+  // Plugin to limit request rate
+  await fastify.register(rateLimit, {
+    max: 100, // Max 100 requests
+    timeWindow: "5 minutes", // Per 5 minutes
+  })
 
   // Plugin to generate OpenAPI documentation
   await fastify.register(fastifySwagger, {
@@ -57,7 +64,7 @@ export async function startServer(): Promise<void> {
       }))
       res.status(400).send({ message: "Request validation failed", details: validationErrors })
     } else {
-      res.status(400).send({ message: "Bad input" })
+      res.status(429).send({ message: "Too Many Requests" })
     }
   })
 
