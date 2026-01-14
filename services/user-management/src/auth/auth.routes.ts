@@ -168,7 +168,9 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
 
     res.send({ user: userToPublicUser(user) })
   })
@@ -185,7 +187,9 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
 
     res.send({ friends: getFriends(user.id) })
   })
@@ -205,7 +209,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     const friend = getUserByUsername(req.body.username)
     if (!friend)
       return res.status(404).send({ message: "User not found" })
@@ -234,7 +241,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     const friend = getUserByUsername(req.body.username)
     if (!friend)
       return res.status(404).send({ message: "User not found" })
@@ -270,7 +280,10 @@ export async function authRoutes(fastify: FastifyInstance) {
       if (!jwt)
         return res.status(401).send({ message: "Invalid token" })
 
-      const user = getUser(jwt.email)!
+      const user = getUser(jwt.email)
+      if (!user)
+        return res.status(401).send({ message: "Invalid credentials" })
+
       user.username = req.body.username
       updateUser(user)
       setJWT(res, user)
@@ -301,7 +314,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     user.avatar = req.body.avatar
     updateUser(user)
 
@@ -320,7 +336,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     const secret = generate2FASecret(user.email)
     const qrCode = await generate2FAQrCode(secret.otpauth_url!)
 
@@ -351,7 +370,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!verify2FACode(req.body.secret, req.body.totp))
       return res.status(403).send({ message: "Invalid verification code" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     user.twofa_secret = req.body.secret
     updateUser(user)
 
@@ -380,7 +402,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.status(401).send({ message: "Invalid token" })
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     if (!user.twofa_secret)
       return res.status(404).send({ message: "2FA not enabled" })
 
@@ -442,7 +467,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!jwt)
       return res.send()
 
-    const user = getUser(jwt.email)!
+    const user = getUser(jwt.email)
+    if (!user)
+      return res.status(401).send({ message: "Invalid credentials" })
+
     updateUser(user)
 
     res.send()
