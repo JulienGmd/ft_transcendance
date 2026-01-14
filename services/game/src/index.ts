@@ -80,6 +80,9 @@ fastify.get("/api/game/ws", { websocket: true }, async (socket, req) => {
   // Check if player is in an existing game and reconnect them
   gameManager.handleReconnect(player)
 
+  // Check if player is in an active tournament and reconnect them
+  tournamentMatchmaking.handleReconnect(player)
+
   socket.on("message", (data) => handleMessage(player, data))
   socket.on("close", () => handleDisconnect(player))
   socket.on("error", (err) => console.error(`[WS] Socket error for player ${player.username}:`, err))

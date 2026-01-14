@@ -3,7 +3,7 @@
 // Normal (1v1) and Tournament (4 players) modes
 // ============================================
 
-import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft } from "./communication.js"
+import { broadcastTournamentResult, sendGameFound, sendQueueJoined, sendQueueLeft, sendTournamentResult } from "./communication.js"
 import { GameEndResult, GameManager } from "./gameManager.js"
 import { GameMode, Side, TournamentResult } from "./sharedTypes.js"
 import { Player } from "./types.js"
@@ -110,9 +110,17 @@ interface Tournament {
   third?: { p1: Player; p2: Player; winner?: Player }
 }
 
+interface ActiveTournament {
+  id: string
+  tournament: Tournament
+  players: Player[]
+}
+
 export class TournamentMatchmaking {
   private readonly gameManager: GameManager
   private readonly queue: Queue
+  private readonly activeTournaments: Map<string, ActiveTournament> = new Map()
+  private tournamentIdCounter = 0
 
   constructor(gameManager: GameManager) {
     this.gameManager = gameManager
@@ -132,14 +140,45 @@ export class TournamentMatchmaking {
     return this.queue.isInQueue(player)
   }
 
+  /**
+   * Find the active tournament a player is in
+   */
+  findPlayerTournament(player: Player): ActiveTournament | undefined {
+    for (const activeTournament of this.activeTournaments.values()) {
+      if (activeTournament.players.some((p) => p.id === player.id))
+        return activeTournament
+    }
+    return undefined
+  }
+
+  /**
+   * Handle player reconnection to their tournament
+   * Updates the player's socket reference and sends current tournament state
+   */
+  handleReconnect(player: Player): boolean {
+    const activeTournament = this.findPlayerTournament(player)
+    if (!activeTournament)
+      return false
+
+    // Update socket reference for the player
+    const tournamentPlayer = activeTournament.players.find((p) => p.id === player.id)
+    if (tournamentPlayer) {
+      tournamentPlayer.socket = player.socket
+      console.log(`[TournamentMatchmaking] Player ${player.username} reconnected to tournament ${activeTournament.id}`)
+
+      // Send current tournament state to the reconnected player
+      sendTournamentResult(player.socket, this.tournamentToTournamentResult(activeTournament.tournament))
+    }
+
+    return true
+  }
+
   private async tryStartTournament(): Promise<void> {
     if (this.queue.length < 4)
       return
 
     const players = [this.queue.shift()!, this.queue.shift()!, this.queue.shift()!, this.queue.shift()!]
-    const sockets = players.map((p) => p.socket)
     const playersInGame = new Set<Player>()
-    const getAvailableSockets = () => players.filter((p) => !playersInGame.has(p)).map((p) => p.socket)
     console.log(`[TournamentMatchmaking] Starting: ${players.map((p) => p.username).join(", ")}`)
 
     // Note: since objects are passed by reference, even if a player reconnect to his game
@@ -150,7 +189,13 @@ export class TournamentMatchmaking {
       semi2: { p1: players[2], p2: players[3] },
     }
 
-    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    // Register this tournament in the active tournaments map
+    const tournamentId = `tournament_${++this.tournamentIdCounter}`
+    const activeTournament: ActiveTournament = { id: tournamentId, tournament, players }
+    this.activeTournaments.set(tournamentId, activeTournament)
+    console.log(`[TournamentMatchmaking] Registered tournament ${tournamentId}`)
+
+    this.broadcastTournamentState(activeTournament)
     await sleep(5000)
 
     // Play semis
@@ -158,27 +203,27 @@ export class TournamentMatchmaking {
     const semi1Promise = createGame(this.gameManager, tournament.semi1.p1, tournament.semi1.p2, GameMode.TOURNAMENT)
     const semi2Promise = createGame(this.gameManager, tournament.semi2.p1, tournament.semi2.p2, GameMode.TOURNAMENT)
 
-    // Update tournament and send results as games finish
+    // Update tournament and send results as games finish (only to players not in game)
     semi1Promise.then((gameResult) => {
       playersInGame.delete(tournament.semi1.p1)
       playersInGame.delete(tournament.semi1.p2)
       tournament.semi1.winner = gameResult.winner
       tournament.semi1.loser = gameResult.loser
-      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
+      this.broadcastTournamentState(activeTournament, playersInGame)
     })
     semi2Promise.then((gameResult) => {
       playersInGame.delete(tournament.semi2.p1)
       playersInGame.delete(tournament.semi2.p2)
       tournament.semi2.winner = gameResult.winner
       tournament.semi2.loser = gameResult.loser
-      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
+      this.broadcastTournamentState(activeTournament, playersInGame)
     })
 
     // Wait for both semis to finish to determine finals matchups
     await Promise.all([semi1Promise, semi2Promise])
     tournament.final = { p1: tournament.semi1.winner!, p2: tournament.semi2.winner! }
     tournament.third = { p1: tournament.semi1.loser!, p2: tournament.semi2.loser! }
-    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    this.broadcastTournamentState(activeTournament)
     await sleep(5000)
 
     // Play finals
@@ -186,19 +231,36 @@ export class TournamentMatchmaking {
     const finalPromise = createGame(this.gameManager, tournament.final.p1!, tournament.final.p2!, GameMode.TOURNAMENT)
     const thirdPromise = createGame(this.gameManager, tournament.third.p1!, tournament.third.p2!, GameMode.TOURNAMENT)
 
-    // Send results as games finish
+    // Send results as games finish (only to players not in game)
     finalPromise.then((gameResult) => {
       playersInGame.delete(tournament.final!.p1)
       playersInGame.delete(tournament.final!.p2)
       tournament.final!.winner = gameResult.winner
-      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
+      this.broadcastTournamentState(activeTournament, playersInGame)
     })
     thirdPromise.then((gameResult) => {
       playersInGame.delete(tournament.third!.p1)
       playersInGame.delete(tournament.third!.p2)
       tournament.third!.winner = gameResult.winner
-      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
+      this.broadcastTournamentState(activeTournament, playersInGame)
     })
+
+    // Wait for finals to finish and cleanup
+    await Promise.all([finalPromise, thirdPromise])
+    console.log(`[TournamentMatchmaking] Tournament ${tournamentId} finished, cleaning up`)
+    this.activeTournaments.delete(tournamentId)
+  }
+
+  /**
+   * Broadcast current tournament state to all players
+   * Uses current socket references to handle reconnections
+   */
+  private broadcastTournamentState(activeTournament: ActiveTournament, excludePlayers?: Set<Player>): void {
+    const players = excludePlayers
+      ? activeTournament.players.filter((p) => !excludePlayers.has(p))
+      : activeTournament.players
+    const sockets = players.map((p) => p.socket)
+    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(activeTournament.tournament))
   }
 
   private tournamentToTournamentResult(tournament: Tournament): TournamentResult {
