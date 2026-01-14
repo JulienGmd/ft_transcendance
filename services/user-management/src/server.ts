@@ -22,6 +22,7 @@ export async function startServer(): Promise<void> {
       key: readFileSync("/secrets/certs/key.pem"),
       cert: readFileSync("/secrets/certs/cert.pem"),
     },
+    bodyLimit: 5 * 1024 * 1024, // 5MB
   })
   fastify.setValidatorCompiler(validatorCompiler)
   fastify.setSerializerCompiler(serializerCompiler)

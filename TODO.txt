@@ -3,7 +3,7 @@ TODO
 checks:
 - ! (ts assertion)
 backend:
-- ✅ process.env.VAR -> config.VAR (game service done)
+- process.env.VAR -> config.VAR (game service done)
 frontend:
 - location.href = "/" -> navigate("/") (Note: Google OAuth redirect is correct as external)
 - alert("msg) -> utils.showNotify("msg") (none found)
@@ -11,7 +11,6 @@ frontend:
   (Note: listeners on DOM elements are auto-cleaned when elements are removed. Only window/document need cleanup)
 
 global:
-- rm console.log() ?
 
 shared:
 

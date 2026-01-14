@@ -411,8 +411,16 @@ export async function authRoutes(fastify: FastifyInstance) {
     schema: {
       body: z.object({
         avatar: z.string()
-          .max(3 * 1024 * 1024, "Avatar image size must be less than 3MB")
-          .regex(/^data:image\/(png|jpeg|jpg|webp|gif);base64,/, "Avatar must be a valid base64-encoded image"),
+          .regex(/^data:image\/(png|jpeg|jpg|webp|gif);base64,/, "Avatar must be a valid base64-encoded image")
+          .refine((data) => {
+            // Extract base64 part and calculate decoded size
+            const base64Data = data.split(",")[1]
+            if (!base64Data)
+              return false
+            // Base64 encoding increases size by ~33%, so calculate actual size
+            const decodedSize = (base64Data.length * 3) / 4
+            return decodedSize <= 3 * 1024 * 1024 // 3MB
+          }, "Avatar image size must be less than 3MB"),
       }),
       response: {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),

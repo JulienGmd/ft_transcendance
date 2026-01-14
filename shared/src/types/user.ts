@@ -661,6 +661,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
+                /** @description Default Response */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -674,6 +675,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -710,6 +712,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
+                /** @description Default Response */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -723,6 +726,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -767,6 +771,7 @@ export interface paths {
                 };
             };
             responses: {
+                /** @description Default Response */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -780,6 +785,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -794,6 +800,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -804,6 +811,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -846,6 +854,7 @@ export interface paths {
                 };
             };
             responses: {
+                /** @description Default Response */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -859,6 +868,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -873,6 +883,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -883,6 +894,7 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1419,6 +1431,17 @@ export interface paths {
                     };
                     content: {
                         "application/json": unknown;
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
                     };
                 };
             };

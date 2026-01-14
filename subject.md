@@ -14,7 +14,6 @@ The use of libraries or tools that provide an immediate and complete solution fo
   - No unhandled errors or warnings when browsing the website.
 - Must use Docker. Everything must be launched with a single command.
 
-TODO ?
 Several container technologies exist: Docker, containerd, podman,
 etc. On the computers of your campus, you may access the container
 software in rootless mode for security reasons. This could lead to
