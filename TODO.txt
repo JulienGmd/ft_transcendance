@@ -8,7 +8,7 @@ frontend:
 - location.href = "/" -> navigate("/") (Note: Google OAuth redirect is correct as external)
 - alert("msg) -> utils.showNotify("msg") (none found)
 - window.addEventListener and document.addEventListener in pages scripts -> onDestroy: removeEventListener
-  (Note: listeners on DOM elements are auto-cleaned when elements are removed. Only window/document need cleanup, already done in game.ts, home.ts, profile.ts)
+  (Note: listeners on DOM elements are auto-cleaned when elements are removed. Only window/document need cleanup)
 
 global:
 - rm console.log() ?
@@ -16,13 +16,10 @@ global:
 shared:
 
 front:
-- ✅ XSS fix in errorHandler.ts
-- ✅ Fix guest/player inputs logic inversion in game.ts
 
 user-management:
 
 game:
-- ✅ validate socket message fields from client (direction must be -1, 0, or 1)
-- ✅ Fix NaN precision on division by zero
+- tester tournoi (deconnecter avant que le match commence etc)
 
 monitoring:

@@ -55,9 +55,9 @@ image with root as unique UID.
 
 Total of selected:
 base: 30 points
-major: 8 * 10 = 80 points
-minor: 5 * 5 = 25 points
-total: 30 + 80 + 25 = 135 points
+major: 7 * 10 = 70 points
+minor: 4 * 5 = 20 points
+total: 30 + 70 + 20 = 120 points
 
 - Web
   - 🔷 Use a framework to build the backend.
@@ -81,8 +81,8 @@ total: 30 + 80 + 25 = 135 points
   - 🔸 GDPR compliance options with user anonymization, local data management, and Account Deletion.
   - 🔷 Implement Two-Factor Authentication (2FA) and JWT.
 - Devops
-  - 🔷 Infrastructure Setup for Log Management.
-  - 🔹 Monitoring system.
+  - 🔶 Infrastructure Setup for Log Management.
+  - 🔸 Monitoring system.
   - 🔷 Designing the backend as microservices.
 - Graphics
   - 🔶 Use advanced 3D techniques.
