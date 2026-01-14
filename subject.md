@@ -39,7 +39,7 @@ image with root as unique UID.
 ## Security concerns
 
 - Any password in database must be hashed using a strong hashing algorithm.
-- TODO Protection against SQL injections/XSS attacks.
+- Protection against SQL injections/XSS attacks.
 - HTTPS/wss connection for all aspects.
 - Validation mechanisms for forms and any user input (if no backend, on the base page, else server side)
 - Routes are protected.
@@ -152,23 +152,6 @@ You must offer the best user experience possible.
 - Ensure that JWT tokens are issued and validated securely to prevent unauthorized access to user accounts and sensitive data.
 
 ### Devops
-
-#### Major module: Infrastructure Setup with ELK (Elasticsearch, Logstash, Kibana) for Log Management.
-
-- TODO Deploy Elasticsearch to efficiently store and index log data, ensuring it is easily searchable and accessible.
-- TODO Configure Logstash to collect, process, and transform log data from various sources, sending it to Elasticsearch.
-- TODO Set up Kibana for visualizing log data, creating dashboards, and generating insights from log events.
-- TODO Define data retention and archiving policies to manage log data storage effectively.
-- TODO Implement security measures to protect log data and access to the ELK stack components.
-
-#### Minor module: Monitoring system.
-
-- TODO Deploy Prometheus as the monitoring and alerting toolkit to collect metrics and monitor the health and performance of various system components.
-- TODO Configure data exporters and integrations to capture metrics from different services, databases, and infrastructure components.
-- TODO Create custom dashboards and visualizations using Grafana to provide real- time insights into system metrics and performance.
-- TODO Set up alerting rules in Prometheus to proactively detect and respond to critical issues and anomalies.
-- TODO Ensure proper data retention and storage strategies for historical metrics data.
-- TODO Implement secure authentication and access control mechanisms for Grafana to protect sensitive monitoring data.
 
 #### Major module: Designing the Backend as Microservices.
 

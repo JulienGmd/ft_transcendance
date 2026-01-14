@@ -53,7 +53,7 @@ export function onMount(): void {
 }
 
 export function onDestroy(): void {
-  window.removeEventListener("resize", updateCanvasSize)
+  window.removeEventListener("resize", onResize)
   if (animationFrameId)
     cancelAnimationFrame(animationFrameId)
 }

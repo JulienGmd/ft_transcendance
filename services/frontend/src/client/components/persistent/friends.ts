@@ -129,7 +129,7 @@ class FriendsList extends HTMLElement implements FriendsListElement {
     this.updateList()
     clearInterval(this.updateListInterval)
     // @ts-ignore @types/node is installed so intellisense thinks setInterval returns a NodeJS.Timeout
-    this.updateListInterval = setInterval(this.updateList, 5000)
+    this.updateListInterval = setInterval(this.updateList, 20000)
 
     this.closeBtn.classList.remove("hidden")
     this.container.classList.remove("hidden")

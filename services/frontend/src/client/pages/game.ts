@@ -181,6 +181,8 @@ export function onMount(): void {
 export function onDestroy(): void {
   document.removeEventListener("keydown", onKeyDown)
   document.removeEventListener("keyup", onKeyUp)
+  document.removeEventListener("touchstart", onTouchStart)
+  document.removeEventListener("touchend", onTouchEnd)
 
   disconnectWebSocket()
   stopTick()

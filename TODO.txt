@@ -19,6 +19,7 @@ front:
 user-management:
 
 game:
+- validate socket message fields from client
 
 monitoring:
 
