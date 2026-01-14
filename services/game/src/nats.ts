@@ -4,6 +4,7 @@
 
 import { type MatchCreatePayload, Topics } from "@ft_transcendence/shared"
 import { connect, NatsConnection, StringCodec } from "nats"
+import config from "./config.js"
 
 let nc: NatsConnection | null = null
 const codec = StringCodec()
@@ -14,9 +15,8 @@ const codec = StringCodec()
 
 export async function connectNats(): Promise<void> {
   try {
-    const natsUrl = process.env.NATS_URL || "nats://nats:4222"
-    nc = await connect({ servers: natsUrl })
-    console.log(`📡 Connected to NATS at ${natsUrl}`)
+    nc = await connect({ servers: config.NATS_URL })
+    console.log(`📡 Connected to NATS at ${config.NATS_URL}`)
   } catch (error) {
     console.error("❌ Failed to connect to NATS:", error)
     throw error

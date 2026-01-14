@@ -9,6 +9,7 @@ import Fastify from "fastify"
 import { readFileSync } from "fs"
 import type { RawData } from "ws"
 import { parseClientMessage, sendError, sendGameFound, sendPong } from "./communication.js"
+import config from "./config.js"
 import { GameManager } from "./gameManager.js"
 import { getJWT } from "./jwt.js"
 import { connectNats, disconnectNats } from "./nats.js"
@@ -46,7 +47,7 @@ await fastify.register(fastifyCookie)
 // ============================================
 
 fastify.addHook("onRequest", async (req, res) => {
-  if (process.env.NODE_ENV !== "production" && req.url !== "/health")
+  if (config.NODE_ENV !== "production" && req.url !== "/health")
     console.log(`${req.method} ${req.url}`)
 })
 
