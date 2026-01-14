@@ -391,7 +391,7 @@ function onTouchEnd(e: TouchEvent): void {
 
 function onUpPressed(side: Side): void {
   const isGuest = side !== state.side
-  const _inputs = isGuest ? inputs : guestInputs
+  const _inputs = isGuest ? guestInputs : inputs
   _inputs.upPressed = true
   const direction = _inputs.downPressed ? 0 : -1 // Stop if opposite key still pressed
   state.game.paddles[side].direction = direction
@@ -400,7 +400,7 @@ function onUpPressed(side: Side): void {
 
 function onDownPressed(side: Side): void {
   const isGuest = side !== state.side
-  const _inputs = isGuest ? inputs : guestInputs
+  const _inputs = isGuest ? guestInputs : inputs
   _inputs.downPressed = true
   const direction = _inputs.upPressed ? 0 : 1 // Stop if opposite key still pressed
   state.game.paddles[side].direction = direction
@@ -409,7 +409,7 @@ function onDownPressed(side: Side): void {
 
 function onUpReleased(side: Side): void {
   const isGuest = side !== state.side
-  const _inputs = isGuest ? inputs : guestInputs
+  const _inputs = isGuest ? guestInputs : inputs
   _inputs.upPressed = false
   const direction = _inputs.downPressed ? 1 : 0 // Move opposite dir if opposite key still pressed
   state.game.paddles[side].direction = direction
@@ -418,7 +418,7 @@ function onUpReleased(side: Side): void {
 
 function onDownReleased(side: Side): void {
   const isGuest = side !== state.side
-  const _inputs = isGuest ? inputs : guestInputs
+  const _inputs = isGuest ? guestInputs : inputs
   _inputs.downPressed = false
   const direction = _inputs.upPressed ? -1 : 0 // Move opposite dir if opposite key still pressed
   state.game.paddles[side].direction = direction
