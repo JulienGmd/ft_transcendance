@@ -1,4 +1,4 @@
-import { Friend } from "../../types.js"
+import { Friend, FriendRequest } from "../../types.js"
 import { escapeString, get, getUser, post, showNotify } from "../../utils.js"
 
 const AWAY_THRESHOLD = 5 * 60 * 1000 // 5 minutes
@@ -11,6 +11,7 @@ class FriendsList extends HTMLElement implements FriendsListElement {
   private closeBtn!: HTMLButtonElement
   private toggleBtn!: HTMLButtonElement
   private list!: HTMLElement
+  private pendingList!: HTMLElement
   private container!: HTMLElement
   private updateListInterval = 0
 
@@ -24,9 +25,9 @@ class FriendsList extends HTMLElement implements FriendsListElement {
         <div class="p-2 bg-surface rounded shadow-lg">
           <input id="friends-add-input" type="text" placeholder="Add friend..." class="w-full px-3 py-2 rounded bg-background/50 focus:bg-background/70 transition" />
 
-          <div id="friends-list" class="mt-2 flex flex-col gap-1 px-2">
-            <!-- Content replaced by actual friend list -->
-          </div>
+          <div id="friends-pending-list" class="mt-2 flex flex-col gap-1 px-2"></div>
+
+          <div id="friends-list" class="mt-2 flex flex-col gap-1 px-2"></div>
         </div>
       </div>
     `
@@ -35,11 +36,13 @@ class FriendsList extends HTMLElement implements FriendsListElement {
     this.toggleBtn = this.querySelector("#friends-toggle-btn")!
     this.container = this.querySelector("#friends-container")!
     this.list = this.querySelector("#friends-list")!
+    this.pendingList = this.querySelector("#friends-pending-list")!
     const addInput = this.querySelector<HTMLInputElement>("#friends-add-input")!
 
     this.closeBtn.addEventListener("click", this.toggleFriendsList)
     this.toggleBtn.addEventListener("click", this.toggleFriendsList)
     this.list.addEventListener("click", this.onFriendListClick)
+    this.pendingList.addEventListener("click", this.onPendingListClick)
     addInput.addEventListener("change", this.onAddFriendInputChange)
     window.addEventListener("userChanged", this.onUserChanged)
 
@@ -61,12 +64,39 @@ class FriendsList extends HTMLElement implements FriendsListElement {
   }
 
   private updateList = async (): Promise<void> => {
-    const data = await get("/api/user/friends/me")
-    if (!data[200])
+    const [friendsData, pendingData] = await Promise.all([
+      get("/api/user/friends/me"),
+      get("/api/user/friends/pending"),
+    ])
+
+    if (pendingData[200]) {
+      const requests = pendingData[200].requests as FriendRequest[]
+      if (requests.length > 0) {
+        this.pendingList.innerHTML = `
+          <p class="text-xs text-text-muted mb-1">Pending requests</p>
+          ${requests.map((req: FriendRequest) => `
+            <div class="flex items-center justify-between bg-background/30 rounded px-2 py-1">
+              <p class="text-sm">${escapeString(req.username)}</p>
+              <div class="flex gap-1">
+                <button data-action="accept" data-username="${escapeString(req.username)}" class="text-success hover:text-success/80">
+                  <svg class="size-4 pointer-events-none" viewBox="0 0 24 24"><path fill="currentColor" d="M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59L21 7Z"/></svg>
+                </button>
+                <button data-action="reject" data-username="${escapeString(req.username)}" class="text-error hover:text-error/80">
+                  <svg class="size-4 pointer-events-none" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/></svg>
+                </button>
+              </div>
+            </div>
+          `).join("")}
+        `
+      } else {
+        this.pendingList.innerHTML = ""
+      }
+    }
+
+    if (!friendsData[200])
       return
 
-    // Sort by online status first, then alphabetically
-    const friends = data[200].friends.sort((a, b) => {
+    const friends = friendsData[200].friends.sort((a: Friend, b: Friend) => {
       if (this.getOnlineStatus(a) === this.getOnlineStatus(b))
         return a.username.localeCompare(b.username)
       return this.getOnlineStatus(a) ? -1 : 1
@@ -82,13 +112,13 @@ class FriendsList extends HTMLElement implements FriendsListElement {
           data-username="${escapeString(friend.username)}"
           class="text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
         >
-          <svg class="size-4 pointer-events-none" viewBox="0 0 24 24"><!-- Icon from Material Design Icons by Pictogrammers - https://github.com/Templarian/MaterialDesign/blob/master/LICENSE --><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/></svg>
+          <svg class="size-4 pointer-events-none" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/></svg>
         </button>
       </div>
     `).join("")
 
     if (this.list.innerHTML === "")
-      this.list.innerHTML = `<p class="text-center text-sm text-text-muted">No friends added.</p>`
+      this.list.innerHTML = `<p class="text-center text-sm text-text-muted">No friends yet.</p>`
   }
 
   private getOnlineStatus = (user: Friend): "online" | "away" | "offline" => {
@@ -111,18 +141,43 @@ class FriendsList extends HTMLElement implements FriendsListElement {
 
   private addFriend = async (username: string): Promise<void> => {
     const data = await post(`/api/user/friends/add`, { username })
-    if (data[200])
+    if (data[200]) {
+      showNotify("Friend added!", "success")
       return this.updateList()
-    if (data[400])
+    }
+    if (data[400]) {
+      if (data[400].message === "Friend request already sent")
+        return showNotify("Friend request already sent", "warning")
       return showNotify(data[400].message, "warning")
+    }
     if (data[404])
-      return showNotify("Can't add friend: No user have this username", "warning")
+      return showNotify("User not found", "warning")
+    showNotify("Friend request sent!", "success")
+    this.updateList()
   }
 
   private removeFriend = async (username: string): Promise<void> => {
     const data = await post(`/api/user/friends/remove`, { username })
     if (data[200])
       this.updateList()
+  }
+
+  private acceptFriendRequest = async (username: string): Promise<void> => {
+    const data = await post(`/api/user/friends/accept`, { username })
+    if (data[200]) {
+      showNotify("Friend request accepted!", "success")
+      this.updateList()
+    }
+    if (data[400])
+      showNotify(data[400].message, "warning")
+  }
+
+  private rejectFriendRequest = async (username: string): Promise<void> => {
+    const data = await post(`/api/user/friends/reject`, { username })
+    if (data[200])
+      this.updateList()
+    if (data[400])
+      showNotify(data[400].message, "warning")
   }
 
   private showFriendsList = (): void => {
@@ -164,6 +219,18 @@ class FriendsList extends HTMLElement implements FriendsListElement {
       const username = target.getAttribute("data-username")
       if (username)
         this.removeFriend(username)
+    }
+  }
+
+  private onPendingListClick = (e: MouseEvent): void => {
+    const target = e.target as HTMLElement
+    if (target.tagName === "BUTTON") {
+      const username = target.getAttribute("data-username")
+      const action = target.getAttribute("data-action")
+      if (username && action === "accept")
+        this.acceptFriendRequest(username)
+      if (username && action === "reject")
+        this.rejectFriendRequest(username)
     }
   }
 }
