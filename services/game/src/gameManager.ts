@@ -143,13 +143,17 @@ export class GameManager {
     // Send match result to user-management via NATS
 
     if (game.p2) {
+      const bounces = game.engine.getPaddlesBounceCount()
+      const p1Total = bounces.left + score.right
+      const p2Total = bounces.right + score.left
+
       sendMatchResult({
         p1_id: game.p1.id,
         p2_id: game.p2.id,
         p1_score: score.left,
         p2_score: score.right,
-        p1_precision: 100 * game.engine.getPaddlesBounceCount().left / (game.engine.getPaddlesBounceCount().left + score.right),
-        p2_precision: 100 * game.engine.getPaddlesBounceCount().right / (game.engine.getPaddlesBounceCount().right + score.left),
+        p1_precision: p1Total > 0 ? 100 * bounces.left / p1Total : 0,
+        p2_precision: p2Total > 0 ? 100 * bounces.right / p2Total : 0,
       })
     }
 
