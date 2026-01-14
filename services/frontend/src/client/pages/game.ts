@@ -84,6 +84,7 @@ let guestInputs = {
   upPressed: false,
   downPressed: false,
 }
+const touchIdToInfo: Map<number, { side: Side; dir: -1 | 1 }> = new Map()
 
 function defaultState(): {
   game: SerializedEngine
@@ -352,17 +353,38 @@ function onKeyUp(e: KeyboardEvent): void {
 }
 
 function onTouchStart(e: TouchEvent): void {
-  if (e.touches[0].clientY < window.innerHeight / 2)
-    onUpPressed(state.side)
+  if (!e.touches[0])
+    return
+
+  const dir = e.touches[0].clientY < window.innerHeight / 2 ? -1 : 1
+
+  let side = state.side
+  if (state.mode === GameMode.LOCAL && e.touches[0].clientX > window.innerWidth / 2)
+    side = Side.RIGHT
+
+  touchIdToInfo.set(e.touches[0].identifier, { side, dir })
+
+  if (dir === -1)
+    onUpPressed(side)
   else
-    onDownPressed(state.side)
+    onDownPressed(side)
 }
 
 function onTouchEnd(e: TouchEvent): void {
-  if (e.changedTouches[0].clientY < window.innerHeight / 2)
-    onUpReleased(state.side)
+  if (!e.changedTouches[0])
+    return
+
+  // We can't only rely on where the touch ended because there can be a move from top left to bottom right for example.
+  const touchInfo = touchIdToInfo.get(e.changedTouches[0].identifier)
+  if (!touchInfo)
+    return
+
+  touchIdToInfo.delete(e.changedTouches[0].identifier)
+
+  if (touchInfo.dir === -1)
+    onUpReleased(touchInfo.side)
   else
-    onDownReleased(state.side)
+    onDownReleased(touchInfo.side)
 }
 
 function onUpPressed(side: Side): void {
