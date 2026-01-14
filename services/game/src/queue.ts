@@ -137,7 +137,7 @@ export class TournamentMatchmaking {
       return
 
     const players = [this.queue.shift()!, this.queue.shift()!, this.queue.shift()!, this.queue.shift()!]
-    const sockets = players.map((p) => p.socket)
+    const getAvailableSockets = () => players.filter((p) => !this.gameManager.getPlayerGame(p)).map((p) => p.socket)
     console.log(`[TournamentMatchmaking] Starting: ${players.map((p) => p.username).join(", ")}`)
 
     // Note: since objects are passed by reference, even if a player reconnect to his game
@@ -148,7 +148,7 @@ export class TournamentMatchmaking {
       semi2: { p1: players[2], p2: players[3] },
     }
 
-    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     await sleep(5000)
 
     // Play semis
@@ -159,19 +159,19 @@ export class TournamentMatchmaking {
     semi1Promise.then((gameResult) => {
       tournament.semi1.winner = gameResult.winner
       tournament.semi1.loser = gameResult.loser
-      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
     semi2Promise.then((gameResult) => {
       tournament.semi2.winner = gameResult.winner
       tournament.semi2.loser = gameResult.loser
-      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
 
     // Wait for both semis to finish to determine finals matchups
     await Promise.all([semi1Promise, semi2Promise])
     tournament.final = { p1: tournament.semi1.winner!, p2: tournament.semi2.winner! }
     tournament.third = { p1: tournament.semi1.loser!, p2: tournament.semi2.loser! }
-    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+    broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     await sleep(5000)
 
     // Play finals
@@ -181,11 +181,11 @@ export class TournamentMatchmaking {
     // Send results as games finish
     finalPromise.then((gameResult) => {
       tournament.final!.winner = gameResult.winner
-      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
     thirdPromise.then((gameResult) => {
       tournament.third!.winner = gameResult.winner
-      broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
+      broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
   }
 
