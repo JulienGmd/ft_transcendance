@@ -137,7 +137,9 @@ export class TournamentMatchmaking {
       return
 
     const players = [this.queue.shift()!, this.queue.shift()!, this.queue.shift()!, this.queue.shift()!]
-    const getAvailableSockets = () => players.filter((p) => !this.gameManager.getPlayerGame(p)).map((p) => p.socket)
+    const sockets = players.map((p) => p.socket)
+    const playersInGame = new Set<Player>()
+    const getAvailableSockets = () => players.filter((p) => !playersInGame.has(p)).map((p) => p.socket)
     console.log(`[TournamentMatchmaking] Starting: ${players.map((p) => p.username).join(", ")}`)
 
     // Note: since objects are passed by reference, even if a player reconnect to his game
@@ -148,20 +150,25 @@ export class TournamentMatchmaking {
       semi2: { p1: players[2], p2: players[3] },
     }
 
-    broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
+    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
     await sleep(5000)
 
     // Play semis
+    playersInGame.add(tournament.semi1.p1).add(tournament.semi1.p2).add(tournament.semi2.p1).add(tournament.semi2.p2)
     const semi1Promise = createGame(this.gameManager, tournament.semi1.p1, tournament.semi1.p2, GameMode.TOURNAMENT)
     const semi2Promise = createGame(this.gameManager, tournament.semi2.p1, tournament.semi2.p2, GameMode.TOURNAMENT)
 
     // Update tournament and send results as games finish
     semi1Promise.then((gameResult) => {
+      playersInGame.delete(tournament.semi1.p1)
+      playersInGame.delete(tournament.semi1.p2)
       tournament.semi1.winner = gameResult.winner
       tournament.semi1.loser = gameResult.loser
       broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
     semi2Promise.then((gameResult) => {
+      playersInGame.delete(tournament.semi2.p1)
+      playersInGame.delete(tournament.semi2.p2)
       tournament.semi2.winner = gameResult.winner
       tournament.semi2.loser = gameResult.loser
       broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
@@ -171,19 +178,24 @@ export class TournamentMatchmaking {
     await Promise.all([semi1Promise, semi2Promise])
     tournament.final = { p1: tournament.semi1.winner!, p2: tournament.semi2.winner! }
     tournament.third = { p1: tournament.semi1.loser!, p2: tournament.semi2.loser! }
-    broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
+    broadcastTournamentResult(sockets, this.tournamentToTournamentResult(tournament))
     await sleep(5000)
 
     // Play finals
+    playersInGame.add(tournament.final.p1).add(tournament.final.p2).add(tournament.third.p1).add(tournament.third.p2)
     const finalPromise = createGame(this.gameManager, tournament.final.p1!, tournament.final.p2!, GameMode.TOURNAMENT)
     const thirdPromise = createGame(this.gameManager, tournament.third.p1!, tournament.third.p2!, GameMode.TOURNAMENT)
 
     // Send results as games finish
     finalPromise.then((gameResult) => {
+      playersInGame.delete(tournament.final!.p1)
+      playersInGame.delete(tournament.final!.p2)
       tournament.final!.winner = gameResult.winner
       broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
     thirdPromise.then((gameResult) => {
+      playersInGame.delete(tournament.third!.p1)
+      playersInGame.delete(tournament.third!.p2)
       tournament.third!.winner = gameResult.winner
       broadcastTournamentResult(getAvailableSockets(), this.tournamentToTournamentResult(tournament))
     })
