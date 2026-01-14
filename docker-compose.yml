@@ -43,7 +43,7 @@ services:
     depends_on:
       - nats
     volumes:
-      - user_db:/app/db
+      - user_db:/app/data
     networks:
       - internal
     restart: unless-stopped

@@ -38,11 +38,11 @@ export async function startServer(): Promise<void> {
   fastify.get("/*", async (req, res) => {
     let content = readFileSync(`${PUBLIC_DIR}/_index.html`, "utf-8")
 
-    // Inject live reload script in development
+    // Inject live reload and error handler scripts in development
     if (config.NODE_ENV !== "production") {
       content = content.replace(
         "</head>",
-        '<script defer type="module" src="/public/persistent/liveReload.js"></script></head>',
+        '<script defer type="module" src="/public/persistent/liveReload.js"></script><script defer type="module" src="/public/persistent/errorHandler.js"></script></head>',
       )
     }
 

@@ -1,6 +1,5 @@
 import Database from "better-sqlite3"
 import { mkdirSync } from "fs"
-import config from "./config.js"
 
 // Singleton pattern
 let db: Database.Database | null = null
@@ -15,8 +14,8 @@ export function initDb(): Database.Database {
   if (db)
     throw new Error("Database already initialized.")
 
-  mkdirSync(config.ROOT_DIR + "/db", { recursive: true })
-  db = new Database(config.ROOT_DIR + "/db/auth.db")
+  mkdirSync("/app/data", { recursive: true })
+  db = new Database("/app/data/auth.db")
 
   // users table
   db.prepare(`
