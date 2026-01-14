@@ -35,17 +35,26 @@ export function initDb(): Database.Database {
 
   // friendships table
   // (ON DELETE CASCADE to remove friendships when a user is deleted)
+  // status: 'pending' = friend request sent, 'accepted' = mutual friendship
   db.prepare(`
         CREATE TABLE IF NOT EXISTS friendships (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             friend_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
             FOREIGN KEY (friend_id) REFERENCES users (id) ON DELETE CASCADE,
             UNIQUE (user_id, friend_id)
         )
     `).run()
+
+  // Migration: add status column if it doesn't exist (for existing databases)
+  const columns = db.prepare(`PRAGMA table_info(friendships)`).all() as { name: string }[]
+  if (!columns.some(col => col.name === "status")) {
+    db.prepare(`ALTER TABLE friendships ADD COLUMN status TEXT NOT NULL DEFAULT 'accepted'`).run()
+    console.log("✅ Migration: added status column to friendships table")
+  }
 
   // match_history table
   db.prepare(`
@@ -91,6 +100,7 @@ export type Friendship = {
   id: number
   user_id: number
   friend_id: number
+  status: "pending" | "accepted"
   created_at: string
 }
 
