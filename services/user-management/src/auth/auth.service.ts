@@ -23,7 +23,6 @@ export function createUser(email: string, passwordHash: string, username: string
 
 export function createGoogleUser(email: string, googleId: string): User {
   const db = getDb()
-  // username is NOT NULL so we create a temporary one and update it right after
   const stmt = db.prepare(`INSERT INTO users (email, google_id, username, last_active_time) VALUES (?, ?, ?, ?)`)
   const currentTime = new Date().toISOString()
   const info = stmt.run(email, googleId, `temp_${googleId}`, currentTime)
@@ -53,26 +52,93 @@ export function addFriend(userId: number, friendId: number): void {
   if (userId === friendId)
     throw new Error("Cannot add yourself as a friend")
   const db = getDb()
+  const existingRequest = db.prepare(`
+    SELECT * FROM friendships 
+    WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+  `).get(userId, friendId, friendId, userId) as { status: string; user_id: number } | undefined
 
-  // Check if friendship already exists
-  const existing = db.prepare(`SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ?`).get(userId, friendId)
-  if (existing)
-    throw new Error("Friendship already exists")
+  if (existingRequest) {
+    if (existingRequest.status === "accepted")
+      throw new Error("Already friends")
+    if (existingRequest.user_id === userId)
+      throw new Error("Friend request already sent")
+    if (existingRequest.user_id === friendId) {
+      acceptFriendRequest(friendId, userId)
+      return
+    }
+  }
 
-  const stmt = db.prepare(`INSERT INTO friendships (user_id, friend_id) VALUES (?, ?)`)
+  const stmt = db.prepare(`INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'pending')`)
   stmt.run(userId, friendId)
+}
+
+export function acceptFriendRequest(senderId: number, receiverId: number): void {
+  const db = getDb()
+
+  const request = db.prepare(`
+    SELECT * FROM friendships 
+    WHERE user_id = ? AND friend_id = ? AND status = 'pending'
+  `).get(senderId, receiverId)
+
+  if (!request)
+    throw new Error("No pending friend request found")
+
+  db.prepare(`UPDATE friendships SET status = 'accepted' WHERE user_id = ? AND friend_id = ?`)
+    .run(senderId, receiverId)
+
+  db.prepare(`INSERT OR IGNORE INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'accepted')`)
+    .run(receiverId, senderId)
+}
+
+export function rejectFriendRequest(senderId: number, receiverId: number): void {
+  const db = getDb()
+
+  const request = db.prepare(`
+    SELECT * FROM friendships 
+    WHERE user_id = ? AND friend_id = ? AND status = 'pending'
+  `).get(senderId, receiverId)
+
+  if (!request)
+    throw new Error("No pending friend request found")
+
+  db.prepare(`DELETE FROM friendships WHERE user_id = ? AND friend_id = ?`)
+    .run(senderId, receiverId)
+}
+
+export function getPendingFriendRequests(userId: number): { username: string; created_at: string }[] {
+  const db = getDb()
+  const stmt = db.prepare(`
+    SELECT users.username, friendships.created_at
+    FROM friendships
+    JOIN users ON friendships.user_id = users.id
+    WHERE friendships.friend_id = ? AND friendships.status = 'pending'
+  `)
+  return stmt.all(userId) as { username: string; created_at: string }[]
+}
+
+export function getSentFriendRequests(userId: number): { username: string; created_at: string }[] {
+  const db = getDb()
+  const stmt = db.prepare(`
+    SELECT users.username, friendships.created_at
+    FROM friendships
+    JOIN users ON friendships.friend_id = users.id
+    WHERE friendships.user_id = ? AND friendships.status = 'pending'
+  `)
+  return stmt.all(userId) as { username: string; created_at: string }[]
 }
 
 export function removeFriend(userId: number, friendId: number): void {
   const db = getDb()
 
-  // Check if friendship exists
-  const existing = db.prepare(`SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ?`).get(userId, friendId)
+  const existing = db.prepare(`
+    SELECT 1 FROM friendships 
+    WHERE user_id = ? AND friend_id = ? AND status = 'accepted'
+  `).get(userId, friendId)
   if (!existing)
     throw new Error("Friendship does not exist")
 
-  const stmt = db.prepare(`DELETE FROM friendships WHERE user_id = ? AND friend_id = ?`)
-  stmt.run(userId, friendId)
+  db.prepare(`DELETE FROM friendships WHERE user_id = ? AND friend_id = ?`).run(userId, friendId)
+  db.prepare(`DELETE FROM friendships WHERE user_id = ? AND friend_id = ?`).run(friendId, userId)
 }
 
 export function getFriends(userId: number): PublicFriendship[] {
@@ -81,7 +147,7 @@ export function getFriends(userId: number): PublicFriendship[] {
     SELECT users.username, users.last_active_time
     FROM friendships
     JOIN users ON friendships.friend_id = users.id
-    WHERE friendships.user_id = ?
+    WHERE friendships.user_id = ? AND friendships.status = 'accepted'
   `)
   return stmt.all(userId).map((row: any) => ({
     username: row.username,
