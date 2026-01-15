@@ -74,7 +74,7 @@ This project implements a **microservices architecture** for a real-time multipl
 ```
 Client (Browser)
     ↓ HTTPS
-Caddy (Reverse Proxy)
+Nginx (Reverse Proxy)
     ↓ HTTPS
 ├── Frontend Service (Static SPA)
 ├── User Management Service (REST API)
@@ -85,7 +85,7 @@ Caddy (Reverse Proxy)
 
 ### SSL/TLS Everywhere
 
-- Client ↔ Caddy ↔ Services: HTTPS (self-signed cert)
+- Client ↔ Nginx ↔ Services: HTTPS (self-signed cert)
 - Game WebSocket: WSS
 
 ### Technology Stack
@@ -93,7 +93,7 @@ Caddy (Reverse Proxy)
 | Backend                 | Frontend     | Infrastructure |
 | ----------------------- | ------------ | -------------- |
 | Node.js + TypeScript    | TypeScript   | Docker         |
-| Fastify                 | Tailwind CSS | Caddy          |
+| Fastify                 | Tailwind CSS | Nginx          |
 | SQLite + better-sqlite3 | Canvas API   | SSL            |
 | NATS                    | WebSocket    |                |
 | JWT (RS256)             |              |                |
@@ -103,7 +103,7 @@ Caddy (Reverse Proxy)
 
 ### Services Breakdown
 
-#### 1. **Caddy (Gateway)**
+#### 1. **Nginx (Gateway)**
 
 - Entry point for all client requests
 - Terminates HTTPS connections

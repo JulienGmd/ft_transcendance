@@ -1,11 +1,10 @@
 # Notes:
-# - Only caddy expose ports because it's the only entry point. It will then redirect requests to corresponding services (they are on the same Docker network)
-# - All services need to communicate over HTTPS with caddy, so they must have the certs copied and configured in Fastify so they can trust caddy's TLS certificate.
+# - Only nginx expose ports because it's the only entry point. It will then redirect requests to corresponding services (they are on the same Docker network)
+# - All services need to communicate over HTTPS with nginx, so they must have the certs copied and configured in Fastify so they can trust nginx's TLS certificate.
 
 services:
-  # https://hub.docker.com/_/caddy#docker-compose-example
-  caddy:
-    image: caddy:2.10.2-alpine
+  nginx:
+    image: nginx:alpine3.23
     cap_add:
       - NET_ADMIN
     ports:
@@ -14,10 +13,10 @@ services:
     environment:
       - HOSTNAME=${HOSTNAME:-localhost}
     volumes:
-      - ./caddy:/etc/caddy
+      - ./nginx:/etc/nginx:ro
       - ./secrets/certs:/certs:ro # ro = read-only
-      - caddy_data:/data
-      - caddy_config:/config
+      - nginx_data:/data
+      - nginx_config:/config
     depends_on:
       user-management:
         condition: service_healthy
@@ -84,8 +83,8 @@ services:
 volumes:
   # Defining these volumes make them persistent across container restarts, so we
   # don't need to reclick "trust" on browser every time (they contains the TLS certs)
-  caddy_data:
-  caddy_config:
+  nginx_data:
+  nginx_config:
   user_db:
 
 networks:
