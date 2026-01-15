@@ -12,7 +12,7 @@ class AppHeader extends HTMLElement implements AppHeaderElement {
 
   connectedCallback() {
     this.innerHTML = `
-      <div class="mb-8 flex items-center justify-between">
+      <div class="mb-8 flex items-center justify-between p-4">
         <a href="/" class="anim-typewriter font-orbitron text-xl sm:text-3xl font-black">TRANSCENDENCE</a>
 
         <div class="animate-slide-left animate-delay-[0.2s]">
