@@ -11,6 +11,9 @@ frontend:
   (Note: listeners on DOM elements are auto-cleaned when elements are removed. Only window/document need cleanup)
 
 global:
+- checker https et wss bien present avec devtools
+- tester 2fa
+- tester profile inspect
 
 shared:
 
@@ -19,6 +22,5 @@ front:
 user-management:
 
 game:
-- tester tournoi (deconnecter avant que le match commence etc)
 
 monitoring:
