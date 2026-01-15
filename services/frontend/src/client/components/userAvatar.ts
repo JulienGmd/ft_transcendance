@@ -1,6 +1,7 @@
-import { getUser } from "../utils.js"
+import { get, getUser } from "../utils.js"
 
 export interface UserAvatarElement extends HTMLElement {
+  setUsername: (username: string) => void
 }
 
 class UserAvatar extends HTMLElement implements UserAvatarElement {
@@ -8,6 +9,7 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
   private letter!: HTMLElement
   private container!: HTMLElement
   private observer?: ResizeObserver
+  private username?: string
 
   connectedCallback() {
     this.innerHTML = `
@@ -34,9 +36,21 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
     this.observer?.disconnect()
   }
 
+  public setUsername = (username: string): void => {
+    this.username = username
+    this.update()
+  }
+
   // Using arrow function because regular function loose 'this' context when called from event listener
   private update = async (): Promise<void> => {
-    const user = getUser()
+    let user
+    if (!this.username)
+      user = getUser()
+    else {
+      const data = await get(`/api/user/user`, { username: this.username })
+      if (data[200])
+        user = data[200].user
+    }
 
     if (user) {
       if (user.avatar) {
@@ -44,8 +58,7 @@ class UserAvatar extends HTMLElement implements UserAvatarElement {
         this.img.classList.remove("hidden")
         this.letter.classList.add("hidden")
       } else {
-        let str = user.username ? user.username : user.email
-        this.letter.textContent = str.charAt(0).toUpperCase()
+        this.letter.textContent = user.username.charAt(0).toUpperCase()
         this.letter.classList.remove("hidden")
         this.img.classList.add("hidden")
       }

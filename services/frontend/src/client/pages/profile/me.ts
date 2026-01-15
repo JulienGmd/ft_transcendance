@@ -1,6 +1,6 @@
-import { navigate } from "../persistent/router.js"
-import { Stats } from "../types.js"
-import { checkEls, escapeString, get, getUser, post, setUser, showNotify } from "../utils.js"
+import { navigate } from "../../persistent/router.js"
+import { Stats } from "../../types.js"
+import { checkEls, escapeString, get, getUser, post, setUser, showNotify } from "../../utils.js"
 
 let els: {
   avatarInput: HTMLInputElement
@@ -56,7 +56,11 @@ function displayUserInfo(): void {
 }
 
 async function displayStats(): Promise<void> {
-  const data = await get(`/api/user/stats/me`)
+  const user = getUser()
+  if (!user)
+    return
+
+  const data = await get(`/api/user/stats`, { username: user.username })
   const stats: Stats = data[200] ? data[200].stats : {
     numMatches: 0,
     numWins: 0,
@@ -74,7 +78,7 @@ async function displayMatchHistory(): Promise<void> {
   const user = getUser()
   if (!user)
     return
-  const data = await get(`/api/user/matches/me`, { limit: 10 })
+  const data = await get(`/api/user/matches`, { username: user.username, limit: "10" })
   const matches = data[200] ? data[200].matches : []
 
   if (matches.length === 0)

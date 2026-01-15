@@ -106,7 +106,7 @@ class FriendsList extends HTMLElement implements FriendsListElement {
       <div class="group flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="size-2 rounded-full" style="background-color: ${this.getOnlineColor(friend)};"></div>
-          <p>${escapeString(friend.username)}</p>
+          <a href="/profile/inspect?username=${escapeString(friend.username)}">${escapeString(friend.username)}</a>
         </div>
         <button
           data-username="${escapeString(friend.username)}"

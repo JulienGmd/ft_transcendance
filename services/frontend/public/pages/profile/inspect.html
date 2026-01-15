@@ -1,0 +1,49 @@
+<script src="/public/pages/profile/inspect.js"></script>
+
+<div class="grid flex-1">
+  <div class="animate-slide-up w-full">
+    <!-- Header -->
+    <div class="border-surface flex items-center gap-4 border-b pb-6">
+      <!-- Avatar -->
+      <user-avatar id="avatar" class="relative size-16 shrink-0"></user-avatar>
+      <!-- Username -->
+      <p id="username" class="px-2 py-1 text-2xl font-bold"></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="pt-12">
+      <h2 class="font-orbitron text-center text-3xl font-bold">STATS</h2>
+      <div class="grid grid-cols-1 gap-8 pt-10 text-center md:grid-cols-4">
+        <!-- Total Matches -->
+        <div>
+          <div class="font-orbitron text-2xl font-bold" id="num-matches">0</div>
+          <div class="text-text-muted mt-2 text-sm">Total Matches</div>
+        </div>
+        <!-- Wins -->
+        <div>
+          <div class="font-orbitron text-2xl font-bold" id="num-wins">0</div>
+          <div class="text-text-muted mt-2 text-sm">Wins</div>
+        </div>
+        <!-- Win Rate -->
+        <div>
+          <div class="font-orbitron text-2xl font-bold" id="win-rate">0.0%</div>
+          <div class="text-text-muted mt-2 text-sm">Win Rate</div>
+        </div>
+        <!-- Global Precision -->
+        <div>
+          <div class="font-orbitron text-2xl font-bold" id="precision">0.0%</div>
+          <div class="text-text-muted mt-2 text-sm">Global Precision</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="pt-20">
+      <h2 class="font-orbitron text-center text-3xl font-bold">HISTORY</h2>
+      <div id="match-history" class="space-y-3 pt-10">
+        <!-- Matches will be inserted here -->
+        <div class="text-text-muted text-center">No matches yet</div>
+      </div>
+    </div>
+  </div>
+</div>

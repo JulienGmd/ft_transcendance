@@ -146,5 +146,5 @@ document.addEventListener("click", (e) => {
     return
 
   e.preventDefault()
-  _navigate(a.pathname)
+  _navigate(a.pathname + a.search)
 })

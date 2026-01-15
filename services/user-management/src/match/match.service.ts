@@ -17,12 +17,12 @@ export function createMatch(matchPayload: MatchCreatePayload): Match {
   return db.prepare("SELECT * FROM match_history WHERE id = ?").get(info.lastInsertRowid) as Match
 }
 
-export function getPlayerMatches(email: string, limit: number = 10): Match[] {
+export function getPlayerMatches(username: string, limit: number = 10): Match[] {
   const db = getDb()
 
   limit = Math.floor(Math.max(1, Math.min(limit, 100)))
 
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User
+  const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username) as User
   if (!user)
     return []
 
@@ -34,10 +34,10 @@ export function getPlayerMatches(email: string, limit: number = 10): Match[] {
   return stmt.all(user.id, user.id, limit) as Match[]
 }
 
-export function getPlayerStats(email: string): PublicStats {
+export function getPlayerStats(username: string): PublicStats {
   const db = getDb()
 
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User
+  const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username) as User
   if (!user)
     return { numMatches: 0, numWins: 0, precision: 0 }
 

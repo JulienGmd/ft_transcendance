@@ -428,6 +428,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query: {
+                    username: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            user: {
+                                username: string;
+                                avatar: string | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            details: {
+                                field: string;
+                                message: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/friends/me": {
         parameters: {
             query?: never;
@@ -1452,7 +1531,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/user/matches/me": {
+    "/api/user/matches": {
         parameters: {
             query?: never;
             header?: never;
@@ -1461,7 +1540,8 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: {
+                query: {
+                    username: string;
                     limit?: string;
                 };
                 header?: never;
@@ -1491,6 +1571,21 @@ export interface paths {
                     };
                 };
                 /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            details: {
+                                field: string;
+                                message: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -1511,7 +1606,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/user/stats/me": {
+    "/api/user/stats": {
         parameters: {
             query?: never;
             header?: never;
@@ -1520,7 +1615,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query: {
+                    username: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1539,6 +1636,21 @@ export interface paths {
                                 numWins: number;
                                 precision: number;
                             };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            details: {
+                                field: string;
+                                message: string;
+                            }[];
                         };
                     };
                 };

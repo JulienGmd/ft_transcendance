@@ -184,6 +184,31 @@ export async function authRoutes(fastify: FastifyInstance) {
     res.send({ user: userToPublicUser(user) })
   })
 
+  fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/user", {
+    schema: {
+      querystring: z.object({ username: z.string() }),
+      response: {
+        200: z.object({ user: z.object({ username: z.string(), avatar: z.string().nullable() }) }),
+        400: PUBLIC_VALIDATION_ERROR_SCHEMA,
+        401: z.object({ message: z.string() }),
+        404: z.object({ message: z.string() }),
+      },
+    },
+  }, async (req, res) => {
+    const jwt = getJWT(req)
+    if (!jwt)
+      return res.status(401).send({ message: "Invalid token" })
+
+    if (!req.query.username)
+      return res.status(400).send({ message: "Username is required", details: [] })
+
+    const user = getUserByUsername(req.query.username)
+    if (!user)
+      return res.status(404).send({ message: "User not found" })
+
+    res.send({ user: { username: user.username, avatar: user.avatar } })
+  })
+
   fastify.withTypeProvider<ZodTypeProvider>().get("/api/user/friends/me", {
     schema: {
       response: {
