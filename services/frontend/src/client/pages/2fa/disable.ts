@@ -52,6 +52,8 @@ async function onSubmit(e: Event): Promise<void> {
     showNotify("Invalid 2FA code", "error")
   else if (data[404])
     navigate("/", "2FA is not enabled on your account", "error")
+  else if (data[429])
+    showNotify("Too many tries, try again later", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

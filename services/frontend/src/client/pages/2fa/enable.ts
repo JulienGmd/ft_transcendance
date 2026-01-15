@@ -65,6 +65,8 @@ async function onSubmit(e: Event): Promise<void> {
     navigate("/login", "Session expired, please log in again", "warning")
   else if (data[403])
     showNotify("Invalid 2FA code", "error")
+  else if (data[429])
+    showNotify("Too many tries, try again later", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

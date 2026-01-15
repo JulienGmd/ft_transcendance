@@ -1,5 +1,5 @@
 import { navigate } from "../../../persistent/router.js"
-import { post, setUser, sleep } from "../../../utils.js"
+import { post, setUser, showNotify, sleep } from "../../../utils.js"
 
 let code = ""
 
@@ -20,6 +20,8 @@ export async function onMount(): Promise<void> {
     navigate("/login", "Google authentication failed, please try again", "error")
   else if (data[403])
     navigate("/login", "An account already exists with this email, please login using your password", "error")
+  else if (data[429])
+    showNotify("Too many tries, try again later", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

@@ -52,6 +52,8 @@ async function onSubmit(e: Event): Promise<void> {
     reportFormValidationErrors(els.form, data[400].details)
   else if (data[401])
     showNotify("Invalid email or password", "error")
+  else if (data[429])
+    showNotify("Too many tries, try again later", "error")
   else
     throw new Error("Unexpected response from server: " + JSON.stringify(data))
 }

@@ -51,6 +51,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         401: z.object({ message: z.string() }),
         403: z.object({ message: z.string() }),
         409: z.object({ message: z.string() }),
+        429: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -102,6 +103,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         200: z.object({ user: PUBLIC_USER_SCHEMA }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         409: z.object({ message: z.string() }),
+        429: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -136,6 +138,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         202: z.object({ needsTwoFA: z.literal(true), email: z.email() }),
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
+        429: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -504,6 +507,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         400: PUBLIC_VALIDATION_ERROR_SCHEMA,
         401: z.object({ message: z.string() }),
         403: z.object({ message: z.string() }),
+        429: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -539,6 +543,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         401: z.object({ message: z.string() }),
         403: z.object({ message: z.string() }),
         404: z.object({ message: z.string() }),
+        429: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
@@ -577,6 +582,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         401: z.object({ message: z.string() }),
         403: z.object({ message: z.string() }),
         404: z.object({ message: z.string() }),
+        429: z.object({ message: z.string() }),
       },
     },
   }, async (req, res) => {
