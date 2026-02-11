@@ -83,11 +83,6 @@ Nginx (Reverse Proxy)
     User Management (Event Listener)
 ```
 
-### SSL/TLS Everywhere
-
-- Client ↔ Nginx ↔ Services: HTTPS (self-signed cert)
-- Game WebSocket: WSS
-
 ### Technology Stack
 
 | Backend                 | Frontend     | Infrastructure |

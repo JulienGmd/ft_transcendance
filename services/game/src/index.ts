@@ -6,7 +6,6 @@
 import fastifyCookie from "@fastify/cookie"
 import fastifyWebsocket from "@fastify/websocket"
 import Fastify from "fastify"
-import { readFileSync } from "fs"
 import type { RawData } from "ws"
 import { parseClientMessage, sendError, sendGameFound, sendPong } from "./communication.js"
 import config from "./config.js"
@@ -32,12 +31,7 @@ const tournamentMatchmaking = new TournamentMatchmaking(gameManager)
 // CREATE SERVER
 // ============================================
 
-const fastify = Fastify({
-  https: {
-    key: readFileSync("/secrets/certs/key.pem"),
-    cert: readFileSync("/secrets/certs/cert.pem"),
-  },
-})
+const fastify = Fastify()
 
 await fastify.register(fastifyWebsocket)
 await fastify.register(fastifyCookie)

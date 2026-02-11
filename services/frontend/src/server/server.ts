@@ -14,12 +14,7 @@ export async function startServer(): Promise<void> {
   if (fastify)
     throw new Error("Server is already running")
 
-  fastify = Fastify({
-    https: {
-      key: readFileSync("/secrets/certs/key.pem"),
-      cert: readFileSync("/secrets/certs/cert.pem"),
-    },
-  })
+  fastify = Fastify()
 
   // Generic error handler (when a route throws an error)
   fastify.setErrorHandler((err, req, res) => {

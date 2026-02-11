@@ -3,20 +3,7 @@ HOSTNAME = $(shell hostname | head -c6)
 
 all: start
 
-setup: conf secrets/certs/cert.pem secrets/jwt/private.pem
-
-conf:
-	@mkdir -p secrets/certs
-	@if [ -f secrets/certs/.hostname ] && [ "$$(cat secrets/certs/.hostname)" != "$(HOSTNAME)" ]; then \
-		echo "--> Hostname changed, regenerating certificates..."; \
-		rm -f secrets/certs/key.pem secrets/certs/cert.pem; \
-	fi
-# Generate self-signed SSL certificate, will then be copied to all services so they can communicate using HTTPS with nginx.
-# "DNS:servicename,..." ($(SERVICES)) is required for https communication between nginx and services.
-secrets/certs/cert.pem:
-	@openssl req -x509 -newkey rsa:2048 -nodes -keyout secrets/certs/key.pem -out secrets/certs/cert.pem -days 365 -subj "/CN=internal" -addext "subjectAltName=DNS:localhost,DNS:$(HOSTNAME),$(SERVICES)" 2>/dev/null
-	@echo "$(HOSTNAME)" > secrets/certs/.hostname
-	@echo "--> New certs has been generated"
+setup: secrets/jwt/private.pem
 
 secrets/jwt/private.pem:
 	@mkdir -p secrets/jwt

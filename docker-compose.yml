@@ -1,6 +1,5 @@
 # Notes:
 # - Only nginx expose ports because it's the only entry point. It will then redirect requests to corresponding services (they are on the same Docker network)
-# - All services need to communicate over HTTPS with nginx, so they must have the certs copied and configured in Fastify so they can trust nginx's TLS certificate.
 
 services:
   nginx:
@@ -20,7 +19,6 @@ services:
       - HOSTNAME=${HOSTNAME:-localhost}
     volumes:
       - ./nginx:/etc/nginx:ro
-      - ./secrets/certs:/certs:ro # ro = read-only
       - nginx_data:/data
       - nginx_config:/config
     depends_on:
@@ -88,8 +86,7 @@ services:
       retries: 10
 
 volumes:
-  # Defining these volumes make them persistent across container restarts, so we
-  # don't need to reclick "trust" on browser every time (they contains the TLS certs)
+  # Defining these volumes make them persistent across container restarts
   nginx_data:
   nginx_config:
   user_db:

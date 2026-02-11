@@ -4,7 +4,6 @@ import fastifySwagger from "@fastify/swagger"
 import fastifySwaggerUI from "@fastify/swagger-ui"
 import Fastify, { type FastifyInstance } from "fastify"
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
-import { readFileSync } from "fs"
 import { authRoutes } from "./auth/auth.routes.js"
 import { PublicValidationError } from "./auth/schemas.js"
 import config from "./config.js"
@@ -17,13 +16,7 @@ export async function startServer(): Promise<void> {
   if (fastify)
     throw new Error("Server is already running")
 
-  fastify = Fastify({
-    https: {
-      key: readFileSync("/secrets/certs/key.pem"),
-      cert: readFileSync("/secrets/certs/cert.pem"),
-    },
-    bodyLimit: 5 * 1024 * 1024, // 5MB
-  })
+  fastify = Fastify()
   fastify.setValidatorCompiler(validatorCompiler)
   fastify.setSerializerCompiler(serializerCompiler)
 
