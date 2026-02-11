@@ -12,9 +12,9 @@ services:
     environment:
       # For nginx-proxy
       - VIRTUAL_PORT=8080
-      - VIRTUAL_HOST=transcendence-42lyon.duckdns.org
+      - VIRTUAL_HOST=transcendence-jss.duckdns.org
       # For acme
-      - LETSENCRYPT_HOST=transcendence-42lyon.duckdns.org
+      - LETSENCRYPT_HOST=transcendence-jss.duckdns.org
       - LETSENCRYPT_EMAIL=julien.grmd@gmail.com
 
       - HOSTNAME=${HOSTNAME:-localhost}
